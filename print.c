@@ -1,0 +1,847 @@
+#ifndef GCC_PRINT
+#define GCC_PRINT GCC_PRINT
+#include<stdio.h>
+#include<assert.h>
+#include "all.h"
+
+
+#define INDENT for(int j=0;j<indent;++j) fprintf(out," ");
+#define TOK(s) ((struct token*)(s))
+#define ASTPTR(s) ((struct AST*)(s))
+
+int indent;
+
+
+void print_ast(FILE *out,struct AST* tree);
+void print_type_giberish(FILE* out,struct Type* type);
+void print_keyword_enum(FILE *out,enum KEYWORDS kw);
+
+void print_token(FILE *out,struct token *token)
+{
+	size_t i;
+//	fprintf(out,"[");
+	for(i=0;i<token->data_size;++i)
+	{
+		fprintf(out,"%c",token->data[i]);
+	}
+//	fprintf(out,"]");
+}
+
+void print_tokens(FILE *out,struct Queue *tokens)
+{
+	struct Queue_Node *it;
+	for( it=tokens->first;
+		it!=tokens->last;
+		    it=it->prev)
+	{
+			fprintf(out,"[");
+			print_keyword_enum(out,((struct token*)(it->data))->type);
+			print_token(out,(struct token*)(it->data));
+			fprintf(out,"] ");
+	}
+	if(it!=NULL)
+	{
+		print_token(out,(struct token*)(it->data));
+	}
+}
+
+void print_declarators(FILE *out,struct Queue *declarators)
+{
+	struct Queue_Node *it;
+	struct Declarator *dec;
+	for(it=declarators->first;NULL;it=it->prev)
+	{
+		dec=(struct Declarator*)(it->data);
+		print_type_giberish(out,dec->type);
+		fprintf(out,",");
+	}
+}
+void print_struct_union_node(FILE *out,struct Type_Node *type)
+{
+	struct Queue_Node *it;
+	struct AST *dec;
+	assert(type->type_specifier==TS_UNION || type->type_specifier==TS_STRUCT);
+	if(type->specifics.struct_union->id!=NULL)
+	{
+		print_token(out,type->specifics.struct_union->id);
+		fprintf(out,"\n{");
+	}
+	for(it=type->specifics.struct_union->declarations.first;it!=NULL;it=it->prev)
+	{
+		dec=(struct AST*)(it->data);
+		print_ast(out,dec);
+		fprintf(out,";\n");
+	}
+
+}
+
+void print_type_node(FILE* out,struct Type_Node* type)
+{
+	short i;
+	struct Queue_Node *it;
+	struct Declarator *dec;
+
+	if(type->type_def)
+	{
+		print_type_giberish(out,type->type_def);
+		return;
+	}
+
+	if(type->is_const)
+	       fprintf(out,"CONSTANT ");
+	if(type->is_volatile)
+	       fprintf(out,"VOLATILE ");
+
+	switch(type->type_specifier)
+	{
+		case TS_VOID:
+		       fprintf(out,"VOID");break;
+		case TS_CHAR:
+		       fprintf(out,"CHAR");break;
+		case TS_INT:
+		       fprintf(out,"INT");break;
+		case TS_FLOAT:
+		       fprintf(out,"FLOAT");break;
+		case TS_DOUBLE:
+		       fprintf(out,"DOUBLE");break;
+		case TS_STRUCT:
+		       fprintf(out,"\nstruct ");
+		       print_struct_union_node(out,type);
+		       fprintf(out,"\n}\n");
+		       break;
+		case TS_UNION:
+		       fprintf(out,"\nunion ");
+		       print_struct_union_node(out,type);
+		       fprintf(out,"\n}\n");
+		       break;
+		case TS_ENUM:
+		       fprintf(out,"ENUM");
+		       break;
+		case TS_TYPEDEF:
+		       fprintf(out,"TYPEDEF");break;
+		case TS_POINTER:
+		       fprintf(out,"POINTER to ");
+		       break;
+		case TS_ARRAY:
+		       fprintf(out,"ARRAY[");
+		       if(type->specifics.arr.number_of_elements_expr!=NULL)
+			       //print_ast(out,type->specifics.number_of_elements);
+			       fprintf(out,"%i",type->specifics.arr.number_of_elements);
+		       fprintf(out,"] of ");
+			break;
+		case TS_FUNC:
+		       fprintf(out,"FUNC taking argumens (");
+			for(it=type->specifics.arg_types.first;it!=type->specifics.arg_types.last;it=it->prev)
+			{
+				dec=(struct Declarator*)(it->data);
+				print_type_giberish(out,dec->type);
+				fprintf(out,",");
+			}
+			if(it!=NULL)
+			{
+				dec=(struct Declarator*)(it->data);
+				print_type_giberish(out,dec->type);
+				fprintf(out,",");
+			}
+			fprintf(out,") returning ");
+		       break;
+		case TS_NONE:
+		       fprintf(out,"NONE");break;
+		case TS_PTR_ERROR:
+		       fprintf(out,"PTR_ERROR");break;
+		case TS_ARR_ERROR:
+		       fprintf(out,"ARR_ERROR");break;
+		case TS_FUNC_ERROR:
+		       fprintf(out,"FUNC_ERROR");break;
+		case TS_GROUP_ERROR:
+			fprintf(out,"GROUP_ERROR");break;
+	}
+}
+void print_type_giberish(FILE* out,struct Type* type)
+{
+	if(type!=NULL)
+	{
+		struct Queue_Node *it;	
+		for(it=type->components.first;it!=NULL;it=it->prev)
+		{
+			print_type_node(out,(struct Type_Node*)(it->data));
+		}
+		fprintf(out," SIZE=%zu",type->size);
+	}
+}
+void print_ast_enum(FILE *out,enum AST_Type op)
+{
+	switch(op)
+	{
+	case OP_COMMA:
+		fprintf(out,",");break;
+	case OP_ADDITION:
+		fprintf(out,"+");break;
+	case OP_SUBTRACTION:
+		fprintf(out,"-");break;
+	case OP_MUL:
+		fprintf(out,"*");break;
+	case OP_DIV:
+		fprintf(out,"/");break;
+	case OP_REMAINDER:
+		fprintf(out,"%");break;
+	case OP_COND:
+		fprintf(out,"CONDITIONAL");break;
+	case OP_FUNCTION:
+		fprintf(out,"FUNCTION_CALL");break;
+	case OP_ASSIGN:
+		fprintf(out,"=");break;
+	case OP_ADD_ASSIGN:
+		fprintf(out,"&=");break;
+	case OP_SUBTRACT_ASSIGN:
+		fprintf(out,"-=");break;
+	case OP_MULTIPLY_ASSIGN:
+		fprintf(out,"*=");break;
+	case OP_REMAINDER_ASSIGN:
+		fprintf(out,"%=");break;
+	case OP_DIV_ASSIGN:
+		fprintf(out,"/=");break;
+	case OP_SHIFT_LEFT_ASSIGN:
+		fprintf(out,">>=");break;
+	case OP_SHIFT_RIGHT_ASSIGN:
+		fprintf(out,"<<=");break;
+	case OP_AND_ASSIGN:
+		fprintf(out,"&=");break;
+	case OP_XOR_ASSIGN:
+		fprintf(out,"^=");break;
+	case OP_PIPE_ASSIGN:
+		fprintf(out,"|=");break;
+	case OP_NOP:
+		fprintf(out,"NOP");break;
+	case OP_LOGICAL_OR:
+		fprintf(out,"||");break;
+	case OP_LOGICAL_AND:
+		fprintf(out,"&&");break;
+	case OP_LOGICAL_NOT:
+		fprintf(out,"!");break;
+	case OP_BITWISE_OR:
+		fprintf(out,"|");break;
+	case OP_BITWISE_AND:
+		fprintf(out,"&");break;
+	case OP_BITWISE_XOR:
+		fprintf(out,"^");break;
+	case OP_BITWISE_NOT:
+		fprintf(out,"~");break;
+	case OP_ADDR_OF:
+		fprintf(out,"&");break;
+	case OP_DEREFERENCE:
+		fprintf(out,"*");break;
+	case OP_MEMBER_TROUGH_PTR:
+		fprintf(out,"->");break;
+	case OP_MEMBER:
+		fprintf(out,".");break;
+	case OP_ARR_SUBSCRIPT:
+		fprintf(out,"ARR_SUBSCRIPT");break;
+	case OP_POSTFIX_INC:
+		fprintf(out,"++");break;
+	case OP_POSTFIX_DEC:
+		fprintf(out,"--");break;
+	case OP_PREFIX_INC:
+		fprintf(out,"++");break;
+	case OP_PREFIX_DEC:
+		fprintf(out,"--");break;
+	case OP_UNARY_PLUS:
+		fprintf(out,"+");break;
+	case OP_UNARY_MINUS:
+		fprintf(out,"-");break;
+	case OP_CAST:
+		fprintf(out,"CAST");break;
+	case OP_SIZEOF:
+		fprintf(out,"sizeof");break;
+	case OP_SHIFT_LEFT:
+		fprintf(out,"<<");break;
+	case OP_SHIFT_RIGHT:
+		fprintf(out,">>");break;
+	case OP_LESS_EQ:
+		fprintf(out,"<=");break;
+	case OP_GREATER_EQ:
+		fprintf(out,">=");break;
+	case OP_LESS:
+		fprintf(out,"<");break;
+	case OP_GREATER:
+		fprintf(out,">");break;
+	case OP_EQUAL:
+		fprintf(out,"==");break;
+	case OP_NOT_EQUAL:
+		fprintf(out,"!=");break;
+	case OP_LVALUE:
+		fprintf(out,"LVALUE");break;
+	case OP_RVALUE:
+		fprintf(out,"RVALUE");break;
+	case ST_COMPOUND:
+		fprintf(out,"COMPOUND");break;
+	case ST_EXPRESSION:
+		fprintf(out,"EXPRESSION");break;
+	case ST_SWITCH:
+		fprintf(out,"switch");break;
+	case ST_IF:
+		fprintf(out,"if");break;
+	case ST_WHILE:
+		fprintf(out,"while");break;
+	case ST_DO_WHILE:
+		fprintf(out,"do_while");break;
+	case ST_GOTO:
+		fprintf(out,"goto");break;
+	case ST_LABEL:
+		fprintf(out,"LABEL");break;
+	case ST_CASE:
+		fprintf(out,"case");break;
+	case ST_DEFAULT:
+		fprintf(out,"default");break;
+	case ST_CONTINUE:
+		fprintf(out,"continue");break;
+	case ST_BREAK:
+		fprintf(out,"break");break;
+	case ST_RETURN:
+		fprintf(out,"return");break;
+	case ST_FOR:
+		fprintf(out,"for");break;
+	case ST_DECLARATION:
+		fprintf(out,"DECLARATION");break;
+	case ST_FUNCTION_DEFINITION:
+		fprintf(out,"FUNCTION_DEFINITION");break;
+	case TRANSLATION_UNIT:
+		fprintf(out,"TRANSLATION_UNIT");break;
+	case ERROR:
+		fprintf(out,"ERROR");break;
+		default:
+			fprintf(out,"NOT_POSSIBLE");break;
+	}
+}
+
+void print_error_tree(FILE *out,struct AST_Error *error)
+{
+	fprintf(out,"ERROR");
+	if(error->error!=NULL)
+	{
+		if(error->error->type==ST_DECLARATION)
+		{
+			fprintf(out,"ST_DECLARATION");
+		}else
+		{
+			print_ast(out,error->error);
+		}
+	}
+}
+void print_binary_expression_tree(FILE *out,struct AST_Binary_Expression *bin)
+{
+	if(bin->type==OP_ARR_SUBSCRIPT)
+	{
+		print_ast(out,bin->left);
+		fprintf(out,"[");
+		print_ast(out,bin->right);
+		fprintf(out,"]");
+	}else
+	{
+		fprintf(out,"(");
+		print_ast(out,bin->left);
+		print_ast_enum(out,bin->type);
+		print_ast(out,bin->right);
+		fprintf(out,")");
+	}
+}
+void print_conditional_expression_tree(FILE *out,struct AST_Conditional_Expression *cond)
+{
+	fprintf(out,"(");
+	print_ast(out,cond->left);
+	fprintf(out,"?");
+	print_ast(out,cond->center);
+	fprintf(out,":");
+	print_ast(out,cond->right);
+	fprintf(out,")");
+}
+void print_function_expression_tree(FILE *out,struct AST_Function_Expression *function_call)
+{
+	struct Queue_Node *it;
+	print_ast(out,function_call->id);	
+	fprintf(out,"(");
+	if(function_call->arguments.size>0)
+	{
+		fprintf(out,"\n");
+		for(it=function_call->arguments.first;it!=function_call->arguments.last;it=it->prev)
+		{
+			print_ast(out,(struct AST*)(it->data));
+			fprintf(out,",\n");
+		}
+		if(it!=NULL)
+		{
+			print_ast(out,(struct AST*)(it->data));
+		}
+
+	}
+	fprintf(out,")");
+}
+void print_unary_expression_tree(FILE *out,struct AST_Unary_Expression *unary_expression)
+{
+	print_ast_enum(out,unary_expression->type);
+	if(unary_expression->type==OP_CAST)
+	{
+		fprintf(out,"(");
+		print_type_giberish(out,unary_expression->value_type);
+		fprintf(out,")");
+	}
+	print_ast(out,unary_expression->operand);
+}
+void print_rvalue_expression_tree(FILE *out,struct AST_Rvalue_Expression *rval)
+{
+	print_token(out,rval->id);
+}
+void print_lvalue_expression_tree(FILE *out,struct AST_Lvalue_Expression *lval)
+{
+	print_token(out,lval->id);
+}
+void print_labeled_statement_tree(FILE *out,struct AST_Labeled_Statement *lab)
+{
+	if(lab->type!=ST_LABEL)
+		print_ast_enum(out,lab->type);
+	if(lab->label!=NULL)
+		print_token(out,lab->label);
+	fprintf(out,":\n");
+	print_ast(out,lab->statement);
+}
+void print_compound_statement_tree(FILE *out,struct AST_Compound_Statement *comp)
+{
+	struct Queue_Node *it;
+	fprintf(out,"{\n");
+		for(it=comp->components.first;it!=NULL;it=it->prev)
+		{
+			print_ast(out,(struct AST*)(it->data));
+			fprintf(out,";\n");
+		}
+	fprintf(out,"}\n");
+}
+void print_if_statement_tree(FILE *out,struct AST_If_Statement *ifs)
+{
+	fprintf(out,"if(");
+	print_ast(out,ifs->condition);
+	fprintf(out,")\n");
+	print_ast(out,ifs->body_statement);
+
+	if(ifs->else_statement!=NULL)
+	{
+		fprintf(out,"\nelse");
+		print_ast(out,ifs->else_statement);
+	}
+	
+}
+void print_switch_statement_tree(FILE *out,struct AST_Switch_Statement *swi)
+{
+	fprintf(out,"switch(");
+	print_ast(out,swi->condition);
+	fprintf(out,")\n");
+	print_ast(out,swi->body_statement);
+}
+void print_while_statement_tree(FILE *out,struct AST_While_Statement *whi)
+{
+	fprintf(out,"while(");
+	print_ast(out,whi->condition);
+	fprintf(out,")\n");
+	print_ast(out,whi->body_statement);
+}
+void print_do_while_statement_tree(FILE *out,struct AST_Do_While_Statement *whi)
+{
+	fprintf(out,"do\n");
+	print_ast(out,whi->body_statement);
+	fprintf(out,"while(");
+	print_ast(out,whi->condition);
+	fprintf(out,")\n");
+}
+void print_for_statement_tree(FILE *out,struct AST_For_Statement *fo)
+{
+	fprintf(out,"for(\n");
+	print_ast(out,fo->initialisation);
+	fprintf(out,";\n");
+	print_ast(out,fo->condition);
+	fprintf(out,";\n");
+	print_ast(out,fo->update);
+	fprintf(out,")\n");
+	print_ast(out,fo->body_statement);
+}
+void print_return_statement_tree(FILE *out,struct AST_Return_Statement *return_expression)
+{
+	fprintf(out,"return ");
+	print_ast(out,return_expression->return_expression);
+}
+void print_goto_statement_tree(FILE *out,struct AST_Goto_Statement *got)
+{
+	fprintf(out,"goto ");
+	print_token(out,got->label);
+}
+void print_declaration_tree(FILE *out,struct AST_Declaration *declaration)
+{
+	struct Queue_Node *it;
+	struct Declarator *hold;
+	fprintf(out,"DECLARATION {[\n");
+	for(it=declaration->declarators.first;it!=NULL;it=it->prev)
+	{
+		hold=(struct Declarator*)(it->data);
+		if(hold->id!=NULL)
+		{
+			print_token(out,hold->id);
+			fprintf(out," IS a/an ");
+		}
+		print_type_giberish(out,hold->type);
+
+		fprintf(out,"\n");
+		if(hold->initialiser!=NULL)
+		{
+			fprintf(out,"\tINITIALISED WITH ");
+			print_ast(out,hold->initialiser);
+			fprintf(out,"\n");
+		}
+	}
+	fprintf(out,"END DECLARATION]}\n");
+}
+void print_function_definition_tree(FILE *out,struct AST_Function_Definition *def)
+{
+	fprintf(out,"FUNCTION DEFINITION:\n");
+
+	print_token(out,def->declarator->id);
+	print_type_giberish(out,def->declarator->type);
+	print_ast(out,def->body_statement);
+}
+void print_translation_unit_tree(FILE *out,struct AST_Translation_Unit *unit)
+{
+	struct Queue_Node *it;	
+	struct AST* hold;
+	for(it=unit->components.first;it!=NULL;it=it->prev)
+	{
+		hold=(struct AST*)(it->data);
+		print_ast(out,hold);
+		if(hold->type==ST_DECLARATION)
+		{
+			fprintf(out,";\n");
+		}
+	}
+}
+void print_ast(FILE *out,struct AST* tree)
+{
+	switch(tree->type)
+	{
+		case OP_MEMBER_TROUGH_PTR:
+		case OP_MEMBER:
+		case OP_BITWISE_AND:
+		case OP_BITWISE_XOR:
+		case OP_BITWISE_NOT:
+		case OP_LOGICAL_AND:
+		case OP_LOGICAL_OR:
+		case OP_XOR_ASSIGN:
+		case OP_PIPE_ASSIGN:
+		case OP_SHIFT_RIGHT_ASSIGN:
+		case OP_ADD_ASSIGN:
+		case OP_SUBTRACT_ASSIGN:
+		case OP_MULTIPLY_ASSIGN:
+		case OP_REMAINDER_ASSIGN:
+		case OP_DIV_ASSIGN:
+		case OP_SUBTRACTION:
+		case OP_MUL:
+		case OP_DIV:
+		case OP_REMAINDER:
+		case OP_EQUAL:
+		case OP_LESS:
+		case OP_LESS_EQ:
+		case OP_SHIFT_LEFT:
+		case OP_BITWISE_OR:
+		case OP_AND_ASSIGN:
+		case OP_ARR_SUBSCRIPT:
+		case OP_SHIFT_LEFT_ASSIGN:
+		case OP_ASSIGN:
+		case OP_ADDITION:
+		case OP_COMMA:
+		case OP_SHIFT_RIGHT:
+		case OP_GREATER_EQ:
+		case OP_GREATER:
+		case OP_NOT_EQUAL:
+			print_binary_expression_tree(out,(struct AST_Binary_Expression*)tree);
+			break;
+		case OP_COND:
+			print_conditional_expression_tree(out,(struct AST_Conditional_Expression*)tree);
+			break;
+		case OP_FUNCTION:
+			print_function_expression_tree(out,(struct AST_Function_Expression*)tree);
+			break;
+		case OP_LOGICAL_NOT:
+		case OP_UNARY_MINUS:
+		case OP_SIZEOF:
+		case OP_ADDR_OF:
+		case OP_DEREFERENCE:
+		case OP_POSTFIX_INC:
+		case OP_PREFIX_INC:
+		case OP_UNARY_PLUS:
+		case OP_POSTFIX_DEC:
+		case OP_PREFIX_DEC:
+		case OP_CAST:
+			print_unary_expression_tree(out,(struct AST_Unary_Expression*)tree);
+			break;
+		case OP_LVALUE:
+			print_lvalue_expression_tree(out,(struct AST_Lvalue_Expression*)tree);
+			break;
+		case OP_RVALUE:
+			print_rvalue_expression_tree(out,(struct AST_Rvalue_Expression*)tree);
+			break;
+		case OP_NOP:
+			fprintf(out,"NOP");
+			break;
+
+		case ST_SWITCH:
+			print_switch_statement_tree(out,(struct AST_Switch_Statement*)tree);
+			break;
+		case ST_IF:
+			print_if_statement_tree(out,(struct AST_If_Statement*)tree);
+			break;
+		case ST_WHILE:
+			print_while_statement_tree(out,(struct AST_While_Statement*)tree);
+			break;
+		case ST_DO_WHILE:
+			print_do_while_statement_tree(out,(struct AST_Do_While_Statement*)tree);
+			break;
+		case ST_GOTO:
+			print_goto_statement_tree(out,(struct AST_Goto_Statement*)tree);
+			break;
+		case ST_DEFAULT:
+		case ST_LABEL:
+		case ST_CASE:
+			print_labeled_statement_tree(out,(struct AST_Labeled_Statement*)tree);
+			break;
+		case ST_CONTINUE:
+			fprintf(out,"continue");
+			break;
+		case ST_BREAK:
+			fprintf(out,"break");
+			break;
+		case ST_RETURN:
+			print_return_statement_tree(out,(struct AST_Return_Statement*)tree);
+			break;
+		case ST_FOR:
+			print_for_statement_tree(out,(struct AST_For_Statement*)tree);
+			break;
+		case ST_COMPOUND:
+			print_compound_statement_tree(out,(struct AST_Compound_Statement*)tree);
+			break;
+		case ST_DECLARATION:
+			print_declaration_tree(out,(struct AST_Declaration*)tree);
+			break;
+		case ST_FUNCTION_DEFINITION:
+			print_function_definition_tree(out,(struct AST_Function_Definition*)tree);
+			break;
+		case TRANSLATION_UNIT:
+			print_translation_unit_tree(out,(struct AST_Translation_Unit*)tree);
+			break;
+		case ERROR:
+			print_error_tree(out,(struct AST_Error*)tree);
+			break;
+		default:
+			fprintf(out,"NOT_POSSIBLE");break;
+	}
+
+}
+void print_program_tokens(FILE *out,struct Program *program)
+{
+	struct Queue_Node *it;
+	struct Queue_Node *it2;
+	it=program->source_files.first;
+	it2=program->translation_units_tokens.first;
+	for(;it!=NULL && it2!=NULL;it=it->prev,it2=it2->prev)
+	{
+		fprintf(out,"TOKENS for %s\n{\n",((struct Source_File*)(it->data))->src_name);
+		print_tokens(out,it2->data);
+		fprintf(out,"TOKENS_END for %s\n}\n",((struct Source_File*)(it->data))->src_name);
+	}
+}
+void print_program_ast(FILE *out,struct Program *program)
+{
+	size_t i;
+	struct Queue_Node *it;
+	it=program->source_files.first;
+	for( i=0; (i<program->number_of_translation_units) && it!=NULL;++i,it=it->prev)
+	{
+		fprintf(out,"TRANSLATION_UNIT for %s\n{\n",((struct Source_File*)(it->data))->src_name);
+		print_ast(out,program->translation_units[i]);
+		fprintf(out,"TRANSLATION_UNIT_END for %s\n}\n",((struct Source_File*)(it->data))->src_name);
+	}
+}
+void print_keyword_enum(FILE *out,enum KEYWORDS kw)
+{
+	switch(kw)
+	{
+	case  KW_AUTO :
+		fprintf(out," KW_AUTO ");break;
+	case  KW_DO :
+		fprintf(out," KW_DO ");break;
+	case  KW_DOUBLE :
+		fprintf(out," KW_DOUBLE ");break;
+	case  KW_INT :
+		fprintf(out," KW_INT ");break;
+	case  KW_STRUCT :
+		fprintf(out," KW_STRUCT ");break;
+	case  KW_BREAK :
+		fprintf(out," KW_BREAK ");break;
+	case  KW_ELSE :
+		fprintf(out," KW_ELSE ");break;
+	case  KW_LONG :
+		fprintf(out," KW_LONG ");break;
+	case  KW_SWITCH :
+		fprintf(out," KW_SWITCH ");break;
+	case  KW_CASE :
+		fprintf(out," KW_CASE ");break;
+	case  KW_ENUM :
+		fprintf(out," KW_ENUM ");break;
+	case  KW_REGISTER :
+		fprintf(out," KW_REGISTER ");break;
+	case  KW_TYPEDEF :
+		fprintf(out," KW_TYPEDEF ");break;
+	case  KW_CHAR :
+		fprintf(out," KW_CHAR ");break;
+	case  KW_EXTERN :
+		fprintf(out," KW_EXTERN ");break;
+	case  KW_RETURN :
+		fprintf(out," KW_RETURN ");break;
+	case  KW_UNION :
+		fprintf(out," KW_UNION ");break;
+	case  KW_CONST :
+		fprintf(out," KW_CONST ");break;
+	case  KW_FLOAT :
+		fprintf(out," KW_FLOAT ");break;
+	case  KW_SHORT :
+		fprintf(out," KW_SHORT ");break;
+	case  KW_UNSIGNED :
+		fprintf(out," KW_UNSIGNED ");break;
+	case  KW_CONTINUE :
+		fprintf(out," KW_CONTINUE ");break;
+	case  KW_FOR :
+		fprintf(out," KW_FOR ");break;
+	case  KW_SIGNED :
+		fprintf(out," KW_SIGNED ");break;
+	case  KW_VOID :
+		fprintf(out," KW_VOID ");break;
+	case  KW_DEFAULT :
+		fprintf(out," KW_DEFAULT ");break;
+	case  KW_GOTO :
+		fprintf(out," KW_GOTO ");break;
+	case  KW_SIZEOF :
+		fprintf(out," KW_SIZEOF ");break;
+	case  KW_VOLATILE :
+		fprintf(out," KW_VOLATILE ");break;
+	case  KW_IF :
+		fprintf(out," KW_IF ");break;
+	case  KW_STATIC :
+		fprintf(out," KW_STATIC ");break;
+	case  KW_WHILE :
+		fprintf(out," KW_WHILE ");break;
+	case  KW_EXCLAMATION :
+		fprintf(out," KW_EXCLAMATION ");break;
+	case  KW_BACK_SLASH :
+		fprintf(out," KW_BACK_SLASH ");break;
+	case  KW_PERCENT :
+		fprintf(out," KW_PERCENT ");break;
+	case  KW_AND :
+		fprintf(out," KW_AND ");break;
+	case  KW_AND_AND :
+		fprintf(out," KW_AND_AND ");break;
+	case  KW_QUOTE :
+		fprintf(out," KW_QUOTE ");break;
+	case  KW_OPEN_NORMAL :
+		fprintf(out," KW_OPEN_NORMAL ");break;
+	case  KW_CLOSE_NORMAL :
+		fprintf(out," KW_CLOSE_NORMAL ");break;
+	case  KW_STAR :
+		fprintf(out," KW_STAR ");break;
+	case  KW_PLUS :
+		fprintf(out," KW_PLUS ");break;
+	case  KW_COMMA :
+		fprintf(out," KW_COMMA ");break;
+	case  KW_MINUS :
+		fprintf(out," KW_MINUS ");break;
+	case  KW_DOT :
+		fprintf(out," KW_DOT ");break;
+	case  KW_ARROW :
+		fprintf(out," KW_ARROW ");break;
+	case  KW_COLUMN :
+		fprintf(out," KW_COLUMN ");break;
+	case  KW_SEMI_COLUMN :
+		fprintf(out," KW_SEMI_COLUMN ");break;
+	case  KW_LESS :
+		fprintf(out," KW_LESS ");break;
+	case  KW_EQ :
+		fprintf(out," KW_EQ ");break;
+	case  KW_EQEQ :
+		fprintf(out," KW_EQEQ ");break;
+	case  KW_MORE :
+		fprintf(out," KW_MORE ");break;
+	case  KW_QUESTION :
+		fprintf(out," KW_QUESTION ");break;
+	case  KW_OPEN_SQUARE :
+		fprintf(out," KW_OPEN_SQUARE ");break;
+	case  KW_CLOSE_SQUARE :
+		fprintf(out," KW_CLOSE_SQUARE ");break;
+	case  KW_HAT :
+		fprintf(out," KW_HAT ");break;
+	case  KW_FLOOR :
+		fprintf(out," KW_FLOOR ");break;
+	case  KW_OPEN_CURLY :
+		fprintf(out," KW_OPEN_CURLY ");break;
+	case  KW_CLOSE_CURLY :
+		fprintf(out," KW_CLOSE_CURLY ");break;
+	case  KW_PIPE :
+		fprintf(out," KW_PIPE ");break;
+	case  KW_PIPE_PIPE :
+		fprintf(out," KW_PIPE_PIPE ");break;
+	case  KW_TILDE :
+		fprintf(out," KW_TILDE ");break;
+	case  KW_PLUSPLUS :
+		fprintf(out," KW_PLUSPLUS ");break;
+	case  KW_MINUSMINUS :
+		fprintf(out," KW_MINUSMINUS ");break;
+	case  KW_SHIFT_RIGHT :
+		fprintf(out," KW_SHIFT_RIGHT ");break;
+	case  KW_SHIFT_LEFT :
+		fprintf(out," KW_SHIFT_LEFT ");break;
+	case  KW_LESS_EQ :
+		fprintf(out," KW_LESS_EQ ");break;
+	case  KW_MORE_EQ :
+		fprintf(out," KW_MORE_EQ ");break;
+	case  KW_NOT_EQ :
+		fprintf(out," KW_NOT_EQ ");break;
+	case  KW_PLUS_EQ :
+		fprintf(out," KW_PLUS_EQ ");break;
+	case  KW_MINUS_EQ :
+		fprintf(out," KW_MINUS_EQ ");break;
+	case  KW_STAR_EQ :
+		fprintf(out," KW_STAR_EQ ");break;
+	case  KW_PERCENT_EQ :
+		fprintf(out," KW_PERCENT_EQ ");break;
+	case  KW_SHIFT_LEFT_EQ :
+		fprintf(out," KW_SHIFT_LEFT_EQ ");break;
+	case  KW_SHIFT_RIGHT_EQ :
+		fprintf(out," KW_SHIFT_RIGHT_EQ ");break;
+	case  KW_AND_EQ :
+		fprintf(out," KW_AND_EQ ");break;
+	case  KW_HAT_EQ :
+		fprintf(out," KW_HAT_EQ ");break;
+	case  KW_PIPE_EQ :
+		fprintf(out," KW_PIPE_EQ ");break;
+	case  KW_DIV_EQ :
+		fprintf(out," KW_DIV_EQ ");break;
+	case  KW_FORWARD_SLASH :
+		fprintf(out," KW_FORWARD_SLASH ");break;
+	case  KW_NOTYPE :
+		fprintf(out," KW_NOTYPE ");break;
+	case  KW_NUMBER :
+		fprintf(out," KW_NUMBER ");break;
+	case  KW_COMMENT :
+		fprintf(out," KW_COMMENT ");break;
+	case  KW_ID :
+		fprintf(out," KW_ID ");break;
+	case  KW_STRING :
+		fprintf(out," KW_STRING ");break;
+	}
+}
+#undef TOK
+#undef INDENT
+
+#endif
