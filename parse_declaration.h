@@ -9,13 +9,6 @@
 #include "lexer.h"
 #include <assert.h>
 
-struct Declarator
-{
-	struct Type *type;
-	struct AST *initialiser;
-	struct token *id;
-	struct Location *location;
-};
 
 struct AST* parse_declaration(struct Queue *tokens,struct Scope *scope);
 void parse_declarator(struct Queue *tokens,struct Declarator *base,struct Scope *scope);

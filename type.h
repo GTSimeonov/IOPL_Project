@@ -2,6 +2,7 @@
 #define GCC_TYPE_H GCC_TYPE_H
 #include "queue.c"
 #include "map.c"
+#include "scope.h"
 #include <limits.h>
 
 #define PTR_SIZE 4
@@ -31,12 +32,7 @@ enum Type_Specifier
 	TS_ARRAY,
 	TS_FUNC,
 	TS_NONE,
-	TS_PTR_ERROR,
-	TS_ARR_ERROR,
-	TS_FUNC_ERROR,
-	TS_GROUP_ERROR,
-	TS_ID_ERROR,
-	TS_ERROR
+	TS_ERROR,
 };
 enum Type_Constraint
 {
@@ -45,52 +41,104 @@ enum Type_Constraint
 	TC_SHORT,
 	TC_NONE
 };
-struct Struct_Union
+enum Type_Storage_Class
 {
-	struct Map inner_namespace;
-	struct Queue declarations;
-	struct token* id;
+	TSC_EXTERN,
+	TSC_STATIC,
+	TSC_NONE
 };
-struct Type_Node
+enum Type_Signedness
 {
-	enum Type_Specifier type_specifier;
-	enum Type_Constraint type_constraints;
-	char is_signed:1;
-	char is_const:1;
-	char is_volatile:1;
-	char is_extern:1;
-	char is_static:1;
-	char is_bit_field:1;
-	char is_typedef:1;
-	char error:1;
-
-	union 
-	{
-		struct Queue arg_types;
-		struct {
-			struct AST *number_of_elements_expr;
-			size_t number_of_elements;
-			}arr;
-		struct Struct_Union *struct_union;
-		struct AST* bit_field_length;
-		void *error;
-	}specifics;
-	struct Type *type_def;
-
+	TSIGN_SIGNED,
+	TSIGN_UNSIGNED,
+	TSIGN_NONE
 };
+
+
 struct Type
 {
-	struct Queue components;
-	size_t size;
+	enum Type_Specifier specifier;
 };
+struct Type_Error
+{	
+	enum Type_Specifier specifier;
+	struct Type *error;
+};
+struct Type_Prototype
+{
+	enum Type_Specifier specifier;
+	enum Type_Storage_Class storage_class;
+	enum Type_Constraint constraint;
+	enum Type_Signedness sign;
+	size_t size;
+	char is_const:1;
+	char is_volatile:1;
+	struct Type *points_to;
+};
+struct Type_Struct_Union
+{
+	enum Type_Specifier specifier;
+	size_t size;
 
-struct Type_Node* check_first_type_component(struct Type *type);
-struct Type_Node* check_base_type_component(struct Type *type);
-size_t size_of(struct Type *type);
-size_t size_of_array(struct Type *type);
-size_t size_of_struct(struct Type *type);
-size_t size_of_union(struct Type *type);
-struct Type_Node* get_node();
-struct Struct_Union* get_struct_union();
-void merge_type_nodes(struct Type_Node *consumer,struct Type_Node *source);
+	size_t number_of_members;
+	struct Denoted_Struct_Union_Member **members;
+	struct Scope *inner_namespace;
+	struct token *id;
+	char is_const:1;
+	char is_volatile:1;
+};
+struct Type_Basic
+{
+	enum Type_Specifier specifier;
+	enum Type_Storage_Class storage_class;
+	enum Type_Constraint constraint;
+	enum Type_Signedness sign;
+	size_t size;
+	char is_const:1;
+	char is_volatile:1;
+	char is_signed:1;
+};
+struct Type_Pointer
+{
+	enum Type_Specifier specifier;
+	enum Type_Storage_Class storage_class;
+	size_t size;
+	struct Type *points_to;
+	char is_const:1;
+	char is_volatile:1;
+};
+struct Type_Array
+{
+	enum Type_Specifier specifier;
+	enum Type_Storage_Class storage_class;
+	size_t size;
+	size_t number_of_elements;
+	struct Type *is_array_of;
+};
+struct Type_Function
+{
+	enum Type_Specifier specifier;
+	struct Type *return_type;
+
+	struct Declarator **parameters;
+	size_t number_of_parameters;
+};
+struct Type_Enum
+{
+	enum Type_Specifier specifier;
+
+	size_t number_of_constants;
+	struct Denoted_Enum_Const **consts;
+	struct token *id;
+};
+struct Type_Error* get_type_error(struct Type* error);
+struct Type_Prototype* get_type_prototype();
+struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,enum Type_Specifier ts);
+struct Type* get_basic_type(struct Type_Prototype *prototype);
+struct Type* get_pointer_type(struct Type* points_to);
+struct Type* get_array_type(struct Type *is_array_of);
+struct Type* get_enum_type(struct token *id);
+
+
+
 #endif

@@ -3,191 +3,135 @@
 #include "type.h"
 
 
-void merge_type_nodes(struct Type_Node *consumer,struct Type_Node *source)
+
+struct Type_Error* get_type_error(struct Type* error)
 {
-	if(source->is_signed)
-		consumer->is_signed=1;	
-	if(source->is_const)
-		consumer->is_const=1;	
-	if(source->is_volatile)
-		consumer->is_volatile=1;	
-	if(source->is_extern)
-		consumer->is_extern=1;	
-	if(source->is_static)
-		consumer->is_static=1;	
-	if(source->is_bit_field)
-		consumer->is_bit_field=1;	
-	/*
-	if(source->is_typedef)
-		consumer->is_typedef=1;	
-		*/
-	if(source->error)
-		consumer->error=1;	
-	if(consumer->type_specifier==TS_NONE)
+	struct Type_Error *ret;
+	ret=malloc(sizeof(struct Type_Error));
+	ret->specifier=TS_ERROR;
+	ret->error=error;
+	
+	return ret;
+}
+struct Type_Prototype* get_type_prototype()
+{
+	struct Type_Prototype *ret;
+
+	ret=malloc(sizeof(struct Type_Prototype));
+	ret->type_specifier=TS_NONE;
+	ret->size=0;
+	ret->is_const=ret->is_volatile=0;
+	ret->storage_class=TSC_NONE;
+	ret->constraint=TC_NONE;
+	ret->sign=TSIGN_NONE;
+
+	return ret;
+}
+/*could return error */
+struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,enum Type_Specifier ts)
+{
+	struct Type_Struct_Union *ret;
+	
+	ret=malloc(sizeof(struct Type_Struct_Union));
+	ret->specifier=ts;
+	ret->size=prototype->size;
+
+	ret->number_of_members=0;
+	ret->members=NULL;
+
+	ret->inner_namespace=get_scope(NULL);
+	ret->id=id;
+	ret->is_const=prototype->is_const;
+	ret->is_volatile=prototype->is_volatile;
+	ret->storage_class=prototype->storage_class;
+
+	if(prototype->constraint!=TC_NONE || prototype->size!=TSIGN_NONE)
 	{
-		consumer->type_specifier=source->type_specifier;
+		return (struct Type*)get_type_error(ret);
 	}else
 	{
-		consumer->error=1;
+		return (struct Type*)ret;
 	}
-	if(consumer->type_constraints==TC_NONE)
-	{
-		consumer->type_constraints=source->type_constraints;
-	}
-	if(consumer->type_constraints!=source->type_constraints)
-	{
-		consumer->error=1;
-	}
-	consumer->specifics=source->specifics;
 }
-struct Type_Node* check_first_type_component(struct Type *type)
+/*could return error*/
+struct Type* get_basic_type(struct Type_Prototype *prototype)
 {
-	return ((struct Type_Node*)type->components.first->data);
-}
-struct Type_Node* check_base_type_component(struct Type *type)
-{
-	return ((struct Type_Node*)type->components.last->data);
-}
-size_t size_of(struct Type *type)
-{
-	struct Type_Node *hold;
-	size_t size;
+	struct Type_Basic *ret;
+	ret=malloc(sizeof(struct Type_Basic));
 
-	hold=type->components.first->data;
-		
-	switch(hold->type_specifier)
+	ret->size=prototype->size;
+	ret->is_const=prototype->is_const;
+	ret->is_volatile=prototype->is_volatile;
+	ret->storage_class=prototype->storage_class;
+	ret->constraint=prototype->constraint;
+	ret->size=prototype->sign;
+	
+
+	if(prototype->specifier==TS_NONE)
 	{
-		case TS_INT:
-			size=INT_SIZE;
+		ret->specifier=TS_INT;
+	}else
+	{
+		ret->specifier=prototype->specifier;
+
+	}
+
+	switch(prototype->specifier)
+	{
+		case TS_DOUBLE:
+			if(prototype->constraint==TC_LONG_LONG 
+				|| prototype->constraint==TC_SHORT
+				|| prototype->sign!=TSIGN_NONE)
+			{
+				return (struct Type*)get_type_error(ret);
+			}
 			break;
 		case TS_CHAR:
-			size=CHAR_SIZE;
-			break;
-		case TS_FLOAT:
-			size=FLOAT_SIZE;
-			break;
-		case TS_DOUBLE:
-			size=DOUBLE_SIZE;
-			break;
-		case TS_ARRAY:
-			return size_of_array(type);
-		case TS_STRUCT:
-			return size_of_struct(type);
-		case TS_UNION:
-			return size_of_union(type);
-		case TS_POINTER:
-			return PTR_SIZE;
-		default:
-			size=0;
-	}
-	switch(hold->type_constraints)
-	{
-		case TC_LONG:
-			return size<<1;
-			break;
-		case TC_LONG_LONG:
-			return size<<2;
-			break;
-		case TC_SHORT:
-			return size>>1;
+			if(prototype->constraint!=TC_NONE)
+			{
+				return (struct Type*)get_type_error(ret);
+			}
 			break;
 		default:
-			return size;
-	}
-
-}
-
-size_t size_of_array(struct Type *type)
-{
-	struct Type temp;
-	struct Type_Node *hold;
-	size_t size;
-
-	hold=type->components.first->data;
-	assert(hold->type_specifier==TS_ARRAY);
-	temp.components=Queue_Fit(&type->components,1);
-	size=hold->specifics.arr.number_of_elements*size_of(&temp);
-	return size;
-
-
-}
-size_t size_of_struct(struct Type *type)
-{
-	struct Queue_Node *it;
-	struct Queue_Node *it2;
-	struct Type_Node *hold;
-	size_t size=0;
-	size_t i;
-
-	hold=type->components.first->data;
-	assert(hold->type_specifier==TS_STRUCT);
-
-	if(hold->specifics.struct_union->declarations.size==0)
-		return 0;
-
-
-	for(it=hold->specifics.struct_union->declarations.first;it!=hold->specifics.struct_union->declarations.last->prev; it=it->prev)
-	{
-		if(DECLR_PTR(it->data)->declarators.size!=0)
-		{
-			for(it2=DECLR_PTR(it->data)->declarators.first;DECLR_PTR(it->data)->declarators.last->prev;it2=it2->prev)
+			if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE)
 			{
-				size+=size_of(((struct Declarator*)(it2->data))->type);
+				return (struct Type*)get_type_error(ret);
 			}
-		}
+			
 	}
-
-	return size;
-}
-size_t size_of_union(struct Type *type)
-{
-	struct Queue_Node *it;
-	struct Queue_Node *it2;
-	struct Type_Node *hold;
-	size_t size=0;
-	size_t hold_size;
-	size_t i;
-
-	hold=type->components.first->data;
-	assert(hold->type_specifier==TS_STRUCT);
-
-	if(hold->specifics.struct_union->declarations.size==0)
-		return 0;
-
-
-	for(it=hold->specifics.struct_union->declarations.first;it!=hold->specifics.struct_union->declarations.last->prev; it=it->prev)
-	{
-		if(DECLR_PTR(it->data)->declarators.size!=0)
-		{
-			for(it2=DECLR_PTR(it->data)->declarators.first;DECLR_PTR(it->data)->declarators.last->prev;it2=it2->prev)
-			{
-				if(hold_size>size)
-				{
-					size=hold_size;
-				}
-			}
-		}
-	}
-	return size;
-}
-
-struct Type* get_type()
-{
-	struct Type *hold;
-	hold=malloc(sizeof(struct Type));
-	Queue_Init(&hold->components);
-	return hold;
+	return (struct Type*)ret;
 
 }
-
-struct Type_Node* get_node()
+struct Type* get_pointer_type(struct Type* points_to)
 {
-	struct Type_Node *temp;
-	temp=malloc(sizeof(struct Type_Node));
-	temp->type_specifier=TS_NONE;
-	temp->type_constraints=TC_NONE;
-	temp->type_def=NULL;
-	temp->is_typedef=temp->error=temp->is_const=temp->is_signed=temp->is_volatile=temp->is_extern=temp->is_static=temp->is_bit_field=0;
-	return temp;
+	struct Type_Pointer *ret;
+	ret=malloc(sizeof(struct Type_Pointer));
+	ret->specifier=TS_POINTER;
+	ret->size=PTR_SIZE;
+	ret->points_to=points_to;
+	ret->is_const=ret->is_volatile=0;
+	return ret;
+
+}
+struct Type* get_array_type(struct Type *is_array_of)
+{
+	struct Type_Array *ret;
+	ret=malloc(sizeof(struct Type_Array));
+	ret->specifier=TS_ARRAY;
+	ret->size=0;
+	ret->number_of_elements=0;
+
+	return ret;
+}
+struct Type* get_enum_type(struct token *id)
+{
+	struct Type_Enum *ret;
+	ret=malloc(sizeof(struct Type_Enum));
+	ret->specifier=TS_ENUM;
+	ret->number_of_constants=0;
+	ret->consts=NULL;
+	ret->id=id;
+	
+	return ret;
 }
 #endif

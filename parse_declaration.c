@@ -16,11 +16,9 @@
 */
 struct Type_Node* parse_declaration_specifiers(struct Queue *tokens,struct Scope *scope)
 {
-	struct Type_Node *base;
-	struct Type *hold_type;
-	struct Type_Node *hold;
+	struct Type_Prototype *hold;
 	enum KEYWORDS kw;
-	base=get_node();
+	hold=get_type_prototype();
 
 	for(kw=kw_get(tokens);tokens->size>0;chomp(tokens),kw=kw_get(tokens))
 	{
