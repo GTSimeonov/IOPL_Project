@@ -9,7 +9,7 @@ struct Denoted_Error* get_denoted_error(struct Denoted *error)
 	ret->denotation=DT_Error;
 	ret->error=error;
 
-	return error;
+	return (struct Denoted*)ret;
 }
 struct Denoted_Function* get_denoted_function(struct Type *type)
 {
@@ -19,7 +19,7 @@ struct Denoted_Function* get_denoted_function(struct Type *type)
 	ret->type=type;
 	ret->body=NULL;
 
-	return ret;
+	return (struct Denoted*)ret;
 }
 struct Denoted_Object* get_denoted_object(struct Type *type)
 {
@@ -29,7 +29,7 @@ struct Denoted_Object* get_denoted_object(struct Type *type)
 	ret->type=type;
 	ret->location=NULL;
 
-	return ret;
+	return (struct Denoted*)ret;
 }
 
 struct Denoted_Typedef* get_denoted_typedef(struct token* id,struct Type *typedefed)
@@ -40,7 +40,7 @@ struct Denoted_Typedef* get_denoted_typedef(struct token* id,struct Type *typede
 	ret->type=typedefed;
 	ret->id=id;
 
-	return ret;
+	return (struct Denoted*)ret;
 
 }
 struct Denoted_Enum_Const* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value)
@@ -52,7 +52,7 @@ struct Denoted_Enum_Const* get_denoted_enum_const(struct token *id,struct Type_E
 	ret->parent=parent;
 	ret->value=value;
 
-	return ret;
+	return (struct Denoted*)ret;
 	
 }
 struct Denoted_Struct_Union_Member* get_denoted_struct_union_member(struct token *id,struct Type *type,size_t offset)
@@ -64,7 +64,16 @@ struct Denoted_Struct_Union_Member* get_denoted_struct_union_member(struct token
 	ret->type=type;
 	ret->offset=offset;
 
-	return ret;
+	return (struct Denoted*)ret;
 }
+struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *struct_union)
+{
+	struct Denoted_Struct_Union *ret;
+	ret=malloc(sizeof(struct Denoted_Struct_Union));
+	ret->denotation=DT_Struct_Union_Tag;
+	ret->id=id;
+	ret->struct_union=struct_union;
 
+	return (struct Denoted*)ret;
+}
 #endif

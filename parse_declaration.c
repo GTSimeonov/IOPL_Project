@@ -14,102 +14,111 @@
 		alignment-specifier [ declaration-specifiers ]
 		
 */
-struct Type_Node* parse_declaration_specifiers(struct Queue *tokens,struct Scope *scope)
+struct Denoted* parse_declaration_specifiers(struct Queue *tokens,struct Scope *scope)
 {
-	struct Type_Prototype *hold;
+	struct Object_Prototype *hold;
 	enum KEYWORDS kw;
-	hold=get_type_prototype();
+	hold=(struct Object_Prototype*)get_object_prototype();
 
 	for(kw=kw_get(tokens);tokens->size>0;chomp(tokens),kw=kw_get(tokens))
 	{
 		switch(kw)
 		{
 			case KW_CONST:	
-				base->is_const=1;
+				hold->is_const=1;
 				break;
 			case KW_VOLATILE:
-				base->is_volatile=1;
+				hold->is_volatile=1;
 				break;
 			case KW_STATIC:
-				base->is_static=1;
+				if(hold->storage_class==TSC_NONE)
+				{
+					hold->storage_class=TSC_STATIC;
+				}else
+				{
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
+				}
 				break;
 			case KW_EXTERN:
-				base->is_extern=1;
+				if(hold->storage_class==TSC_NONE)
+				{
+					hold->storage_class=TSC_EXTERN;
+				}else
+				{
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
+				}
 				break;
 			case KW_INT:
-				if(base->type_specifier!=TS_NONE)
+				if(hold->specifier!=TS_NONE)
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
-				base->type_specifier=TS_INT;
+				hold->specifier=TS_INT;
 				break;
 			case KW_CHAR:
-				if(base->type_specifier!=TS_NONE)
+				if(hold->specifier!=TS_NONE)
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
-				base->type_specifier=TS_CHAR;
+				hold->specifier=TS_CHAR;
 				break;
 			case KW_VOID:
-				if(base->type_specifier!=TS_NONE)
+				if(hold->specifier!=TS_NONE)
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
-				base->type_specifier=TS_VOID;
+				hold->specifier=TS_VOID;
 				break;
 			case KW_DOUBLE:
-				if(base->type_specifier!=TS_NONE)
+				if(hold->specifier!=TS_NONE)
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
-				base->type_specifier=TS_DOUBLE;
+				hold->specifier=TS_DOUBLE;
 				break;
 			case KW_FLOAT:
-				if(base->type_specifier!=TS_NONE)
+				if(hold->specifier!=TS_NONE)
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
-				base->type_specifier=TS_FLOAT;
+				hold->specifier=TS_FLOAT;
 				break;
 			case KW_UNION:
 			case KW_STRUCT:
 				if(check(tokens,KW_ID,1) )
 				{
 					/*this struct might already have been defined*/
+					struct Denoted_Struct_Union *hold_su;
+					struct token *tag=tokens->first->prev->data;
+					hold_su=check_tag(scope,tag);
 
-					hold_type=check_tag(scope,tokens->first->prev->data);
-					if(hold_type!=NULL)
+					if(hold_su==NULL)
 					{
-						return check_first_type_component(hold_type);
+						/*this tag isn't taken*/
+						/*denote an incomplete struct/union type*/
+						hold_su=get_denoted_struct_union(tag,get_struct_union());
+						
 					}
-					hold=parse_struct_union_specifier(tokens,scope);
-					merge_type_nodes(base,hold);
-					return base;
+					/*consume struct/union tag*/
+					chomp(tokens);
+					return get_denoted_object(get_struct_union_type(hold,hold_su->struct_union));
 
 				}else if(check(tokens,KW_OPEN_CURLY,1))
 				{
-					/*this is a definition of an anonymous struct*/
-					hold=parse_struct_union_specifier(tokens,scope);
-					merge_type_nodes(base,hold);
-					return base;
+					/*this is a definition of an anonymous struct/union*/
+					return get_denoted_struct_union(NULL,parse_struct_union_specifier(tokens,scope))
 				}else
 				{
-					base->error=1;
-					return base;
+					return get_denoted_error(get_denoted_object((struct Type*)hold));
 				}
 			case KW_TYPEDEF:
-				base->is_typedef=1;
+				hold->is_typedef=1;
 				break;
 			case KW_ID:
-				if(base->type_specifier==TS_NONE && check_if_typedefed(scope,tokens->first->data))
+				if(hold->specifier==TS_NONE && check_if_typedefed(scope,tokens->first->data))
 				{
-					base->type_def=check_ordinary(scope,tokens->first->data);
-					merge_type_nodes(base,check_base_type_component(base->type_def));
+					hold->type_def=check_ordinary(scope,tokens->first->data);
+					merge_type_nodes(base,check_base_type_component(hold->type_def));
 					break;
 				}else
 				{

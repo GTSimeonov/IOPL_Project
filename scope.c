@@ -26,7 +26,7 @@ void* check_label(struct Scope *current,struct token *id)
 	return hold;
 }
 
-void* check_tag(struct Scope *current,struct token *id)
+struct Denoted_Struct_Union* check_tag(struct Scope *current,struct token *id)
 {
 	void *hold;
 	hold=NULL;
@@ -35,7 +35,7 @@ void* check_tag(struct Scope *current,struct token *id)
 		hold=Map_Check(&current->tags,id->data,id->data_size);
 		current=current->parent;
 	}
-	return hold;
+	return (struct Denoted_Struct_Union*)hold;
 }
 void* check_ordinary(struct Scope *current,struct token *id)
 {

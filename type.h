@@ -1,7 +1,6 @@
 #ifndef GCC_TYPE_H 
 #define GCC_TYPE_H GCC_TYPE_H
-#include "queue.c"
-#include "map.c"
+#include "denoted.h"
 #include "scope.h"
 #include <limits.h>
 
@@ -16,6 +15,7 @@
 
 
 
+struct Denotation_Prototype;
 
 enum Type_Specifier
 {
@@ -41,12 +41,6 @@ enum Type_Constraint
 	TC_SHORT,
 	TC_NONE
 };
-enum Type_Storage_Class
-{
-	TSC_EXTERN,
-	TSC_STATIC,
-	TSC_NONE
-};
 enum Type_Signedness
 {
 	TSIGN_SIGNED,
@@ -64,33 +58,25 @@ struct Type_Error
 	enum Type_Specifier specifier;
 	struct Type *error;
 };
-struct Type_Prototype
-{
-	enum Type_Specifier specifier;
-	enum Type_Storage_Class storage_class;
-	enum Type_Constraint constraint;
-	enum Type_Signedness sign;
-	size_t size;
-	char is_const:1;
-	char is_volatile:1;
-	struct Type *points_to;
-};
+
 struct Type_Struct_Union
 {
 	enum Type_Specifier specifier;
-	size_t size;
+	struct Struct_Union *struct_union;
 
+	char is_const:1;
+	char is_volatile:1;
+};
+struct Struct_Union
+{
+	size_t size;
 	size_t number_of_members;
 	struct Denoted_Struct_Union_Member **members;
 	struct Scope *inner_namespace;
-	struct token *id;
-	char is_const:1;
-	char is_volatile:1;
 };
 struct Type_Basic
 {
 	enum Type_Specifier specifier;
-	enum Type_Storage_Class storage_class;
 	enum Type_Constraint constraint;
 	enum Type_Signedness sign;
 	size_t size;
@@ -101,7 +87,6 @@ struct Type_Basic
 struct Type_Pointer
 {
 	enum Type_Specifier specifier;
-	enum Type_Storage_Class storage_class;
 	size_t size;
 	struct Type *points_to;
 	char is_const:1;
@@ -110,7 +95,6 @@ struct Type_Pointer
 struct Type_Array
 {
 	enum Type_Specifier specifier;
-	enum Type_Storage_Class storage_class;
 	size_t size;
 	size_t number_of_elements;
 	struct Type *is_array_of;
@@ -120,7 +104,7 @@ struct Type_Function
 	enum Type_Specifier specifier;
 	struct Type *return_type;
 
-	struct Declarator **parameters;
+	struct Denoted_Object **parameters;
 	size_t number_of_parameters;
 };
 struct Type_Enum
@@ -131,10 +115,11 @@ struct Type_Enum
 	struct Denoted_Enum_Const **consts;
 	struct token *id;
 };
-struct Type_Error* get_type_error(struct Type* error);
-struct Type_Prototype* get_type_prototype();
-struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,enum Type_Specifier ts);
-struct Type* get_basic_type(struct Type_Prototype *prototype);
+
+struct Type* get_type_error(struct Type* error);
+struct Type* get_struct_union_type(struct Denotation_Prototype *prototype,struct Struct_Union *base);
+struct Struct_Union* get_struct_union_base();
+struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type* points_to);
 struct Type* get_array_type(struct Type *is_array_of);
 struct Type* get_enum_type(struct token *id);

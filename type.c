@@ -13,12 +13,12 @@ struct Type_Error* get_type_error(struct Type* error)
 	
 	return ret;
 }
-struct Type_Prototype* get_type_prototype()
+struct Object_Prototype* get_object_prototype()
 {
 	struct Type_Prototype *ret;
 
 	ret=malloc(sizeof(struct Type_Prototype));
-	ret->type_specifier=TS_NONE;
+	ret->specifier=TS_NONE;
 	ret->size=0;
 	ret->is_const=ret->is_volatile=0;
 	ret->storage_class=TSC_NONE;
@@ -28,7 +28,7 @@ struct Type_Prototype* get_type_prototype()
 	return ret;
 }
 /*could return error */
-struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,enum Type_Specifier ts)
+struct Type* get_struct_union_type(struct Denotation_Prototype *prototype,struct Struct_Union *base)
 {
 	struct Type_Struct_Union *ret;
 	
@@ -36,8 +36,7 @@ struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,
 	ret->specifier=ts;
 	ret->size=prototype->size;
 
-	ret->number_of_members=0;
-	ret->members=NULL;
+	ret->struct_union=base;
 
 	ret->inner_namespace=get_scope(NULL);
 	ret->id=id;
@@ -53,8 +52,18 @@ struct Type* get_struct_union(struct Type_Prototype *prototype,struct token *id,
 		return (struct Type*)ret;
 	}
 }
+struct Struct_Union* get_struct_union_base()
+{
+	struct Struct_Union *ret;
+	ret=malloc(sizeof(struct Struct_Union));
+	ret->number_of_members=0;
+	ret->members=NULL;
+	ret->inner_namespace=NULL;
+
+	return ret;
+}
 /*could return error*/
-struct Type* get_basic_type(struct Type_Prototype *prototype)
+struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Basic *ret;
 	ret=malloc(sizeof(struct Type_Basic));
