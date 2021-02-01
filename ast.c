@@ -10,6 +10,16 @@ struct AST_Error* get_error_tree(struct AST *error)
 	ret->error=error;
 	return ret;
 }
+struct AST_Declaration_Error* get_declaration_error_tree(struct Denoted *error)
+{
+
+	struct AST_Error *ret;
+	ret=malloc(sizeof(struct AST_Error));
+	ret->type=ERROR_DECLARATION;
+	ret->error=error;
+	return ret;
+}
+
 struct AST_Binary_Expression* get_binary_expression_tree(struct AST *left,struct AST *right,enum AST_Type type)
 {
 	struct AST_Binary_Expression *ret;
@@ -162,25 +172,47 @@ struct AST* get_nop_tree()
 
 
 
-struct AST_Declaration* get_declaration_tree(struct Scope* scope)
+struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *definition,struct Scope *scope);
 {
-	struct AST_Declaration *ret;
-	ret=malloc(sizeof(struct AST_Declaration));
-	ret->type=ST_DECLARATION;
-	ret->base_type=malloc(sizeof(struct Type_Node));
-	Queue_Init(&ret->declarators);
+	struct AST_Type_Definition *ret;
+	ret=malloc(sizeof(struct AST_Type_Definition));
+	ret->type=ST_TYPE_DEFINITION;
+	ret->definition=definition;
 	ret->scope=scope;
 
 	return ret;
+
 }
-struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope)
+struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object,struct AST *initializer,struct Scope *scope)
+{
+	struct AST_Object_Declaration *ret;
+	ret=malloc(sizeof(struct AST_Object_Declaration));
+	ret->type=ST_OBJECT_DECLARATION;
+	ret->object=object;
+	ret->scope=scope;
+	
+	return ret;
+}
+
+struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope,struct Denoted_Function *function)
 {
 	struct AST_Function_Definition *ret;
 	ret=malloc(sizeof(struct AST_Function_Definition));
 	ret->type=ST_FUNCTION_DEFINITION;
+	ret->function=function;
+	ret->scope=scope;
 	return ret;
 }
 
+struct AST_Function_Declaration* get_function_declaration_tree(struct Scope *scope,struct Denoted_Function *function)
+{
+	struct AST_Function_Definition *ret;
+	ret=malloc(sizeof(struct AST_Function_Definition));
+	ret->type=ST_FUNCTION_DECLARATION;
+	ret->function=function;
+	ret->scope=scope;
+	return ret;
+}
 struct AST_Translation_Unit* get_translation_unit_tree(struct Scope* parent_scope)
 {
 	struct AST_Translation_Unit *ret;

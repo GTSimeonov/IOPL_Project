@@ -2,6 +2,10 @@
 #define GCC_AST_H GCC_AST_H
 #include "scope.h"
 #include "parse_declaration.h"
+#include "denoted.h"
+
+
+struct Denoted;
 
 enum AST_Type{
 	 OP_COMMA
@@ -25,9 +29,10 @@ enum AST_Type{
 	,OP_LVALUE,OP_RVALUE
 	,ST_COMPOUND,ST_EXPRESSION,ST_SWITCH,ST_IF,ST_WHILE,ST_DO_WHILE,ST_GOTO,ST_LABEL,ST_CASE,ST_DEFAULT
 	,ST_CONTINUE,ST_BREAK,ST_RETURN,ST_FOR
-	,ST_DECLARATION,ST_FUNCTION_DEFINITION
+	,ST_OBJECT_DECLARATION,ST_TYPE_DEFINITION,ST_FUNCTION_DEFINITION
+	,ST_FUNCTION_DECLARATION
 	,TRANSLATION_UNIT
-	,ERROR
+	,ERROR,ERROR_DECLARATION
 };
 
 
@@ -53,6 +58,11 @@ struct AST_Error
 {
 	enum AST_Type type;
 	struct AST *error;
+};
+struct AST_Declaration_Error
+{
+	enum AST_Type type;
+	struct Denotation *error;
 };
 struct AST_Binary_Expression
 {
@@ -163,19 +173,31 @@ struct AST_Return_Statement
 	struct AST* return_expression;
 
 };
-struct AST_Declaration
+
+
+struct AST_Type_Definition
 {
 	enum AST_Type type;
-	struct Type_Node* base_type;
-	struct Queue declarators;
+	struct Denoted_Typedef *definition;
+	struct Scope *scope;
+};
+struct AST_Object_Declaration
+{
+	enum AST_Type type;
+	struct Denoted_Object *object;
+	struct AST *initializer;
 	struct Scope *scope;
 };
 struct AST_Function_Definition
 {
 	enum AST_Type type;
-	struct Type_Node *base_type;
-	struct Declarator *declarator;
-	struct AST *body_statement;
+	struct Denoted_Function *function;
+	struct Scope *scope;
+};
+struct AST_Function_Declaration
+{
+	enum AST_Type type;
+	struct Denoted_Function *function;
 	struct Scope *scope;
 };
 struct AST_Translation_Unit
@@ -189,6 +211,7 @@ struct AST_Translation_Unit
 
 
 struct AST_Error* get_error_tree(struct AST *error);
+struct AST_Declaration_Error* get_declaration_error_tree(struct Denoted *error);
 struct AST_Binary_Expression* get_binary_expression_tree(struct AST *left,struct AST *right,enum AST_Type type);
 struct AST_Conditional_Expression* get_conditional_expression_tree(struct AST *left,struct AST *center,struct AST *right);
 struct AST_Function_Expression* get_function_expression_tree(struct AST* id,struct Scope *scope);
@@ -205,8 +228,10 @@ struct AST_For_Statement* get_for_statement_tree();
 struct AST_Return_Statement* get_return_statement_tree(struct AST* return_expression);
 struct AST_Goto_Statement* get_goto_statement_tree(struct token *label,struct Scope *scope);
 struct AST* get_nop_tree();
-struct AST_Declaration* get_declaration_tree(struct Scope* scope);
-struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope);
+struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *definition,struct Scope *scope);
+struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object,struct AST *initializer,struct Scope *scope);
+struct AST_Function_Declaration* get_function_declaration_tree(struct Scope *scope,struct Denoted_Function *function);
+struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope,struct Denoted_Function *function);
 struct AST_Translation_Unit* get_translation_unit_tree(struct Scope* parent_scope);
 
 

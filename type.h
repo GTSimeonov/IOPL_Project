@@ -17,6 +17,7 @@
 
 struct Denotation_Prototype;
 
+/*this isn't just type-specifier*/
 enum Type_Specifier
 {
 	TS_VOID,
@@ -31,8 +32,9 @@ enum Type_Specifier
 	TS_POINTER,
 	TS_ARRAY,
 	TS_FUNC,
+	TS_BITFIELD,
 	TS_NONE,
-	TS_ERROR,
+	TS_ERROR
 };
 enum Type_Constraint
 {
@@ -69,10 +71,17 @@ struct Type_Struct_Union
 };
 struct Struct_Union
 {
+	enum Type_Specifier specifier;
 	size_t size;
 	size_t number_of_members;
 	struct Denoted_Struct_Union_Member **members;
 	struct Scope *inner_namespace;
+};
+struct Type_Bit_Field
+{
+	enum Type_Specifier specifier;
+	size_t number_of_bits;
+	struct Type *base;
 };
 struct Type_Basic
 {
@@ -110,19 +119,28 @@ struct Type_Function
 struct Type_Enum
 {
 	enum Type_Specifier specifier;
+	struct Enum *enumeration;
 
+	char is_const:1;
+	char is_volatile:1;
+
+};
+struct Enum
+{
+	enum Type_Specifier specifier;
 	size_t number_of_constants;
 	struct Denoted_Enum_Const **consts;
-	struct token *id;
 };
 
 struct Type* get_type_error(struct Type* error);
-struct Type* get_struct_union_type(struct Denotation_Prototype *prototype,struct Struct_Union *base);
+struct Type* get_struct_union_type(struct Denotation_Prototype *prototype);
 struct Struct_Union* get_struct_union_base();
+struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type* points_to);
 struct Type* get_array_type(struct Type *is_array_of);
-struct Type* get_enum_type(struct token *id);
+struct Type* get_enum_type(struct Denotation_Prototype *prototype);
+struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits);
 
 
 

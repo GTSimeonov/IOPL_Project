@@ -17,7 +17,7 @@ struct Scope
 
 struct Scope* get_scope(struct Scope *parent);
 void* check_label(struct Scope *current,struct token *id);
-void* check_tag(struct Scope *current,struct token *id);
+struct Denoted_Struct_Union* check_tag(struct Scope *current,struct token *id);
 void* check_ordinary(struct Scope *current,struct token *id);
 char Scope_Push(struct Scope *scope,struct Denoted* denoted);
 char check_if_typedefed(struct Scope* scope,struct token *id);

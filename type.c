@@ -4,61 +4,53 @@
 
 
 
-struct Type_Error* get_type_error(struct Type* error)
+struct Type* get_type_error(struct Type* error)
 {
 	struct Type_Error *ret;
 	ret=malloc(sizeof(struct Type_Error));
 	ret->specifier=TS_ERROR;
 	ret->error=error;
 	
-	return ret;
-}
-struct Object_Prototype* get_object_prototype()
-{
-	struct Type_Prototype *ret;
-
-	ret=malloc(sizeof(struct Type_Prototype));
-	ret->specifier=TS_NONE;
-	ret->size=0;
-	ret->is_const=ret->is_volatile=0;
-	ret->storage_class=TSC_NONE;
-	ret->constraint=TC_NONE;
-	ret->sign=TSIGN_NONE;
-
-	return ret;
+	return (struct Type*)ret;
 }
 /*could return error */
-struct Type* get_struct_union_type(struct Denotation_Prototype *prototype,struct Struct_Union *base)
+struct Type* get_struct_union_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Struct_Union *ret;
 	
 	ret=malloc(sizeof(struct Type_Struct_Union));
-	ret->specifier=ts;
-	ret->size=prototype->size;
+	ret->specifier=prototype->specifier;
+	ret->struct_union=prototype->struct_union;
 
-	ret->struct_union=base;
-
-	ret->inner_namespace=get_scope(NULL);
-	ret->id=id;
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
-	ret->storage_class=prototype->storage_class;
 
-	if(prototype->constraint!=TC_NONE || prototype->size!=TSIGN_NONE)
+	if(prototype->constraint!=TC_NONE || prototype->size!=TSIGN_NONE || (prototype->specifier!=TS_ENUM && prototype->specifier!=TS_STRUCT))
 	{
-		return (struct Type*)get_type_error(ret);
+		return (struct Type*)get_type_error((struct Type*)ret);
 	}else
 	{
 		return (struct Type*)ret;
 	}
 }
-struct Struct_Union* get_struct_union_base()
+struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union)
 {
 	struct Struct_Union *ret;
 	ret=malloc(sizeof(struct Struct_Union));
+	ret->specifier=struct_or_union;
 	ret->number_of_members=0;
 	ret->members=NULL;
 	ret->inner_namespace=NULL;
+
+	return ret;
+}
+struct Enum *get_enum_base()
+{
+	struct Enum *ret;
+	ret=malloc(sizeof(struct Enum));
+	ret->specifier=TS_ENUM;
+	ret->number_of_constants=0;
+	ret->consts=NULL;
 
 	return ret;
 }
@@ -71,7 +63,6 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 	ret->size=prototype->size;
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
-	ret->storage_class=prototype->storage_class;
 	ret->constraint=prototype->constraint;
 	ret->size=prototype->sign;
 	
@@ -92,19 +83,19 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 				|| prototype->constraint==TC_SHORT
 				|| prototype->sign!=TSIGN_NONE)
 			{
-				return (struct Type*)get_type_error(ret);
+				return (struct Type*)get_type_error((struct Type*)ret);
 			}
 			break;
 		case TS_CHAR:
 			if(prototype->constraint!=TC_NONE)
 			{
-				return (struct Type*)get_type_error(ret);
+				return (struct Type*)get_type_error((struct Type*)ret);
 			}
 			break;
 		default:
 			if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE)
 			{
-				return (struct Type*)get_type_error(ret);
+				return (struct Type*)get_type_error((struct Type*)ret);
 			}
 			
 	}
@@ -119,7 +110,7 @@ struct Type* get_pointer_type(struct Type* points_to)
 	ret->size=PTR_SIZE;
 	ret->points_to=points_to;
 	ret->is_const=ret->is_volatile=0;
-	return ret;
+	return (struct Type*)ret;
 
 }
 struct Type* get_array_type(struct Type *is_array_of)
@@ -130,17 +121,30 @@ struct Type* get_array_type(struct Type *is_array_of)
 	ret->size=0;
 	ret->number_of_elements=0;
 
-	return ret;
+	return (struct Type*)ret;
 }
-struct Type* get_enum_type(struct token *id)
+struct Type* get_enum_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Enum *ret;
 	ret=malloc(sizeof(struct Type_Enum));
 	ret->specifier=TS_ENUM;
-	ret->number_of_constants=0;
-	ret->consts=NULL;
-	ret->id=id;
-	
-	return ret;
+	ret->enumeration=prototype->enumerator;
+	ret->is_const=prototype->is_const;
+	ret->is_volatile=prototype->is_volatile;
+	if(prototype->sign!=TSIGN_NONE || prototype->constraint!=TC_NONE)
+	{
+		return get_type_error((struct Type*)ret);
+	}
+	return (struct Type*)ret;
+}
+struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits)
+{
+	struct Type_Bit_Field *ret;
+	ret=malloc(sizeof(struct Type_Bit_Field));
+	ret->specifier=TS_BITFIELD;
+	ret->number_of_bits=number_of_bits;
+	ret->base=base;
+
+	return (struct Type*)ret;
 }
 #endif

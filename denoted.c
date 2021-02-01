@@ -1,8 +1,9 @@
 #ifndef GCC_DENOTED_C
 #define GCC_DENOTED_C GCC_DENOTED_C
+#include "denoted.h"
 
 
-struct Denoted_Error* get_denoted_error(struct Denoted *error)
+struct Denoted* get_denoted_error(struct Denoted *error)
 {
 	struct Denoted_Error *ret;
 	ret=malloc(sizeof(struct Denoted_Error));
@@ -11,39 +12,40 @@ struct Denoted_Error* get_denoted_error(struct Denoted *error)
 
 	return (struct Denoted*)ret;
 }
-struct Denoted_Function* get_denoted_function(struct Type *type)
+struct Denoted* get_denoted_function(struct Denotation_Prototype *prototype)
 {
 	struct Denoted_Function *ret;
 	ret=malloc(sizeof(struct Denoted_Function));
 	ret->denotation=DT_Function;
-	ret->type=type;
+	ret->type=prototype->type;
+	ret->function_specifier=prototype->function_specifier;
 	ret->body=NULL;
 
 	return (struct Denoted*)ret;
 }
-struct Denoted_Object* get_denoted_object(struct Type *type)
+struct Denoted* get_denoted_object(struct token *id, struct Object *object)
 {
 	struct Denoted_Object *ret;
 	ret=malloc(sizeof(struct Denoted_Object));
 	ret->denotation=DT_Object;
-	ret->type=type;
-	ret->location=NULL;
+	ret->id=id;
+	ret->object=object;
 
 	return (struct Denoted*)ret;
 }
 
-struct Denoted_Typedef* get_denoted_typedef(struct token* id,struct Type *typedefed)
+struct Denoted* get_denoted_typedef(struct Denotation_Prototype *prototype)
 {
 	struct Denoted_Typedef *ret;
 	ret=malloc(sizeof(struct Denoted_Typedef));
 	ret->denotation=DT_Typedef;
-	ret->type=typedefed;
-	ret->id=id;
+	ret->type=prototype->type;
+	ret->id=prototype->id;
 
 	return (struct Denoted*)ret;
 
 }
-struct Denoted_Enum_Const* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value)
+struct Denoted* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value)
 {
 	struct Denoted_Enum_Const *ret;
 	ret=malloc(sizeof(struct Denoted_Enum_Const));
@@ -55,14 +57,13 @@ struct Denoted_Enum_Const* get_denoted_enum_const(struct token *id,struct Type_E
 	return (struct Denoted*)ret;
 	
 }
-struct Denoted_Struct_Union_Member* get_denoted_struct_union_member(struct token *id,struct Type *type,size_t offset)
+struct Denoted* get_denoted_enum(struct token *id,struct Enum *enumerator)
 {
-	struct Denoted_Struct_Union_Member *ret;
-	ret=malloc(sizeof(struct Denoted_Struct_Union_Member));
-	ret->denotation=DT_Struct_Union_Member;
+	struct Denoted_Enum *ret;
+	ret=malloc(sizeof(struct Denoted_Enum));
+	ret->denotation=DT_Enum;
 	ret->id=id;
-	ret->type=type;
-	ret->offset=offset;
+	ret->enumeration=enumerator;
 
 	return (struct Denoted*)ret;
 }
@@ -73,6 +74,21 @@ struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *s
 	ret->denotation=DT_Struct_Union_Tag;
 	ret->id=id;
 	ret->struct_union=struct_union;
+
+	return (struct Denoted*)ret;
+}
+struct Denoted* get_denotation_prototype()
+{
+	struct Denotation_Prototype *ret;
+	ret=malloc(sizeof(struct Denotation_Prototype));
+	ret->denotation=DT_Prototype;
+	ret->specifier=TS_NONE;
+	ret->storage_class=SC_NONE;
+	ret->constraint=TC_NONE;
+	ret->sign=TSIGN_NONE;
+	ret->function_specifier=FS_None;
+	ret->size=0;
+	ret->is_const=ret->is_volatile=0;
 
 	return (struct Denoted*)ret;
 }
