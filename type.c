@@ -38,9 +38,10 @@ struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union)
 	struct Struct_Union *ret;
 	ret=malloc(sizeof(struct Struct_Union));
 	ret->specifier=struct_or_union;
-	ret->number_of_members=0;
-	ret->members=NULL;
-	ret->inner_namespace=NULL;
+	ret->members=malloc(sizeof(struct Queue));
+	Queue_Init(ret->members);
+
+	ret->inner_namespace=get_scope(NULL);
 
 	return ret;
 }
@@ -113,13 +114,15 @@ struct Type* get_pointer_type(struct Type* points_to)
 	return (struct Type*)ret;
 
 }
-struct Type* get_array_type(struct Type *is_array_of)
+struct Type* get_array_type(struct Type *is_array_of,struct AST* number_of_elements)
 {
 	struct Type_Array *ret;
 	ret=malloc(sizeof(struct Type_Array));
 	ret->specifier=TS_ARRAY;
 	ret->size=0;
-	ret->number_of_elements=0;
+	ret->number_of_elements=evaluate_const_expression_integer(number_of_elements);
+	ret->expression=number_of_elements;
+	ret->is_array_of=is_array_of;
 
 	return (struct Type*)ret;
 }
@@ -144,6 +147,16 @@ struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits)
 	ret->specifier=TS_BITFIELD;
 	ret->number_of_bits=number_of_bits;
 	ret->base=base;
+
+	return (struct Type*)ret;
+}
+struct Type* get_function_type(struct Type* return_type,struct Queue *parameters)
+{
+	struct Type_Function *ret;
+	ret=malloc(sizeof(struct Type_Function));
+	ret->specifier=TS_FUNC;
+	ret->return_type=return_type;
+	ret->parameters=parameters;
 
 	return (struct Type*)ret;
 }

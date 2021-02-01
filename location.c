@@ -32,4 +32,32 @@ struct Location_Relative* get_relative_location(struct Location *base,size_t off
 
 	return ret;
 }
+/*base is modified*/
+struct Location *get_location_for_denoted_object(struct Location *base,struct Type *type,struct token *id)
+{
+	if(base->type==LT_ON_STACK)
+	{
+		struct Location_Stack *hold;
+		hold=malloc(sizeof(struct Location_Stack));
+		*hold=*(struct Location_Stack*)base;
+		base->offset+=type->size;
+
+		return (struct Location*)hold;
+	}else if(base->type==LT_RELATIVE)
+	{
+		struct Location_Relative *hold;
+
+		hold=malloc(sizeof(struct Location_Relative));
+		*hold=*(struct Location_Relative*)base;
+
+		return (struct Location*)hold;
+	}else if(base->type==LT_GLOBAL)
+	{
+		struct Location_Labeled *hold;
+		hold=malloc(sizeof(struct Location_Labeled));
+		hold->id=id;
+
+		return hold;
+	}
+}
 #endif

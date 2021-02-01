@@ -73,8 +73,7 @@ struct Struct_Union
 {
 	enum Type_Specifier specifier;
 	size_t size;
-	size_t number_of_members;
-	struct Denoted_Struct_Union_Member **members;
+	struct Queue *members;
 	struct Scope *inner_namespace;
 };
 struct Type_Bit_Field
@@ -82,6 +81,7 @@ struct Type_Bit_Field
 	enum Type_Specifier specifier;
 	size_t number_of_bits;
 	struct Type *base;
+	struct AST *expression;
 };
 struct Type_Basic
 {
@@ -107,14 +107,15 @@ struct Type_Array
 	size_t size;
 	size_t number_of_elements;
 	struct Type *is_array_of;
+
+	struct AST *expression;
 };
 struct Type_Function
 {
 	enum Type_Specifier specifier;
 	struct Type *return_type;
+	struct Queue *parameters;
 
-	struct Denoted_Object **parameters;
-	size_t number_of_parameters;
 };
 struct Type_Enum
 {
@@ -138,9 +139,10 @@ struct Struct_Union* get_struct_union_base();
 struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type* points_to);
-struct Type* get_array_type(struct Type *is_array_of);
+struct Type* get_array_type(struct Type *is_array_of,struct AST* number_of_elements);
 struct Type* get_enum_type(struct Denotation_Prototype *prototype);
 struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits);
+struct Type* get_function_type(struct Type* return_type,struct Queue *parameters);
 
 
 

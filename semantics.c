@@ -38,6 +38,8 @@ long long int evaluate_const_expression_integer(struct AST *expression)
 			}
 			break;
 	}
+	/*shouldnt reach here*/
+	return 0;
 	
 }
 

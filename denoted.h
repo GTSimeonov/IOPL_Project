@@ -42,37 +42,48 @@ struct Denoted_Error
 	enum Denotation_Type denotation;
 	struct Denoted *error;
 };
+struct Denoted_Base
+{
+	enum Denotation_Type denotation;
+	struct Type *type;
+	struct token *id;
+};
 struct Denoted_Function
 {
 	enum Denotation_Type denotation;
-	enum Function_Specifier function_specifier;
-
-	struct Type *type;
+	struct Type *return_type;
 	struct token *id;
+
+
+	enum Function_Specifier function_specifier;
 	struct AST_Compound_Statement *body;
 };
 struct Denoted_Object
 {
 	enum Denotation_Type denotation;
 	struct token *id;
+
 	struct Object *object;
 };
 struct Denoted_Typedef
 {
 	enum Denotation_Type denotation;
-	struct token *id;
 	struct Type *type;
+	struct token *id;
+
 };
 struct Denoted_Enum
 {
 	enum Denotation_Type denotation;
 	struct token *id;
+
 	struct Enum *enumeration;
 };
 struct Denoted_Enum_Const
 {
 	enum Denotation_Type denotation;
 	struct token *id;
+
 	struct Type_Enum *parent;
 	int value;
 };
@@ -81,21 +92,21 @@ struct Denoted_Struct_Union
 {
 	enum Denotation_Type denotation;
 	struct token *id;
+
 	struct Struct_Union *struct_union;
 };
 
 struct Denotation_Prototype
 {
 	enum Denotation_Type denotation;
+	struct Type *type;
+
+
 	enum Storage_Class storage_class;
 	enum Type_Specifier specifier;
 	enum Type_Constraint constraint;
 	enum Type_Signedness sign;
 	enum Function_Specifier function_specifier;
-
-	struct Type *type;
-
-	struct token *id;
 
 	struct Struct_Union *struct_union;
 	struct Enum *enumerator;
@@ -112,9 +123,9 @@ struct Object
 };
 
 struct Denoted* get_denoted_error(struct Denoted *error);
-struct Denoted* get_denoted_function(struct Denotation_Prototype *prototype);
-struct Denoted* get_denoted_object(struct token *id, struct Object *object);
-struct Denoted* get_denoted_typedef(struct token* id,struct Type *typedefed);
+struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs);
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Location *where,struct Type *type);
+struct Denoted* get_denoted_typedef(struct Denoted_Base *base);
 struct Denoted* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value);
 struct Denoted* get_denoted_enum(struct token *id,struct Enum *enumerator);
 struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *struct_union);

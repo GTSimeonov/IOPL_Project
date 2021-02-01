@@ -5,7 +5,9 @@ enum Location_Type
 {
 	LT_ON_STACK,
 	LT_RAW,
-	LT_RELATIVE
+	LT_RELATIVE,
+	LT_LABELED,
+	LT_GLOBAL
 };
 struct Location 
 {
@@ -29,6 +31,11 @@ struct Location_Relative
 	size_t offset;
 };
 
+struct Location_Labeled
+{
+	enum Location_Type type;
+	struct token *id;
+};
 
 
 #endif

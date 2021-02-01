@@ -12,35 +12,51 @@ struct Denoted* get_denoted_error(struct Denoted *error)
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denoted_function(struct Denotation_Prototype *prototype)
+struct Denoted* get_denoted_base(struct token *id,struct Type *type,enum Denotation_Type denotation)
+{
+	struct Denoted_Base *ret;
+	ret=malloc(sizeof(struct Denoted_Base));
+	ret->denotation=denotation;
+	ret->id=id;
+	ret->type=type;
+
+
+	return (struct Denoted*)ret;
+}
+struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs)
 {
 	struct Denoted_Function *ret;
 	ret=malloc(sizeof(struct Denoted_Function));
 	ret->denotation=DT_Function;
-	ret->type=prototype->type;
-	ret->function_specifier=prototype->function_specifier;
+	ret->id=id;
+	ret->return_type=return_type;
+	ret->function_specifier=fs;
 	ret->body=NULL;
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denoted_object(struct token *id, struct Object *object)
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Location *where,struct Type *type)
 {
 	struct Denoted_Object *ret;
 	ret=malloc(sizeof(struct Denoted_Object));
 	ret->denotation=DT_Object;
 	ret->id=id;
-	ret->object=object;
+
+	ret->object=malloc(sizeof(struct Object));
+	ret->object->type=type;
+	ret->object->location=get_location_for_denoted_object(where,type,id);
+	ret->object->storage_class=sc;
 
 	return (struct Denoted*)ret;
 }
 
-struct Denoted* get_denoted_typedef(struct Denotation_Prototype *prototype)
+struct Denoted* get_denoted_typedef(struct Denoted_Base *base)
 {
 	struct Denoted_Typedef *ret;
 	ret=malloc(sizeof(struct Denoted_Typedef));
 	ret->denotation=DT_Typedef;
-	ret->type=prototype->type;
-	ret->id=prototype->id;
+	ret->type=base->type;
+	ret->id=base->id;
 
 	return (struct Denoted*)ret;
 
