@@ -35,7 +35,7 @@ struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,e
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Location *where,struct Type *type)
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Type *type)
 {
 	struct Denoted_Object *ret;
 	ret=malloc(sizeof(struct Denoted_Object));
@@ -44,7 +44,7 @@ struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struc
 
 	ret->object=malloc(sizeof(struct Object));
 	ret->object->type=type;
-	ret->object->location=get_location_for_denoted_object(where,type,id);
+	ret->object->location=NULL;
 	ret->object->storage_class=sc;
 
 	return (struct Denoted*)ret;
@@ -61,17 +61,30 @@ struct Denoted* get_denoted_typedef(struct Denoted_Base *base)
 	return (struct Denoted*)ret;
 
 }
-struct Denoted* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value)
+struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression)
 {
 	struct Denoted_Enum_Const *ret;
 	ret=malloc(sizeof(struct Denoted_Enum_Const));
 	ret->denotation=DT_Enum_Constant;
 	ret->id=id;
 	ret->parent=parent;
-	ret->value=value;
+	ret->expression=expression;
+	ret->value=evaluate_const_expression_integer(expression);
 
 	return (struct Denoted*)ret;
 	
+}
+struct Denoted* get_denoted_enum_const_num(struct token *id,struct Enum *parent,int value)
+{
+	struct Denoted_Enum_Const *ret;
+	ret=malloc(sizeof(struct Denoted_Enum_Const));
+	ret->denotation=DT_Enum_Constant;
+	ret->id=id;
+	ret->parent=parent;
+	ret->expression=NULL;
+	ret->value=value;
+
+	return (struct Denoted*)ret;
 }
 struct Denoted* get_denoted_enum(struct token *id,struct Enum *enumerator)
 {
@@ -107,5 +120,36 @@ struct Denoted* get_denotation_prototype()
 	ret->is_const=ret->is_volatile=0;
 
 	return (struct Denoted*)ret;
+}
+struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prototype *prototype,char allow_abstract)
+{
+	if(base->type->specifier==TS_FUNC)
+	{
+		if(base->id==NULL && !allow_abstract)
+		{
+			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->type)->return_type,prototype->function_specifier));
+		}else
+		{
+			return get_denoted_function(base->id,((struct Type_Function*)base->type)->return_type,prototype->function_specifier);
+		}
+	}else if(prototype->storage_class==SC_TYPEDEF)
+	{
+		if(base->id==NULL && !allow_abstract)
+		{
+			return get_denoted_error(get_denoted_typedef(base));
+		}else
+		{
+			return get_denoted_typedef(base);
+		}
+	}else
+	{
+		if(base->id==NULL && !allow_abstract)
+		{
+			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->type));
+		}else
+		{
+			return get_denoted_object(base->id,prototype->storage_class,base->type);
+		}
+	}
 }
 #endif

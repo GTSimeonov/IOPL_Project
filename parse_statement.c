@@ -79,7 +79,7 @@ struct AST* parse_finish_compound_statement(struct Queue* tokens,struct Scope *s
 	{
 		if(is_type(tokens,scope))
 		{
-			Queue_Push(&hold->components,parse_declaration(tokens,hold->scope));	
+			parse_declaration(tokens,hold->scope,&hold->components,0);	
 		}else
 		{
 			Queue_Push(&hold->components,parse_statement(tokens,hold->scope));	

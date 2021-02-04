@@ -13,8 +13,8 @@ struct AST_Error* get_error_tree(struct AST *error)
 struct AST_Declaration_Error* get_declaration_error_tree(struct Denoted *error)
 {
 
-	struct AST_Error *ret;
-	ret=malloc(sizeof(struct AST_Error));
+	struct AST_Declaration_Error *ret;
+	ret=malloc(sizeof(struct AST_Declaration_Error));
 	ret->type=ERROR_DECLARATION;
 	ret->error=error;
 	return ret;
@@ -172,7 +172,7 @@ struct AST* get_nop_tree()
 
 
 
-struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *definition,struct Scope *scope);
+struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *definition,struct Scope *scope)
 {
 	struct AST_Type_Definition *ret;
 	ret=malloc(sizeof(struct AST_Type_Definition));
@@ -206,8 +206,8 @@ struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope
 
 struct AST_Function_Declaration* get_function_declaration_tree(struct Scope *scope,struct Denoted_Function *function)
 {
-	struct AST_Function_Definition *ret;
-	ret=malloc(sizeof(struct AST_Function_Definition));
+	struct AST_Function_Declaration *ret;
+	ret=malloc(sizeof(struct AST_Function_Declaration));
 	ret->type=ST_FUNCTION_DECLARATION;
 	ret->function=function;
 	ret->scope=scope;

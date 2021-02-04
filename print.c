@@ -1,20 +1,10 @@
 #ifndef GCC_PRINT
 #define GCC_PRINT GCC_PRINT
-#include<stdio.h>
-#include<assert.h>
-#include "all.h"
+#include "print.h"
 
 
-#define INDENT for(int j=0;j<indent;++j) fprintf(out," ");
-#define TOK(s) ((struct token*)(s))
-#define ASTPTR(s) ((struct AST*)(s))
-
-int indent;
 
 
-void print_ast(FILE *out,struct AST* tree);
-void print_type_giberish(FILE* out,struct Type* type);
-void print_keyword_enum(FILE *out,enum KEYWORDS kw);
 
 void print_token(FILE *out,struct token *token)
 {
@@ -45,130 +35,6 @@ void print_tokens(FILE *out,struct Queue *tokens)
 	}
 }
 
-void print_declarators(FILE *out,struct Queue *declarators)
-{
-	struct Queue_Node *it;
-	struct Declarator *dec;
-	for(it=declarators->first;NULL;it=it->prev)
-	{
-		dec=(struct Declarator*)(it->data);
-		print_type_giberish(out,dec->type);
-		fprintf(out,",");
-	}
-}
-void print_struct_union_node(FILE *out,struct Type_Node *type)
-{
-	struct Queue_Node *it;
-	struct AST *dec;
-	assert(type->type_specifier==TS_UNION || type->type_specifier==TS_STRUCT);
-	if(type->specifics.struct_union->id!=NULL)
-	{
-		print_token(out,type->specifics.struct_union->id);
-		fprintf(out,"\n{");
-	}
-	for(it=type->specifics.struct_union->declarations.first;it!=NULL;it=it->prev)
-	{
-		dec=(struct AST*)(it->data);
-		print_ast(out,dec);
-		fprintf(out,";\n");
-	}
-
-}
-
-void print_type_node(FILE* out,struct Type_Node* type)
-{
-	short i;
-	struct Queue_Node *it;
-	struct Declarator *dec;
-
-	if(type->type_def)
-	{
-		print_type_giberish(out,type->type_def);
-		return;
-	}
-
-	if(type->is_const)
-	       fprintf(out,"CONSTANT ");
-	if(type->is_volatile)
-	       fprintf(out,"VOLATILE ");
-
-	switch(type->type_specifier)
-	{
-		case TS_VOID:
-		       fprintf(out,"VOID");break;
-		case TS_CHAR:
-		       fprintf(out,"CHAR");break;
-		case TS_INT:
-		       fprintf(out,"INT");break;
-		case TS_FLOAT:
-		       fprintf(out,"FLOAT");break;
-		case TS_DOUBLE:
-		       fprintf(out,"DOUBLE");break;
-		case TS_STRUCT:
-		       fprintf(out,"\nstruct ");
-		       print_struct_union_node(out,type);
-		       fprintf(out,"\n}\n");
-		       break;
-		case TS_UNION:
-		       fprintf(out,"\nunion ");
-		       print_struct_union_node(out,type);
-		       fprintf(out,"\n}\n");
-		       break;
-		case TS_ENUM:
-		       fprintf(out,"ENUM");
-		       break;
-		case TS_TYPEDEF:
-		       fprintf(out,"TYPEDEF");break;
-		case TS_POINTER:
-		       fprintf(out,"POINTER to ");
-		       break;
-		case TS_ARRAY:
-		       fprintf(out,"ARRAY[");
-		       if(type->specifics.arr.number_of_elements_expr!=NULL)
-			       //print_ast(out,type->specifics.number_of_elements);
-			       fprintf(out,"%i",type->specifics.arr.number_of_elements);
-		       fprintf(out,"] of ");
-			break;
-		case TS_FUNC:
-		       fprintf(out,"FUNC taking argumens (");
-			for(it=type->specifics.arg_types.first;it!=type->specifics.arg_types.last;it=it->prev)
-			{
-				dec=(struct Declarator*)(it->data);
-				print_type_giberish(out,dec->type);
-				fprintf(out,",");
-			}
-			if(it!=NULL)
-			{
-				dec=(struct Declarator*)(it->data);
-				print_type_giberish(out,dec->type);
-				fprintf(out,",");
-			}
-			fprintf(out,") returning ");
-		       break;
-		case TS_NONE:
-		       fprintf(out,"NONE");break;
-		case TS_PTR_ERROR:
-		       fprintf(out,"PTR_ERROR");break;
-		case TS_ARR_ERROR:
-		       fprintf(out,"ARR_ERROR");break;
-		case TS_FUNC_ERROR:
-		       fprintf(out,"FUNC_ERROR");break;
-		case TS_GROUP_ERROR:
-			fprintf(out,"GROUP_ERROR");break;
-	}
-}
-void print_type_giberish(FILE* out,struct Type* type)
-{
-	if(type!=NULL)
-	{
-		struct Queue_Node *it;	
-		for(it=type->components.first;it!=NULL;it=it->prev)
-		{
-			print_type_node(out,(struct Type_Node*)(it->data));
-		}
-		fprintf(out," SIZE=%zu",type->size);
-	}
-}
 void print_ast_enum(FILE *out,enum AST_Type op)
 {
 	switch(op)
@@ -301,8 +167,8 @@ void print_ast_enum(FILE *out,enum AST_Type op)
 		fprintf(out,"return");break;
 	case ST_FOR:
 		fprintf(out,"for");break;
-	case ST_DECLARATION:
-		fprintf(out,"DECLARATION");break;
+	
+		/*TODO obj dec obj def func decl*/
 	case ST_FUNCTION_DEFINITION:
 		fprintf(out,"FUNCTION_DEFINITION");break;
 	case TRANSLATION_UNIT:
@@ -319,13 +185,7 @@ void print_error_tree(FILE *out,struct AST_Error *error)
 	fprintf(out,"ERROR");
 	if(error->error!=NULL)
 	{
-		if(error->error->type==ST_DECLARATION)
-		{
-			fprintf(out,"ST_DECLARATION");
-		}else
-		{
-			print_ast(out,error->error);
-		}
+		print_ast(out,error->error);
 	}
 }
 void print_binary_expression_tree(FILE *out,struct AST_Binary_Expression *bin)
@@ -382,7 +242,7 @@ void print_unary_expression_tree(FILE *out,struct AST_Unary_Expression *unary_ex
 	if(unary_expression->type==OP_CAST)
 	{
 		fprintf(out,"(");
-		print_type_giberish(out,unary_expression->value_type);
+		print_type(out,unary_expression->value_type);
 		fprintf(out,")");
 	}
 	print_ast(out,unary_expression->operand);
@@ -472,38 +332,128 @@ void print_goto_statement_tree(FILE *out,struct AST_Goto_Statement *got)
 	fprintf(out,"goto ");
 	print_token(out,got->label);
 }
-void print_declaration_tree(FILE *out,struct AST_Declaration *declaration)
+
+void print_type(FILE *out,struct Type *type)
+{
+	switch(type->specifier)
+	{
+		case TS_VOID:
+			fprintf(out,"void");return;
+		case TS_CHAR:
+			fprintf(out,"char");return;
+		case TS_INT:
+			fprintf(out,"int");return;
+		case TS_FLOAT:
+			fprintf(out,"float");return;
+		case TS_DOUBLE:
+			fprintf(out,"double");return;
+		case TS_UNION:
+		case TS_STRUCT:
+			print_struct_union(out,((struct Type_Struct_Union*)type)->struct_union);
+			return;
+		case TS_ENUM:
+			print_enumeration(out,((struct Type_Enum*)type)->enumeration);
+			return;
+		case TS_POINTER:
+			fprintf(out,"pointer to ");
+
+			print_type(out,((struct Type_Pointer*)type)->points_to);
+			return;
+		case TS_ARRAY:
+			fprintf(out,"array [%zu] of ",((struct Type_Array*)type)->number_of_elements);
+			print_type(out,((struct Type_Array*)type)->is_array_of);
+			return;
+		case TS_FUNC:
+			fprintf(out,"a function taking arguments ");
+			print_list_of_denoted(out,((struct Type_Function*)type)->parameters);
+			fprintf(out,"returning ");
+			print_type(out,((struct Type_Function*)type)->return_type);
+			return;
+		case TS_BITFIELD:
+			fprintf(out,"%zu bits of ",((struct Type_Bit_Field*)type)->number_of_bits);
+			print_type(out,((struct Type_Bit_Field*)type)->base);
+			return;
+		case TS_NONE:
+			fprintf(out,"NONE");return;
+		case TS_ERROR:
+			fprintf(out,"ERROR!");return;
+
+	}
+	assert(1==0);
+}
+void print_denoted(FILE *out,struct Denoted *denoted)
+{
+
+	switch(denoted->denotation)
+	{
+		case DT_Macro:
+			fprintf(out,"macro ");return;
+		case DT_Macro_Parameter:
+			fprintf(out,"macro parameter ");return;
+		case DT_Label:
+			fprintf(out,"label ");return;
+		case DT_Object:
+			fprintf(out,"object");return;
+		case DT_Typedef:
+			fprintf(out,"typedef ");
+			print_token(out,((struct Denoted_Typedef*)denoted)->id);	
+			fprintf(out,"to ");
+			print_type(out,((struct Denoted_Typedef*)denoted)->type);	
+			return;
+		case DT_Function:
+			print_token(out,((struct Denoted_Function*)denoted)->id);
+			fprintf(out,"is a");
+			print_type(out,((struct Denoted_Function*)denoted)->return_type);
+			return;
+		case DT_Enum:
+			print_token(out,((struct Denoted_Enum*)denoted)->id);
+			fprintf(out,"is a");
+			print_enumeration(out,((struct Denoted_Enum*)denoted)->enumeration);
+			return;
+		case DT_Enum_Constant:
+			fprintf(out,"%i ",((struct Denoted_Enum_Const*)denoted)->value);
+			return;
+		case DT_Struct_Union_Tag:
+			print_token(out,((struct Denoted_Struct_Union*)denoted)->id);
+			fprintf(out,"is a");
+			print_struct_union(out,((struct Denoted_Struct_Union*)denoted)->struct_union);
+		case DT_Error:
+			fprintf(out,"denotation error");return;
+		case DT_Prototype:
+			fprintf(out,"denotation prototyep");return;
+		
+	}
+}
+void print_list_of_denoted(FILE *out,struct Queue *denoted)
 {
 	struct Queue_Node *it;
-	struct Declarator *hold;
-	fprintf(out,"DECLARATION {[\n");
-	for(it=declaration->declarators.first;it!=NULL;it=it->prev)
+	for(it=denoted->first;it!=NULL;it=it->prev)
 	{
-		hold=(struct Declarator*)(it->data);
-		if(hold->id!=NULL)
-		{
-			print_token(out,hold->id);
-			fprintf(out," IS a/an ");
-		}
-		print_type_giberish(out,hold->type);
-
-		fprintf(out,"\n");
-		if(hold->initialiser!=NULL)
-		{
-			fprintf(out,"\tINITIALISED WITH ");
-			print_ast(out,hold->initialiser);
-			fprintf(out,"\n");
-		}
+		print_denoted(out,(struct Denoted*)it->data);
+		if(it->prev!=NULL)
+			fprintf(out,",");
 	}
-	fprintf(out,"END DECLARATION]}\n");
 }
-void print_function_definition_tree(FILE *out,struct AST_Function_Definition *def)
+void print_enumeration(FILE *out,struct Enum *enumeration)
 {
-	fprintf(out,"FUNCTION DEFINITION:\n");
+	fprintf(out,"enum ");
+	print_list_of_denoted(out,enumeration->consts);
+}
+void print_struct_union(FILE *out,struct Struct_Union *struct_union)
+{
+	switch(struct_union->specifier)
+	{
+		case TS_UNION:
+			fprintf(out,"union ");
+			break;
+		case TS_STRUCT:
+			fprintf(out,"struct ");
+			break;
+		default:
+			assert(1==0);
+	}
+	print_list_of_denoted(out,struct_union->members);
 
-	print_token(out,def->declarator->id);
-	print_type_giberish(out,def->declarator->type);
-	print_ast(out,def->body_statement);
 }
 void print_translation_unit_tree(FILE *out,struct AST_Translation_Unit *unit)
 {
@@ -513,7 +463,7 @@ void print_translation_unit_tree(FILE *out,struct AST_Translation_Unit *unit)
 	{
 		hold=(struct AST*)(it->data);
 		print_ast(out,hold);
-		if(hold->type==ST_DECLARATION)
+		if(hold->type!=ST_FUNCTION_DEFINITION)
 		{
 			fprintf(out,";\n");
 		}
@@ -623,11 +573,16 @@ void print_ast(FILE *out,struct AST* tree)
 		case ST_COMPOUND:
 			print_compound_statement_tree(out,(struct AST_Compound_Statement*)tree);
 			break;
-		case ST_DECLARATION:
-			print_declaration_tree(out,(struct AST_Declaration*)tree);
+		case ST_OBJECT_DECLARATION:
+			print_denoted(out,(struct Denoted*)((struct AST_Object_Declaration*)tree)->object);
+			fprintf(out,"=");
+			print_ast(out,((struct AST_Object_Declaration*)tree)->initializer);
+			break;
+		case ST_FUNCTION_DECLARATION:
+			print_denoted(out,(struct Denoted*)((struct AST_Function_Declaration*)tree)->function);
 			break;
 		case ST_FUNCTION_DEFINITION:
-			print_function_definition_tree(out,(struct AST_Function_Definition*)tree);
+			print_function_definition(out,((struct AST_Function_Declaration*)tree)->function);
 			break;
 		case TRANSLATION_UNIT:
 			print_translation_unit_tree(out,(struct AST_Translation_Unit*)tree);
@@ -639,6 +594,14 @@ void print_ast(FILE *out,struct AST* tree)
 			fprintf(out,"NOT_POSSIBLE");break;
 	}
 
+}
+
+void print_function_definition(FILE *out,struct Denoted_Function *function)
+{
+	print_token(out,function->id);
+	fprintf(out,"is a ");
+	print_type(out,function->return_type);
+	print_ast(out,(struct AST*)function->body);
 }
 void print_program_tokens(FILE *out,struct Program *program)
 {

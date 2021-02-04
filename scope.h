@@ -2,6 +2,7 @@
 #define GCC_SCOPE_H GCC_SCOPE_H
 #include "map.c"
 #include "denoted.h"
+#include "location.h"
 
 struct Scope
 {
@@ -12,12 +13,13 @@ struct Scope
 	Map ordinary;
 
 	struct Scope *parent;
+	struct Location *location;
 };
 
 
 struct Scope* get_scope(struct Scope *parent);
 void* check_label(struct Scope *current,struct token *id);
-struct Denoted_Struct_Union* check_tag(struct Scope *current,struct token *id);
+struct Denoted* check_tag(struct Scope *current,struct token *id);
 void* check_ordinary(struct Scope *current,struct token *id);
 char Scope_Push(struct Scope *scope,struct Denoted* denoted);
 char check_if_typedefed(struct Scope* scope,struct token *id);

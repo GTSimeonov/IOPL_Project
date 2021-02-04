@@ -28,7 +28,6 @@ enum Type_Specifier
 	TS_STRUCT,
 	TS_ENUM,
 	TS_UNION,
-	TS_TYPEDEF,
 	TS_POINTER,
 	TS_ARRAY,
 	TS_FUNC,
@@ -115,6 +114,7 @@ struct Type_Function
 	enum Type_Specifier specifier;
 	struct Type *return_type;
 	struct Queue *parameters;
+	struct Scope *function_prototype_scope;
 
 };
 struct Type_Enum
@@ -129,20 +129,21 @@ struct Type_Enum
 struct Enum
 {
 	enum Type_Specifier specifier;
-	size_t number_of_constants;
-	struct Denoted_Enum_Const **consts;
+	struct Queue *consts;
 };
 
 struct Type* get_type_error(struct Type* error);
 struct Type* get_struct_union_type(struct Denotation_Prototype *prototype);
-struct Struct_Union* get_struct_union_base();
+struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union);
 struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type* points_to);
 struct Type* get_array_type(struct Type *is_array_of,struct AST* number_of_elements);
 struct Type* get_enum_type(struct Denotation_Prototype *prototype);
-struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits);
-struct Type* get_function_type(struct Type* return_type,struct Queue *parameters);
+struct Type* get_type_bitfield(struct Type* base,struct AST* number_of_bits);
+struct Type* get_function_type(struct Type* return_type,struct Queue *parameters,struct Scope* function_prototype_scope);
+char is_type(struct Queue *tokens,struct Scope *scope);
+size_t get_type_size(struct Type *type);
 
 
 

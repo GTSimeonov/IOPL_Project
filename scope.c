@@ -11,6 +11,13 @@ struct Scope* get_scope(struct Scope *parent)
 	Map_Init(&ret->tags);
 	Map_Init(&ret->ordinary);
 	ret->parent=parent;
+	if(parent==NULL)
+	{
+		ret->location=get_global_location();
+	}else
+	{
+		ret->location=(struct Location*)get_relative_location(parent->location,0);
+	}
 	return ret;
 }
 
@@ -26,7 +33,7 @@ void* check_label(struct Scope *current,struct token *id)
 	return hold;
 }
 
-struct Denoted_Struct_Union* check_tag(struct Scope *current,struct token *id)
+struct Denoted* check_tag(struct Scope *current,struct token *id)
 {
 	void *hold;
 	hold=NULL;
@@ -35,7 +42,7 @@ struct Denoted_Struct_Union* check_tag(struct Scope *current,struct token *id)
 		hold=Map_Check(&current->tags,id->data,id->data_size);
 		current=current->parent;
 	}
-	return (struct Denoted_Struct_Union*)hold;
+	return hold;
 }
 void* check_ordinary(struct Scope *current,struct token *id)
 {

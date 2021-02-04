@@ -50,8 +50,8 @@ struct Enum *get_enum_base()
 	struct Enum *ret;
 	ret=malloc(sizeof(struct Enum));
 	ret->specifier=TS_ENUM;
-	ret->number_of_constants=0;
-	ret->consts=NULL;
+	ret->consts=malloc(sizeof(struct Queue));
+	Queue_Init(ret->consts);
 
 	return ret;
 }
@@ -140,24 +140,96 @@ struct Type* get_enum_type(struct Denotation_Prototype *prototype)
 	}
 	return (struct Type*)ret;
 }
-struct Type* get_type_bitfield(struct Type* base,size_t number_of_bits)
+struct Type* get_type_bitfield(struct Type* base,struct AST* number_of_bits)
 {
 	struct Type_Bit_Field *ret;
 	ret=malloc(sizeof(struct Type_Bit_Field));
 	ret->specifier=TS_BITFIELD;
-	ret->number_of_bits=number_of_bits;
+	ret->expression=number_of_bits;
+	ret->number_of_bits=evaluate_const_expression_integer(number_of_bits);
 	ret->base=base;
 
 	return (struct Type*)ret;
 }
-struct Type* get_function_type(struct Type* return_type,struct Queue *parameters)
+struct Type* get_function_type(struct Type* return_type,struct Queue *parameters,struct Scope* function_prototype_scope)
 {
 	struct Type_Function *ret;
 	ret=malloc(sizeof(struct Type_Function));
 	ret->specifier=TS_FUNC;
 	ret->return_type=return_type;
 	ret->parameters=parameters;
+	ret->function_prototype_scope=function_prototype_scope;
 
 	return (struct Type*)ret;
+}
+char is_type(struct Queue *tokens,struct Scope *scope)
+{
+	struct token *hold;
+	struct Denoted *thing;
+
+	hold=tokens->first->data;
+
+	switch(hold->type)
+	{
+		case KW_ID:
+			thing=check_ordinary(scope,hold);
+			if(thing->denotation==DT_Typedef) 
+				return 1;
+			else return 0;
+		case KW_CONST:
+		case KW_VOLATILE:
+		case KW_INT:
+		case KW_VOID:
+		case KW_CHAR:
+		case KW_DOUBLE:
+		case KW_FLOAT:
+		case KW_LONG:
+		case KW_SHORT:
+		case KW_EXTERN:
+		case KW_STATIC:
+		case KW_TYPEDEF:
+		case KW_STRUCT:
+		case KW_UNION:
+		case KW_ENUM:
+			return 1;
+		default:
+			return 0;
+
+	}
+}
+size_t get_type_size(struct Type *type)
+{
+	switch(type->specifier)
+	{
+		case TS_VOID:
+			return 0;
+		case TS_CHAR:
+			return 1;
+		case TS_INT:
+			return INT_SIZE;
+		case TS_FLOAT:
+			return FLOAT_SIZE;
+		case TS_DOUBLE:
+			return FLOAT_SIZE*2;
+		case TS_STRUCT:
+			return ((struct Type_Struct_Union*)type)->struct_union->size;
+		case TS_ENUM:
+			return INT_SIZE;
+		case TS_UNION:
+			return ((struct Type_Struct_Union*)type)->struct_union->size;
+		case TS_POINTER:
+			return PTR_SIZE;
+		case TS_ARRAY:
+			return ((struct Type_Array*)type)->size;
+		case TS_FUNC:
+			return 0;
+		case TS_BITFIELD:
+			return ((struct Type_Bit_Field*)type)->number_of_bits;
+		case TS_NONE:
+			return 0;
+		case TS_ERROR:
+			return 0;
+
+	}	
 }
 #endif

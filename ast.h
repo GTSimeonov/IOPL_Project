@@ -62,7 +62,7 @@ struct AST_Error
 struct AST_Declaration_Error
 {
 	enum AST_Type type;
-	struct Denotation *error;
+	struct Denoted *error;
 };
 struct AST_Binary_Expression
 {

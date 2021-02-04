@@ -40,7 +40,7 @@ struct Location *get_location_for_denoted_object(struct Location *base,struct Ty
 		struct Location_Stack *hold;
 		hold=malloc(sizeof(struct Location_Stack));
 		*hold=*(struct Location_Stack*)base;
-		base->offset+=type->size;
+		((struct Location_Stack*)base)->offset+=get_type_size(type);
 
 		return (struct Location*)hold;
 	}else if(base->type==LT_RELATIVE)
@@ -57,7 +57,15 @@ struct Location *get_location_for_denoted_object(struct Location *base,struct Ty
 		hold=malloc(sizeof(struct Location_Labeled));
 		hold->id=id;
 
-		return hold;
+		return (struct Location*)hold;
 	}
+}
+struct Location *get_global_location()
+{
+	struct Location *ret;
+	ret=malloc(sizeof(struct Location));
+	ret->type=LT_GLOBAL;
+
+	return ret;
 }
 #endif

@@ -84,8 +84,9 @@ struct Denoted_Enum_Const
 	enum Denotation_Type denotation;
 	struct token *id;
 
-	struct Type_Enum *parent;
+	struct Enum *parent;
 	int value;
+	struct AST* expression;
 };
 
 struct Denoted_Struct_Union
@@ -124,11 +125,14 @@ struct Object
 
 struct Denoted* get_denoted_error(struct Denoted *error);
 struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs);
-struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Location *where,struct Type *type);
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Type *type);
 struct Denoted* get_denoted_typedef(struct Denoted_Base *base);
-struct Denoted* get_denoted_enum_const(struct token *id,struct Type_Enum *parent,int value);
+struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression);
+struct Denoted* get_denoted_enum_const_num(struct token *id,struct Enum *parent,int value);
 struct Denoted* get_denoted_enum(struct token *id,struct Enum *enumerator);
 struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *struct_union);
+struct Denoted* get_denoted_base(struct token *id,struct Type *type,enum Denotation_Type denotation);
 
+struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prototype *prototype,char allow_abstract);
 struct Denoted* get_denotation_prototype();
 #endif
