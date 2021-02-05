@@ -29,7 +29,7 @@ struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,e
 	ret=malloc(sizeof(struct Denoted_Function));
 	ret->denotation=DT_Function;
 	ret->id=id;
-	ret->return_type=return_type;
+	ret->type=return_type;
 	ret->function_specifier=fs;
 	ret->body=NULL;
 
@@ -111,11 +111,14 @@ struct Denoted* get_denotation_prototype()
 	struct Denotation_Prototype *ret;
 	ret=malloc(sizeof(struct Denotation_Prototype));
 	ret->denotation=DT_Prototype;
-	ret->specifier=TS_NONE;
+	ret->type=NULL;
 	ret->storage_class=SC_NONE;
+	ret->specifier=TS_NONE;
 	ret->constraint=TC_NONE;
 	ret->sign=TSIGN_NONE;
 	ret->function_specifier=FS_None;
+	ret->struct_union=NULL;
+	ret->enumerator=NULL;
 	ret->size=0;
 	ret->is_const=ret->is_volatile=0;
 
@@ -130,7 +133,7 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->type)->return_type,prototype->function_specifier));
 		}else
 		{
-			return get_denoted_function(base->id,((struct Type_Function*)base->type)->return_type,prototype->function_specifier);
+			return get_denoted_function(base->id,base->type,prototype->function_specifier);
 		}
 	}else if(prototype->storage_class==SC_TYPEDEF)
 	{

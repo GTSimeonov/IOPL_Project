@@ -77,7 +77,7 @@ struct AST* parse_finish_compound_statement(struct Queue* tokens,struct Scope *s
 	hold=get_compound_statement_tree(scope);
 	while(!get_and_check(tokens,KW_CLOSE_CURLY))
 	{
-		if(is_type(tokens,scope))
+		if(is_type(tokens,hold->scope))
 		{
 			parse_declaration(tokens,hold->scope,&hold->components,0);	
 		}else

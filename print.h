@@ -31,7 +31,7 @@ void print_do_while_statement_tree(FILE *out,struct AST_Do_While_Statement *whi)
 void print_for_statement_tree(FILE *out,struct AST_For_Statement *fo);
 void print_return_statement_tree(FILE *out,struct AST_Return_Statement *return_expression);
 void print_goto_statement_tree(FILE *out,struct AST_Goto_Statement *got);
-void print_type(FILE *out,struct Type *type);
+void print_type(FILE *out,struct Type *type,char print_struct_union);
 void print_denoted(FILE *out,struct Denoted *denoted);
 void print_list_of_denoted(FILE *out,struct Queue *denoted);
 void print_enumeration(FILE *out,struct Enum *enumeration);

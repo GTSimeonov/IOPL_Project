@@ -3,3 +3,4 @@ struct ke
 {
 	int s;
 };
+typedef int List;

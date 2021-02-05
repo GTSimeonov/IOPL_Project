@@ -1,8 +1,11 @@
-#/*asdf*/include/*asd*/<tes\
-t2.c>
+#include "test2.c"
+List ints;
 int main()
 {
 
-	struct ke asdf;
+	long int c;
+	int a,b;
+
+	c=a+b;
 	return 0;
 }

@@ -25,7 +25,7 @@ struct Type* get_struct_union_type(struct Denotation_Prototype *prototype)
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
 
-	if(prototype->constraint!=TC_NONE || prototype->size!=TSIGN_NONE || (prototype->specifier!=TS_ENUM && prototype->specifier!=TS_STRUCT))
+	if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE || (prototype->specifier!=TS_UNION && prototype->specifier!=TS_STRUCT))
 	{
 		return (struct Type*)get_type_error((struct Type*)ret);
 	}else
@@ -33,7 +33,7 @@ struct Type* get_struct_union_type(struct Denotation_Prototype *prototype)
 		return (struct Type*)ret;
 	}
 }
-struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union)
+struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specifier struct_or_union)
 {
 	struct Struct_Union *ret;
 	ret=malloc(sizeof(struct Struct_Union));
@@ -41,7 +41,8 @@ struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union)
 	ret->members=malloc(sizeof(struct Queue));
 	Queue_Init(ret->members);
 
-	ret->inner_namespace=get_scope(NULL);
+	ret->inner_namespace=get_scope(scope);
+	ret->is_finished=0;
 
 	return ret;
 }
@@ -52,6 +53,8 @@ struct Enum *get_enum_base()
 	ret->specifier=TS_ENUM;
 	ret->consts=malloc(sizeof(struct Queue));
 	Queue_Init(ret->consts);
+
+	ret->is_finished=0;
 
 	return ret;
 }
@@ -92,6 +95,8 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 			{
 				return (struct Type*)get_type_error((struct Type*)ret);
 			}
+			break;
+		case TS_INT:
 			break;
 		default:
 			if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE)
@@ -173,7 +178,7 @@ char is_type(struct Queue *tokens,struct Scope *scope)
 	{
 		case KW_ID:
 			thing=check_ordinary(scope,hold);
-			if(thing->denotation==DT_Typedef) 
+			if(thing!=NULL && thing->denotation==DT_Typedef) 
 				return 1;
 			else return 0;
 		case KW_CONST:

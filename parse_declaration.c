@@ -10,15 +10,17 @@ void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *wh
 	struct Denoted *hold;
 
 	prototype=parse_declaration_specifiers(tokens,scope);
-	while(!get_and_check(tokens,KW_SEMI_COLUMN))
+	while(1)
 	{
+		if(get_and_check(tokens,KW_SEMI_COLUMN))
+			return;
 		hold=parse_declarator(tokens,scope,prototype);
 		if(hold->denotation==DT_Function && parse_function_definitions==1)
 		{
 			if(get_and_check(tokens,KW_OPEN_CURLY))
 			{
 				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(tokens,scope);
-				Queue_Push(where_to_push,get_function_declaration_tree(scope,(struct Denoted_Function*)hold));
+				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
 				Scope_Push(scope,hold);
 				free(prototype);
 				return;
@@ -41,6 +43,18 @@ void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *wh
 
 		Scope_Push(scope,hold);
 		parse_function_definitions=0;
+		if(!get_and_check(tokens,KW_COMMA))
+		{
+			if(get_and_check(tokens,KW_SEMI_COLUMN))
+			{
+				return;
+			}else
+			{
+				/*TODO error*/
+				Queue_Push(where_to_push,get_declaration_error_tree(NULL));
+				return;
+			}
+		}
 	}
 	free(prototype);
 
@@ -180,9 +194,10 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 					if(tag==NULL)
 					{
 						struct Struct_Union *body;
-						body=get_struct_union_base(ret->specifier);
-						parse_struct_union_specifier_finish(tokens,scope,body);
+						body=get_struct_union_base(scope,ret->specifier);
 						Scope_Push(scope,get_denoted_struct_union(id,body));
+
+						parse_struct_union_specifier_finish(tokens,scope,body);
 						ret->struct_union=body;
 					}else
 					{
@@ -191,16 +206,16 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 						{
 							return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 						}
-						if(ret->struct_union->members->size==0)
+						if(ret->struct_union->is_finished==0)
 						{
 							/*then this could be a definition*/
-							parse_struct_declaration(tokens,scope,ret->struct_union->members);
+							parse_struct_union_specifier_finish(tokens,scope,ret->struct_union);
 						}
 					}
 
 				}else
 				{
-						ret->struct_union=get_struct_union_base(ret->specifier);
+						ret->struct_union=get_struct_union_base(scope,ret->specifier);
 						parse_struct_union_specifier_finish(tokens,scope,ret->struct_union);
 				}
 				break;
@@ -217,8 +232,8 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 					{
 						struct Enum *body;
 						body=get_enum_base();
-						parse_enum_specifier_finish(tokens,scope,body);
 						Scope_Push(scope,get_denoted_enum(id,body));
+						parse_enum_specifier_finish(tokens,scope,body);
 						ret->enumerator=body;
 					}else
 					{
@@ -227,7 +242,7 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 						{
 							return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 						}
-						if(ret->enumerator->consts->size==0)
+						if(ret->enumerator->is_finished==0)
 						{
 							/*this could be an enum definition*/
 							parse_enum_specifier_finish(tokens,scope,ret->enumerator);
@@ -406,6 +421,7 @@ void parse_struct_union_specifier_finish(struct Queue *tokens,struct Scope *scop
 {
 	if(get_and_check(tokens,KW_OPEN_CURLY))
 	{
+		base->is_finished=1;
 		while(parse_struct_declaration(tokens,base->inner_namespace,base->members))
 		{
 			
@@ -436,7 +452,7 @@ char parse_struct_declaration(struct Queue *tokens,struct Scope *struct_scope,st
 	struct Denotation_Prototype *prototype;
 	struct Denoted *hold;
 	prototype=parse_specifier_qualifier_list(tokens,struct_scope);
-	while(!get_and_check(tokens,KW_SEMI_COLUMN))
+	while(1)
 	{
 		hold=parse_struct_declarator(tokens,struct_scope,prototype);
 		if(hold!=NULL && hold->denotation!=DT_Error)
@@ -449,6 +465,18 @@ char parse_struct_declaration(struct Queue *tokens,struct Scope *struct_scope,st
 			free(prototype);
 			/*todo error*/
 			return 0;
+		}
+		if(!get_and_check(tokens,KW_COMMA))
+		{
+			if(get_and_check(tokens,KW_SEMI_COLUMN))
+			{
+				break;
+			}else
+			{
+				free(prototype);
+				/*todo error*/
+				return 0;
+			}
 		}
 	}
 	free(prototype);
@@ -485,6 +513,9 @@ struct Denoted* parse_struct_declarator(struct Queue *tokens,struct Scope *scope
 				/*TODO error*/
 				return get_denoted_error(hold);
 			}
+		}else
+		{
+			return hold;
 		}
 	}
 	
@@ -500,6 +531,7 @@ void parse_enum_specifier_finish(struct Queue *tokens,struct Scope *scope,struct
 	int where_in_enumeration=0;
 	if(get_and_check(tokens,KW_OPEN_CURLY))
 	{
+		enumeration->is_finished=1;
 		do
 		{
 			if(check(tokens,KW_ID,0))
@@ -541,6 +573,9 @@ void parse_enum_specifier_finish(struct Queue *tokens,struct Scope *scope,struct
 */
 void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype_scope,struct Queue *parameters)
 {
+	if(get_and_check(tokens,KW_CLOSE_NORMAL))
+		return;
+
 	struct Denotation_Prototype *prototype;
 	struct Denoted_Base temp;
 	struct Denoted *hold;
@@ -561,6 +596,12 @@ void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype
 
 		free(prototype);
 	}while(get_and_check(tokens,KW_COMMA));
+	if(!get_and_check(tokens,KW_CLOSE_NORMAL))
+	{
+		/*TODO error*/
+		Queue_Push(parameters,get_denoted_error(NULL));
+		return;
+	}
 
 }
 /*
@@ -605,4 +646,6 @@ struct AST* parse_initializer(struct Queue *tokens,struct Scope *scope,struct De
 {
 	
 }
+
+const const const const const const const const const const const const const const const const const const const const const const const char const const const constant;
 #endif

@@ -242,7 +242,7 @@ void print_unary_expression_tree(FILE *out,struct AST_Unary_Expression *unary_ex
 	if(unary_expression->type==OP_CAST)
 	{
 		fprintf(out,"(");
-		print_type(out,unary_expression->value_type);
+		print_type(out,unary_expression->value_type,1);
 		fprintf(out,")");
 	}
 	print_ast(out,unary_expression->operand);
@@ -333,7 +333,7 @@ void print_goto_statement_tree(FILE *out,struct AST_Goto_Statement *got)
 	print_token(out,got->label);
 }
 
-void print_type(FILE *out,struct Type *type)
+void print_type(FILE *out,struct Type *type,char should_print_struct_union)
 {
 	switch(type->specifier)
 	{
@@ -349,29 +349,34 @@ void print_type(FILE *out,struct Type *type)
 			fprintf(out,"double");return;
 		case TS_UNION:
 		case TS_STRUCT:
-			print_struct_union(out,((struct Type_Struct_Union*)type)->struct_union);
+			if(should_print_struct_union)
+			{
+				print_struct_union(out,((struct Type_Struct_Union*)type)->struct_union);
+			}else
+			{
+				fprintf(out,(type->specifier==TS_STRUCT?"struct":"union"));
+			}
 			return;
 		case TS_ENUM:
 			print_enumeration(out,((struct Type_Enum*)type)->enumeration);
 			return;
 		case TS_POINTER:
 			fprintf(out,"pointer to ");
-
-			print_type(out,((struct Type_Pointer*)type)->points_to);
+			print_type(out,((struct Type_Pointer*)type)->points_to,0);
 			return;
 		case TS_ARRAY:
 			fprintf(out,"array [%zu] of ",((struct Type_Array*)type)->number_of_elements);
-			print_type(out,((struct Type_Array*)type)->is_array_of);
+			print_type(out,((struct Type_Array*)type)->is_array_of,should_print_struct_union);
 			return;
 		case TS_FUNC:
-			fprintf(out,"a function taking arguments ");
+			fprintf(out,"function taking arguments (");
 			print_list_of_denoted(out,((struct Type_Function*)type)->parameters);
-			fprintf(out,"returning ");
-			print_type(out,((struct Type_Function*)type)->return_type);
+			fprintf(out,") returning ");
+			print_type(out,((struct Type_Function*)type)->return_type,should_print_struct_union);
 			return;
 		case TS_BITFIELD:
 			fprintf(out,"%zu bits of ",((struct Type_Bit_Field*)type)->number_of_bits);
-			print_type(out,((struct Type_Bit_Field*)type)->base);
+			print_type(out,((struct Type_Bit_Field*)type)->base,should_print_struct_union);
 			return;
 		case TS_NONE:
 			fprintf(out,"NONE");return;
@@ -393,21 +398,26 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 		case DT_Label:
 			fprintf(out,"label ");return;
 		case DT_Object:
-			fprintf(out,"object");return;
+			fprintf(out,"denoted object ");
+			print_token(out,((struct Denoted_Object*)denoted)->id);
+			fprintf(out," is a ");
+			print_type(out,((struct Denoted_Object*)denoted)->object->type,1);
+
+			return;
 		case DT_Typedef:
 			fprintf(out,"typedef ");
 			print_token(out,((struct Denoted_Typedef*)denoted)->id);	
-			fprintf(out,"to ");
-			print_type(out,((struct Denoted_Typedef*)denoted)->type);	
+			fprintf(out," to ");
+			print_type(out,((struct Denoted_Typedef*)denoted)->type,0);	
 			return;
 		case DT_Function:
 			print_token(out,((struct Denoted_Function*)denoted)->id);
-			fprintf(out,"is a");
-			print_type(out,((struct Denoted_Function*)denoted)->return_type);
+			fprintf(out," is ");
+			print_type(out,((struct Denoted_Function*)denoted)->type,1);
 			return;
 		case DT_Enum:
 			print_token(out,((struct Denoted_Enum*)denoted)->id);
-			fprintf(out,"is a");
+			fprintf(out," is ");
 			print_enumeration(out,((struct Denoted_Enum*)denoted)->enumeration);
 			return;
 		case DT_Enum_Constant:
@@ -415,7 +425,7 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			return;
 		case DT_Struct_Union_Tag:
 			print_token(out,((struct Denoted_Struct_Union*)denoted)->id);
-			fprintf(out,"is a");
+			fprintf(out," is ");
 			print_struct_union(out,((struct Denoted_Struct_Union*)denoted)->struct_union);
 		case DT_Error:
 			fprintf(out,"denotation error");return;
@@ -452,7 +462,9 @@ void print_struct_union(FILE *out,struct Struct_Union *struct_union)
 		default:
 			assert(1==0);
 	}
+	fprintf(out,"{");
 	print_list_of_denoted(out,struct_union->members);
+	fprintf(out,"}");
 
 }
 void print_translation_unit_tree(FILE *out,struct AST_Translation_Unit *unit)
@@ -471,6 +483,11 @@ void print_translation_unit_tree(FILE *out,struct AST_Translation_Unit *unit)
 }
 void print_ast(FILE *out,struct AST* tree)
 {
+	if(tree==NULL)
+	{
+		fprintf(out,"NULL");
+		return ;
+	}
 	switch(tree->type)
 	{
 		case OP_MEMBER_TROUGH_PTR:
@@ -578,6 +595,9 @@ void print_ast(FILE *out,struct AST* tree)
 			fprintf(out,"=");
 			print_ast(out,((struct AST_Object_Declaration*)tree)->initializer);
 			break;
+		case ST_TYPE_DEFINITION:
+			print_denoted(out,(struct Denoted*)((struct AST_Type_Definition*)tree)->definition);
+			break;
 		case ST_FUNCTION_DECLARATION:
 			print_denoted(out,(struct Denoted*)((struct AST_Function_Declaration*)tree)->function);
 			break;
@@ -599,8 +619,8 @@ void print_ast(FILE *out,struct AST* tree)
 void print_function_definition(FILE *out,struct Denoted_Function *function)
 {
 	print_token(out,function->id);
-	fprintf(out,"is a ");
-	print_type(out,function->return_type);
+	fprintf(out," is a ");
+	print_type(out,function->type,1);
 	print_ast(out,(struct AST*)function->body);
 }
 void print_program_tokens(FILE *out,struct Program *program)

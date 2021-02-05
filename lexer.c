@@ -15,21 +15,6 @@ struct Queue* lex(struct Source_File *src,struct Program *prog)
 	Queue_Init(tokens);
 	while(src->src[src->where_in_src]!='\0')
 	{
-		/*ignore leading spaces and tabs and check for double slash comment*/
-		while(src->src[src->where_in_src]==' ' || src->src[src->where_in_src]=='\n' || src->src[src->where_in_src]=='\t')
-		{
-			if(src->src[src->where_in_src]=='\n')
-			{
-				src->which_column=0;
-				++src->which_row;
-			}else if(src->src[src->where_in_src]=='\t')
-			{
-				src->which_row+=5;
-			}
-			++src->where_in_src;
-		}
-		if(src->src[src->where_in_src]=='\0')
-			break;
 
 		if(src->which_column==0 && src->src[src->where_in_src]=='#')
 		{
@@ -40,7 +25,10 @@ struct Queue* lex(struct Source_File *src,struct Program *prog)
 		}else
 		{
 			current_token=get_next_token(src,prog,&chonky[0]);
-			Queue_Push(tokens,current_token);
+			if(current_token->type!=KW_NOTYPE)
+				Queue_Push(tokens,current_token);
+			else
+				free(current_token);
 		}
 	}
 
@@ -309,6 +297,19 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 		}
 
 	}
+	/*ignore leading spaces and tabs and check for double slash comment*/
+	while(src->src[src->where_in_src]==' ' || src->src[src->where_in_src]=='\n' || src->src[src->where_in_src]=='\t')
+	{
+		if(src->src[src->where_in_src]=='\n')
+		{
+			src->which_column=0;
+			++src->which_row;
+		}else if(src->src[src->where_in_src]=='\t')
+		{
+			src->which_row+=5;
+		}
+		++src->where_in_src;
+	}
 
 	while(src->src[src->where_in_src]!='\0')
 	{
@@ -351,6 +352,8 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 	}
 	ret=malloc(sizeof(struct token));
 	ret->type=KW_NOTYPE;
+	ret->data_size=0;
+
 	return ret;
 }
 #endif

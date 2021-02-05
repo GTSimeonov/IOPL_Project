@@ -45,14 +45,14 @@ struct Denoted_Error
 struct Denoted_Base
 {
 	enum Denotation_Type denotation;
-	struct Type *type;
 	struct token *id;
+	struct Type *type;
 };
 struct Denoted_Function
 {
 	enum Denotation_Type denotation;
-	struct Type *return_type;
 	struct token *id;
+	struct Type *type;
 
 
 	enum Function_Specifier function_specifier;
@@ -68,8 +68,8 @@ struct Denoted_Object
 struct Denoted_Typedef
 {
 	enum Denotation_Type denotation;
-	struct Type *type;
 	struct token *id;
+	struct Type *type;
 
 };
 struct Denoted_Enum

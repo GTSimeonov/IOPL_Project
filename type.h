@@ -15,6 +15,7 @@
 
 
 
+//typedef void ;
 struct Denotation_Prototype;
 
 /*this isn't just type-specifier*/
@@ -74,6 +75,8 @@ struct Struct_Union
 	size_t size;
 	struct Queue *members;
 	struct Scope *inner_namespace;
+
+	char is_finished;
 };
 struct Type_Bit_Field
 {
@@ -130,11 +133,12 @@ struct Enum
 {
 	enum Type_Specifier specifier;
 	struct Queue *consts;
+	char is_finished;
 };
 
 struct Type* get_type_error(struct Type* error);
 struct Type* get_struct_union_type(struct Denotation_Prototype *prototype);
-struct Struct_Union* get_struct_union_base(enum Type_Specifier struct_or_union);
+struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specifier struct_or_union);
 struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type* points_to);
