@@ -1,8 +1,7 @@
 install: ast.o chonky.o chonky_jr.o denoted.o lexer.o location.o map.o parse_declaration.o parse_expression.o parse_statement.o parse_translation_unit.o preprocessing.o print.o program.o queue.o scope.o semantics.o stack.o type.o main.o
 	gcc -g *.o -o wonky 
 run: install
-	./main.exe
-
+	./wonky
 main.o: main.c
 	gcc -c main.c -o main.o
 ast.o: ast.c ast.h
@@ -49,7 +48,7 @@ stack.o: stack.c stack.h
 	gcc -c stack.c -o stack.o
 
 clear:
-	rm ./*.exe -f &
+	rm wonky -f &
 	rm ./*.temp -f &
 	rm ./*.o -f &
 	rm ./*.out -f
@@ -58,5 +57,3 @@ debug:
 	gdbtui a.out
 rm: run
 rn: run
-fuzz: install
-	fuzz ./main.exe
