@@ -7,11 +7,6 @@
 #include <parse_translation_unit.h>
 
 
-#include <parse_expression.c>
-#include <parse_statement.c>
-#include <parse_declaration.c>
-#include <parse_translation_unit.c>
-
 
 
 

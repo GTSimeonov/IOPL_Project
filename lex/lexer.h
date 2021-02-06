@@ -6,6 +6,7 @@
 #include <chonky_jr.h>
 #include <queue.h>
 #include <program.h>
+#include <preprocessing.h>
 struct token
 {
 	enum KEYWORDS type;
@@ -20,18 +21,6 @@ struct token_vector
 	size_t size;
 };
 
-struct define_directive
-{
-	struct token *macro_name;
-	struct Queue replacement_list;
-	/*the tokens of the macro (contains a special token)*/
-	struct Queue id_list;
-
-	struct Map arguments;
-	size_t number_of_arguments;
-	/*put arguments here*/
-	struct token **argument_list;
-};
 
 
 
@@ -46,10 +35,4 @@ void chomp(struct Queue *tokens);
 enum KEYWORDS kw_get(struct Queue *tokens);
 
 
-/*I know, i know*/
-void do_preproc_stuff(struct Source_File *src,struct Program *prog);
-void do_include_stuff(struct Source_File *src,struct Program *prog);
-void do_define_stuff(struct Source_File *src,struct Program *prog);
-void handle_splicing(struct token *word);
-struct define_directive* get_define_directive(struct token* macro_name);
 #endif
