@@ -1,10 +1,10 @@
 #ifndef GCC_PARSE_EXPR_H
 #define GCC_PARSE_EXPR_H GCC_PARSE_EXPR_H
-#include"chonky.h"
-#include"queue.h"
-#include"lexer.h"
-#include"parse_declaration.h"
-#include"ast.h"
+#include <chonky.h>
+#include <queue.h>
+#include <lexer.h>
+#include <parse_declaration.h>
+#include <ast.h>
 #include<limits.h>
 
 

@@ -1,9 +1,9 @@
 #ifndef GCC_AST_H
 #define GCC_AST_H GCC_AST_H
-#include "ast.hh"
-#include "scope.h"
-#include "parse_declaration.h"
-#include "denoted.h"
+#include <ast.hh>
+#include <scope.h>
+#include <parse_declaration.h>
+#include <denoted.h>
 
 
 

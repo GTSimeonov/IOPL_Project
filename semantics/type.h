@@ -1,8 +1,8 @@
 #ifndef GCC_TYPE_H 
 #define GCC_TYPE_H GCC_TYPE_H
-#include "type.hh"
-#include "denoted.h"
-#include "scope.h"
+#include <type.hh>
+#include <denoted.h>
+#include <scope.h>
 #include <limits.h>
 
 #define PTR_SIZE 4

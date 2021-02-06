@@ -1,9 +1,9 @@
 #ifndef GCC_DENOTED_H
 #define GCC_DENOTED_H GCC_DENOTED_H
-#include "denoted.hh"
-#include "type.h"
-#include "scope.h"
-#include "semantics.h"
+#include <denoted.hh>
+#include <type.h>
+#include <scope.h>
+#include <semantics.h>
 
 
 enum Denotation_Type;

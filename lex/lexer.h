@@ -1,11 +1,11 @@
 #ifndef LEXER_H
 #define LEXER_H LEXER_H
-#include "lexer.hh"
-#include<stdio.h>
-#include "chonky.h"
-#include "chonky_jr.h"
-#include "queue.h"
-#include "program.h"
+#include <lexer.hh>
+#include <stdio.h>
+#include <chonky.h>
+#include <chonky_jr.h>
+#include <queue.h>
+#include <program.h>
 struct token
 {
 	enum KEYWORDS type;

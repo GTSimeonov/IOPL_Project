@@ -1,9 +1,9 @@
 #ifndef GCC_SCOPE_H
 #define GCC_SCOPE_H GCC_SCOPE_H
-#include "scope.hh"
-#include "map.h"
-#include "denoted.h"
-#include "location.h"
+#include <scope.hh>
+#include <map.h>
+#include <denoted.h>
+#include <location.h>
 
 struct Scope
 {

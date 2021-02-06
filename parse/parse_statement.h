@@ -1,6 +1,6 @@
 #ifndef PARSE_GCC_STATEMENT_H
 #define PARSE_GCC_STATEMENT_H PARSE_GCC_STATEMENT_H
-#include "all.h"
+#include <all.h>
 
 struct Queue;
 struct Scope;

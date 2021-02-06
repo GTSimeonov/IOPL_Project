@@ -3,7 +3,7 @@
 
 #include<stdio.h>
 #include<assert.h>
-#include "all.h"
+#include <all.h>
 
 
 #define INDENT for(int j=0;j<indent;++j) fprintf(out," ");

@@ -1,9 +1,9 @@
 #ifndef GMAP_H
 #define GMAP_H GMAP_H
-#include<stdlib.h>
-#include<stdio.h>
-#include"stack.h"
-#include"queue.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stack.h>
+#include <queue.h>
 //#include"../Queue/unique_queue.c"
 
 typedef struct Map Map;
