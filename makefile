@@ -1,6 +1,6 @@
-install: ast.o chonky.o chonky_jr.o denoted.o lexer.o location.o map.o parse_declaration.o parse_expression.o parse_statement.o parse_translation_unit.o preprocessing.o print.o program.o queue.o scope.o semantics.o stack.o type.o main.o
+wonky: ast.o chonky.o chonky_jr.o denoted.o lexer.o location.o map.o parse_declaration.o parse_expression.o parse_statement.o parse_translation_unit.o preprocessing.o print.o program.o queue.o scope.o semantics.o stack.o type.o main.o
 	gcc -g *.o -o wonky 
-run: install
+run: wonky
 	./wonky
 main.o: main.c
 	gcc -c main.c -o main.o
