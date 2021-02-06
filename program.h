@@ -1,6 +1,7 @@
 #ifndef GCC_PROGRAM_H
 #define GCC_PROGRAM_H GCC_PROGRAM_H
-#include "queue.c"
+#include "program.hh"
+#include "queue.h"
 #include "scope.h"
 #include "lexer.h"
 

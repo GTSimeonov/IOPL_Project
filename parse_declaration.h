@@ -2,11 +2,12 @@
 #define GCC_PARSE_DECLARATION_H GCC_PARSE_DECLARATION_H
 #include "ast.h"
 #include "parse_expression.h"
+#include "parse_statement.h"
 #include "type.h"
 #include "denoted.h"
 #include "scope.h"
-#include "queue.c"
-#include "map.c"
+#include "queue.h"
+#include "map.h"
 #include "lexer.h"
 #include <assert.h>
 
@@ -14,6 +15,7 @@ struct Denoted_Base;
 struct Denotation_Prototype;
 struct Struct_Union;
 struct Denoted_Object;
+struct Enum;
 
 
 void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *where_to_push,char parse_function_definitions);

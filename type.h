@@ -1,5 +1,6 @@
 #ifndef GCC_TYPE_H 
 #define GCC_TYPE_H GCC_TYPE_H
+#include "type.hh"
 #include "denoted.h"
 #include "scope.h"
 #include <limits.h>
@@ -15,41 +16,11 @@
 
 
 
-//typedef void ;
-struct Denotation_Prototype;
 
-/*this isn't just type-specifier*/
-enum Type_Specifier
-{
-	TS_VOID,
-	TS_CHAR,
-	TS_INT,
-	TS_FLOAT,
-	TS_DOUBLE,
-	TS_STRUCT,
-	TS_ENUM,
-	TS_UNION,
-	TS_POINTER,
-	TS_ARRAY,
-	TS_FUNC,
-	TS_BITFIELD,
-	TS_NONE,
-	TS_ERROR
-};
-enum Type_Constraint
-{
-	TC_LONG,
-	TC_LONG_LONG,
-	TC_SHORT,
-	TC_NONE
-};
-enum Type_Signedness
-{
-	TSIGN_SIGNED,
-	TSIGN_UNSIGNED,
-	TSIGN_NONE
-};
 
+enum Type_Specifier;
+enum Type_Constraint;
+enum Type_Signedness;
 
 struct Type
 {

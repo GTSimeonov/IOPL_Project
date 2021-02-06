@@ -1,10 +1,10 @@
 #ifndef PARSE_GCC_STATEMENT_H
 #define PARSE_GCC_STATEMENT_H PARSE_GCC_STATEMENT_H
-#include"lexer.c"
-#include"ast.h"
-#include "scope.h"
-#include"parse_expression.h"
+#include "all.h"
 
+struct Queue;
+struct Scope;
+enum AST_Type;
 
 struct AST* parse_finish_compound_statement(struct Queue* tokens,struct Scope *scope);
 struct AST* parse_op_e_cl_st(struct Queue* tokens,struct Scope *scope);

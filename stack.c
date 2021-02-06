@@ -1,19 +1,8 @@
 #ifndef GSTACK_C
 #define GSTACK_C GSTACK_C
-#include<stdlib.h>//malloc free et alii
+#include "stack.h"
 
 
-typedef struct Stack Stack;
-
-struct Stack
-{
-    struct Stack_Node
-    {
-        struct Stack_Node *next;
-        void *data;
-    }*first;
-    size_t size;
-};
 
 void Stack_Init(Stack *stack)
 {

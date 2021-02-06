@@ -1,21 +1,6 @@
 #ifndef GQUEUE_C
 #define GQUEUE_C GQUEUE_C
-#include<stdlib.h>//malloc free
-#include<assert.h>
-
-typedef struct Queue Queue;
-
-struct Queue
-{
-	struct Queue_Node
-	{
-		void *data;
-		struct Queue_Node *prev;
-	}*first,*last;
-	
-	size_t size;
-	
-};
+#include "queue.h"
 
 void Queue_Init(Queue *q)
 {

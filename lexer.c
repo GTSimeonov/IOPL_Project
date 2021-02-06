@@ -2,8 +2,6 @@
 #define LEXER_C LEXER_C
 #include "lexer.h"
 
-
-
 struct Queue* lex(struct Source_File *src,struct Program *prog)
 {
 

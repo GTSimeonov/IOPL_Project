@@ -1,11 +1,11 @@
 #ifndef LEXER_H
 #define LEXER_H LEXER_H
+#include "lexer.hh"
 #include<stdio.h>
-#include"chonky.c"
-#include"chonky_jr.c"
-#include"queue.c"
+#include "chonky.h"
+#include "chonky_jr.h"
+#include "queue.h"
 #include "program.h"
-
 struct token
 {
 	enum KEYWORDS type;
@@ -32,6 +32,9 @@ struct define_directive
 	/*put arguments here*/
 	struct token **argument_list;
 };
+
+
+
 
 struct Queue* lex(struct Source_File *src,struct Program *prog);
 struct token* get_next_token(struct Source_File *src,struct Program *prog,struct automata_entry *start_state);

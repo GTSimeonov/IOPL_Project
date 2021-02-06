@@ -1,6 +1,7 @@
 #ifndef GPREPROCESSING_KEYWORDS_MENU_C
 #define GPREPROCESSING_KEYWORDS_MENU_C GPREPROCESSING_KEYWORDS_MENU_C
-#include"chonky.c"
+#include"chonky.h"
+#include "chonky_jr.h"
 
 
 struct automata_entry chonky_jr[]={

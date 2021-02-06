@@ -2,7 +2,6 @@
 #define GCC_DENOTED_C GCC_DENOTED_C
 #include "denoted.h"
 
-
 struct Denoted* get_denoted_error(struct Denoted *error)
 {
 	struct Denoted_Error *ret;

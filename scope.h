@@ -1,6 +1,7 @@
 #ifndef GCC_SCOPE_H
 #define GCC_SCOPE_H GCC_SCOPE_H
-#include "map.c"
+#include "scope.hh"
+#include "map.h"
 #include "denoted.h"
 #include "location.h"
 

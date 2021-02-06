@@ -1,36 +1,16 @@
 #ifndef GCC_DENOTED_H
 #define GCC_DENOTED_H GCC_DENOTED_H
+#include "denoted.hh"
 #include "type.h"
-#include "ast.h"
+#include "scope.h"
+#include "semantics.h"
 
-enum Denotation_Type
-{
-	DT_Macro,
-	DT_Macro_Parameter,
-	DT_Label,
-	DT_Object,
-	DT_Typedef,
-	DT_Function,
-	DT_Enum,
-	DT_Enum_Constant,
-	DT_Struct_Union_Member,
-	DT_Struct_Union_Tag,
-	DT_Error,
-	DT_Prototype
-};
 
-enum Function_Specifier
-{
-	FS_Inline,
-	FS_None
-};
-enum Storage_Class
-{
-	SC_EXTERN,
-	SC_STATIC,
-	SC_TYPEDEF,
-	SC_NONE
-};
+enum Denotation_Type;
+enum Function_Specifier;
+enum Storage_Class;
+
+
 struct Denoted
 {
 	enum Denotation_Type denotation;
@@ -122,6 +102,9 @@ struct Object
 	struct Location *location;
 	enum Storage_Class storage_class;
 };
+
+
+
 
 struct Denoted* get_denoted_error(struct Denoted *error);
 struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs);

@@ -1,23 +1,13 @@
 #ifndef GKEYWORDS_MENU_C
 #define GKEYWORDS_MENU_C GKEYWORDS_MENU_C
+#include"chonky.h"
+#include<stddef.h>
 
 int cmpr[256]={0,0,0,0,0,0,0,0,0,57,57,57,0,57,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,57,29,30,31,0,32,33,34,37,38,41,42,44,43,45,46,28,28,28,28,28,28,28,28,28,28,47,48,49,51,50,52,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,39,53,40,54,55,0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,35,56,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 int uncmpr[256]={0,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,57,33,34,35,37,38,39,123,125,40,41,91,93,42,43,45,44,46,47,58,59,60,62,61,63,92,94,95,124,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 
 
-enum KEYWORDS{KW_AUTO,KW_DO,KW_DOUBLE,KW_INT,KW_STRUCT,KW_BREAK,KW_ELSE,KW_LONG,KW_SWITCH,KW_CASE,KW_ENUM,KW_REGISTER,KW_TYPEDEF,KW_CHAR,KW_EXTERN,KW_RETURN,KW_UNION,KW_CONST,KW_FLOAT,KW_SHORT,KW_UNSIGNED,KW_CONTINUE,KW_FOR,KW_SIGNED,KW_VOID,KW_DEFAULT,KW_GOTO,KW_SIZEOF,KW_VOLATILE,KW_IF,KW_STATIC,KW_WHILE,KW_EXCLAMATION,KW_BACK_SLASH,KW_PERCENT,KW_AND,KW_AND_AND,KW_QUOTE,KW_OPEN_NORMAL,KW_CLOSE_NORMAL,KW_STAR,KW_PLUS,KW_COMMA,KW_MINUS,KW_DOT,KW_ARROW,KW_COLUMN,KW_SEMI_COLUMN,KW_LESS,KW_EQ,KW_EQEQ,KW_MORE,KW_QUESTION,KW_OPEN_SQUARE,KW_CLOSE_SQUARE,KW_HAT,KW_FLOOR,KW_OPEN_CURLY,KW_CLOSE_CURLY,KW_PIPE,KW_PIPE_PIPE,KW_TILDE,KW_PLUSPLUS,KW_MINUSMINUS,KW_SHIFT_RIGHT,KW_SHIFT_LEFT,KW_LESS_EQ,KW_MORE_EQ,KW_NOT_EQ,KW_PLUS_EQ,KW_MINUS_EQ,KW_STAR_EQ,KW_PERCENT_EQ,KW_SHIFT_LEFT_EQ,KW_SHIFT_RIGHT_EQ,KW_AND_EQ,KW_HAT_EQ,KW_PIPE_EQ,KW_DIV_EQ,KW_FORWARD_SLASH,KW_NOTYPE,KW_NUMBER,KW_COMMENT,KW_ID,KW_STRING,PKW_IF,PKW_INCLUDE,PKW_DEFINE,PKW_UNDEF,PKW_PRAGMA,PKW_ENDIF,PKW_IFNDEF,PKW_IFDEF,PKW_ELIF,PKW_ERROR,PKW_COMMENT,PKW_NOTYPE};
-
-
-struct automata_entry
-{
-	unsigned char is_final;
-	enum KEYWORDS type;
-	struct automata_entry* delta[58];
-};
-
-
 struct automata_entry chonky[]={
-
 {0,KW_NOTYPE,{NULL,&(chonky[2]),&(chonky[10]),&(chonky[11]),&(chonky[12]),&(chonky[13]),&(chonky[14]),&(chonky[15]),&(chonky[16]),&(chonky[2]),&(chonky[17]),&(chonky[2]),&(chonky[2]),&(chonky[18]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[19]),&(chonky[20]),&(chonky[21]),&(chonky[22]),&(chonky[23]),&(chonky[24]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[1]),&(chonky[25]),&(chonky[3]),NULL,&(chonky[26]),&(chonky[27]),&(chonky[28]),&(chonky[29]),&(chonky[30]),&(chonky[31]),&(chonky[32]),&(chonky[33]),&(chonky[34]),&(chonky[35]),&(chonky[36]),&(chonky[37]),&(chonky[38]),&(chonky[39]),&(chonky[5]),&(chonky[40]),&(chonky[41]),&(chonky[42]),&(chonky[43]),&(chonky[44]),&(chonky[45]),&(chonky[46]),&(chonky[47]),&(chonky[48]),&(chonky[49]),NULL,} },
 {1,KW_NUMBER,{NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&(chonky[1]),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,} },
 {1,KW_ID,{NULL,&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),&(chonky[2]),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&(chonky[2]),NULL,NULL,} },
