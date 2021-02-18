@@ -5,37 +5,37 @@
 #include <lexer.h>
 #include <parse_declaration.h>
 #include <ast.h>
-#include<limits.h>
+#include <limits.h>
 
 
-struct AST* parse_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_const_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_primary_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_const_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_primary_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
 
-struct AST_Function_Expression* parse_arglist(struct Queue *tokens,struct Scope *scope,struct AST* id);
-struct AST* parse_postfix_expression(struct Queue *tokens,struct Scope *scope);
+struct AST_Function_Expression* parse_arglist(struct Translation_Data *translation_data,struct Scope *scope,struct AST* id);
+struct AST* parse_postfix_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
-struct AST* parse_cast_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_unary_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_cast_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_unary_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
-struct AST* parse_multiplicative_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_multiplicative_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
-struct AST* parse_additive_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_additive_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
-struct AST* parse_shift_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_shift_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
 
-struct AST* parse_relational_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_equality_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_and_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_exclusive_or_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_inclusive_or_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_logical_and_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_logical_or_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_conditional_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_assignment_expression(struct Queue *tokens,struct Scope *scope);
-struct AST* parse_comma_expression(struct Queue *tokens,struct Scope *scope);
+struct AST* parse_relational_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_equality_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_and_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_exclusive_or_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_inclusive_or_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_logical_and_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_logical_or_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_conditional_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_assignment_expression(struct Translation_Data *translation_data,struct Scope *scope);
+struct AST* parse_comma_expression(struct Translation_Data *translation_data,struct Scope *scope);
 
 
 

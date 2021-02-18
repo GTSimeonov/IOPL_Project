@@ -4,22 +4,26 @@
 
 /*declaration-specifiers init-declarator (,init-declarator)* ;*/
 /* init-declarator: declarator [ = initializer ] */
-void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *where_to_push,char parse_function_definitions)
+void parse_declaration(struct Translation_Data *translation_data,struct Scope *scope,struct Queue *where_to_push,char parse_function_definitions)
 {
 	struct Denotation_Prototype *prototype;
 	struct Denoted *hold;
 
-	prototype=parse_declaration_specifiers(tokens,scope);
+	prototype=parse_declaration_specifiers(translation_data,scope);
 	while(1)
 	{
-		if(get_and_check(tokens,KW_SEMI_COLUMN))
+		if(get_and_check(translation_data,KW_SEMI_COLUMN))
 			return;
-		hold=parse_declarator(tokens,scope,prototype);
+
+		hold=parse_declarator(translation_data,scope,prototype);
+
+
+
 		if(hold->denotation==DT_Function && parse_function_definitions==1)
 		{
-			if(get_and_check(tokens,KW_OPEN_CURLY))
+			if(get_and_check(translation_data,KW_OPEN_CURLY))
 			{
-				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(tokens,scope);
+				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(translation_data,scope);
 				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
 				Scope_Push(scope,hold);
 				free(prototype);
@@ -37,21 +41,28 @@ void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *wh
 		{
 			/*TODO error*/
 			Queue_Push(where_to_push,get_declaration_error_tree(hold));
+			push_translation_error("declaration expected",translation_data);
 			free(prototype);
+			/*search for end of erronous declaration*/
+			while(!get_and_check(translation_data,KW_SEMI_COLUMN))
+			{
+				free(Queue_Pop(translation_data->tokens));
+			}
 			return;
 		}
 
 		Scope_Push(scope,hold);
 		parse_function_definitions=0;
-		if(!get_and_check(tokens,KW_COMMA))
+		if(!get_and_check(translation_data,KW_COMMA))
 		{
-			if(get_and_check(tokens,KW_SEMI_COLUMN))
+			if(get_and_check(translation_data,KW_SEMI_COLUMN))
 			{
 				return;
 			}else
 			{
 				/*TODO error*/
 				Queue_Push(where_to_push,get_declaration_error_tree(NULL));
+				push_translation_error("semi column expected",translation_data);
 				return;
 			}
 		}
@@ -61,18 +72,18 @@ void parse_declaration(struct Queue *tokens,struct Scope *scope,struct Queue *wh
 }
 
 
-struct Denotation_Prototype* parse_specifier_qualifier_list(struct Queue *tokens,struct Scope *scope)
+struct Denotation_Prototype* parse_specifier_qualifier_list(struct Translation_Data *translation_data,struct Scope *scope)
 {
-	return parse_declaration_specifiers_inner(tokens,scope,0);
+	return parse_declaration_specifiers_inner(translation_data,scope,0);
 }
-struct Denotation_Prototype* parse_declaration_specifiers(struct Queue *tokens,struct Scope *scope)
+struct Denotation_Prototype* parse_declaration_specifiers(struct Translation_Data *translation_data,struct Scope *scope)
 {
-	return parse_declaration_specifiers_inner(tokens,scope,1);
+	return parse_declaration_specifiers_inner(translation_data,scope,1);
 }
 
 /*declaration-specifiers:
  		( storage-class-specifier type-specifier type-qualifier function-specifier)* */
-struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *tokens,struct Scope *scope,char parse_storage_class)
+struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translation_Data *translation_data,struct Scope *scope,char parse_storage_class)
 {
 	enum KEYWORDS hold_kw;
 	struct Denotation_Prototype *ret;
@@ -80,69 +91,102 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 
 	while(1)
 	{
-		hold_kw=kw_get(tokens);
+		hold_kw=kw_get(translation_data);
 		switch(hold_kw)
 		{
 			case KW_CONST:
-				chomp(tokens);
+				chomp(translation_data);
 				ret->is_const=1;
 				break;
 			case KW_VOLATILE:
-				chomp(tokens);
+				chomp(translation_data);
 				ret->is_volatile=1;
 				break;
 			case KW_INT:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->specifier!=TS_NONE)
 				{
+					push_translation_error("more than one type specifier given",translation_data);
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->specifier=TS_INT;
 				break;
 			case KW_VOID:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->specifier!=TS_NONE)
 				{
+					push_translation_error("more than one type specifier given",translation_data);
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->specifier=TS_VOID;
 				break;
 			case KW_CHAR:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->specifier!=TS_NONE)
 				{
+					push_translation_error("more than one type specifier given",translation_data);
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->specifier=TS_CHAR;
 				break;
 			case KW_DOUBLE:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->specifier!=TS_NONE)
 				{
+					push_translation_error("more than one type specifier given",translation_data);
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->specifier=TS_DOUBLE;
 				break;
 			case KW_FLOAT:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->specifier!=TS_NONE)
 				{
+					push_translation_error("more than one type specifier given",translation_data);
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->specifier=TS_FLOAT;
 				break;
 			case KW_LONG:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->constraint!=TC_NONE)
 				{
-					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
+					if(ret->constraint==TC_LONG)
+					{
+						ret->constraint=TC_LONG_LONG;
+						break;
+					}else
+					{
+						if(ret->constraint==TC_LONG_LONG)
+							push_translation_error("yeah ... it's big",translation_data);
+						else if(ret->constraint==TC_SHORT)
+							push_translation_error("long and short constraints contradict",translation_data);
+						else 
+							assert(0);
+						return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
+					}
 				}
 				ret->constraint=TC_LONG;
 				break;
 			case KW_SHORT:
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->constraint!=TC_NONE)
 				{
+					switch(ret->constraint)
+					{
+						case TC_LONG:
+						push_translation_error("long and short constraints contradict",translation_data);
+						break;
+						case TC_SHORT:
+						push_translation_error("it's not about the size, it's about how you use it",translation_data);
+						break;
+						case TC_LONG_LONG:
+						push_translation_error("long long and short constraints contradict",translation_data);
+						break;
+						default:
+						/*should not be able to enter here*/
+						assert(0);
+					}
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->constraint=TC_SHORT;
@@ -150,9 +194,23 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 			case KW_EXTERN:
 				if(!parse_storage_class)
 					goto exit;
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->storage_class!=SC_NONE)
 				{
+					switch(ret->storage_class)
+					{
+						case SC_EXTERN:
+						push_translation_error("only one extern allowed >:|",translation_data);
+						break;
+
+						case SC_TYPEDEF:
+						case SC_STATIC:
+						push_translation_error("only one storage class allowed >:|",translation_data);
+						break;
+						default:
+						assert(0);
+					}
+
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->storage_class=SC_EXTERN;
@@ -160,9 +218,22 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 			case KW_STATIC:
 				if(!parse_storage_class)
 					goto exit;
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->storage_class!=SC_NONE)
 				{
+					switch(ret->storage_class)
+					{
+						case SC_STATIC:
+						push_translation_error("only one static allowed >:|",translation_data);
+						break;
+
+						case SC_EXTERN:
+						case SC_TYPEDEF:
+						push_translation_error("only one storage class allowed >:|",translation_data);
+						break;
+						default:
+						assert(0);
+					}
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->storage_class=SC_STATIC;
@@ -170,9 +241,19 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 			case KW_TYPEDEF:
 				if(!parse_storage_class)
 					goto exit;
-				chomp(tokens);
+				chomp(translation_data);
 				if(ret->storage_class!=SC_NONE)
 				{
+					switch(ret->storage_class)
+					{
+						case SC_STATIC:
+						case SC_EXTERN:
+						case SC_TYPEDEF:
+						push_translation_error("only one storage class allowed >:|",translation_data);
+						break;
+						default:
+						assert(0);
+					}
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
 				ret->storage_class=SC_TYPEDEF;
@@ -183,12 +264,12 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 			case KW_UNION:
 				ret->specifier=TS_UNION;
 				hack:
-				chomp(tokens);
-				if(check(tokens,KW_ID,0))
+				chomp(translation_data);
+				if(check(translation_data,KW_ID,0))
 				{
 					struct token *id;
 					struct Denoted_Struct_Union *tag;
-					id=Queue_Pop(tokens);
+					id=Queue_Pop(translation_data->tokens);
 					tag=(struct Denoted_Struct_Union*)check_tag(scope,id);
 
 					if(tag==NULL)
@@ -197,43 +278,49 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 						body=get_struct_union_base(scope,ret->specifier);
 						Scope_Push(scope,get_denoted_struct_union(id,body));
 
-						parse_struct_union_specifier_finish(tokens,scope,body);
+						parse_struct_union_specifier_finish(translation_data,scope,body);
 						ret->struct_union=body;
 					}else
 					{
 						ret->struct_union=tag->struct_union;
 						if(ret->struct_union->specifier!=ret->specifier)
 						{
+							push_translation_error("more than one type specifier",translation_data);
 							return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 						}
 						if(ret->struct_union->is_finished==0)
 						{
 							/*then this could be a definition*/
-							parse_struct_union_specifier_finish(tokens,scope,ret->struct_union);
+							parse_struct_union_specifier_finish(translation_data,scope,ret->struct_union);
 						}
 					}
 
 				}else
 				{
 						ret->struct_union=get_struct_union_base(scope,ret->specifier);
-						parse_struct_union_specifier_finish(tokens,scope,ret->struct_union);
+						parse_struct_union_specifier_finish(translation_data,scope,ret->struct_union);
+						if(ret->struct_union->is_finished==0)
+						{
+							push_translation_error("expected a struct tag or a struct definition",translation_data);
+							return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
+						}
 				}
 				break;
 			case KW_ENUM:
-				chomp(tokens);
+				chomp(translation_data);
 				ret->specifier=TS_ENUM;
-				if(check(tokens,KW_ID,0))
+				if(check(translation_data,KW_ID,0))
 				{
 					struct token *id;
 					struct Denoted_Enum *enumerator;
-					id=Queue_Pop(tokens);
+					id=Queue_Pop(translation_data->tokens);
 					enumerator=(struct Denoted_Enum*)check_tag(scope,id);
 					if(enumerator==NULL)
 					{
 						struct Enum *body;
 						body=get_enum_base();
 						Scope_Push(scope,get_denoted_enum(id,body));
-						parse_enum_specifier_finish(tokens,scope,body);
+						parse_enum_specifier_finish(translation_data,scope,body);
 						ret->enumerator=body;
 					}else
 					{
@@ -245,24 +332,24 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
 						if(ret->enumerator->is_finished==0)
 						{
 							/*this could be an enum definition*/
-							parse_enum_specifier_finish(tokens,scope,ret->enumerator);
+							parse_enum_specifier_finish(translation_data,scope,ret->enumerator);
 						}
 					}
 
 				}else
 				{
-					parse_enum_specifier_finish(tokens,scope,ret->enumerator);
+					parse_enum_specifier_finish(translation_data,scope,ret->enumerator);
 				}
 				break;
 			case KW_ID:
 				if(ret->specifier==TS_NONE)
 				{
 					struct Denoted *hold;
-					hold=check_ordinary(scope,(struct token*)tokens->first->data);
+					hold=check_ordinary(scope,(struct token*)translation_data->tokens->first->data);
 					if(hold!=NULL && hold->denotation==DT_Typedef)
 					{
 						ret->type=((struct Denoted_Typedef*)hold)->type;
-						chomp(tokens);
+						chomp(translation_data);
 						break;
 					}
 					/*falltrough - this has not been typedefed*/
@@ -293,24 +380,24 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Queue *to
    	declarator:
 		( pointer ( type-qualifier )* )* direct-declarator
  */
-struct Denoted* parse_declarator(struct Queue *tokens,struct Scope *scope,struct Denotation_Prototype *prototype)
+struct Denoted* parse_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype)
 {
 	struct Denoted_Base temp;
 	temp.id=NULL;
 	temp.denotation=DT_Prototype;
 	temp.type=prototype->type;
-	parse_declarator_inner(tokens,scope,&temp);
+	parse_declarator_inner(translation_data,scope,&temp);
 	return extract_denoted(&temp,prototype,0);
 
 }
 
-void parse_declarator_inner(struct Queue *tokens,struct Scope *scope,struct Denoted_Base *base)
+void parse_declarator_inner(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Base *base)
 {
 	enum KEYWORDS hold;
-	while(get_and_check(tokens,KW_STAR))
+	while(get_and_check(translation_data,KW_STAR))
 	{
 		base->type=get_pointer_type(base->type);
-		hold=kw_get(tokens);
+		hold=kw_get(translation_data);
 		while(1)
 		{
 			if(hold==KW_CONST)
@@ -325,7 +412,7 @@ void parse_declarator_inner(struct Queue *tokens,struct Scope *scope,struct Deno
 			}
 		}
 	}
-	parse_direct_declarator(tokens,scope,base);
+	parse_direct_declarator(translation_data,scope,base);
 
 }
 /*
@@ -333,26 +420,34 @@ void parse_declarator_inner(struct Queue *tokens,struct Scope *scope,struct Deno
 		id direct-declarator-finish
 		( declarator ) direct-declarator-finish
 */
-void parse_direct_declarator(struct Queue *tokens,struct Scope *scope,struct Denoted_Base *base)
+void parse_direct_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Base *base)
 {
-	if(check(tokens,KW_ID,0))
+	if(check(translation_data,KW_ID,0))
 	{
-		base->id=Queue_Pop(tokens);
-		parse_direct_declarator_finish(tokens,scope,base);
+		base->id=Queue_Pop(translation_data->tokens);
+		parse_direct_declarator_finish(translation_data,scope,base);
 		
-	}else if(get_and_check(tokens,KW_OPEN_NORMAL))
+	}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 	{
 		struct Queue *hack;
+		struct Queue *hold;
 		hack=malloc(sizeof(struct Queue));
 		Queue_Init(hack);
-		while(!check(tokens,KW_CLOSE_NORMAL,0))
+
+		while(!check(translation_data,KW_CLOSE_NORMAL,0))
 		{
-			Queue_Push(hack,Queue_Pop(tokens));
+			Queue_Push(hack,Queue_Pop(translation_data->tokens));
 		}
 		/*remove closing )*/
-		chomp(tokens);
-		parse_direct_declarator_finish(tokens,scope,base);
-		parse_declarator_inner(hack,scope,base);
+		chomp(translation_data);
+		parse_direct_declarator_finish(translation_data,scope,base);
+
+
+
+		hold=translation_data->tokens;
+		translation_data->tokens=hack;
+		parse_declarator_inner(translation_data,scope,base);
+		translation_data->tokens=hold;
 		if(hack->size!=0)
 		{
 			/*TODO error*/
@@ -362,6 +457,7 @@ void parse_direct_declarator(struct Queue *tokens,struct Scope *scope,struct Den
 				free(Queue_Pop(hack));
 			}
 			free(hack);
+			push_translation_error("declarator error",translation_data);
 			return;
 		}
 		free(hack);
@@ -369,7 +465,7 @@ void parse_direct_declarator(struct Queue *tokens,struct Scope *scope,struct Den
 	}else
 	{
 		/*this might be an abstract declarator*/
-		parse_direct_declarator_finish(tokens,scope,base);
+		parse_direct_declarator_finish(translation_data,scope,base);
 	}
 }
 
@@ -377,20 +473,20 @@ void parse_direct_declarator(struct Queue *tokens,struct Scope *scope,struct Den
 	direct-declarator-finish:
 		( [ constant-expression ] | (parameter-list) | ( [id-list] ) )* 
 */
-void parse_direct_declarator_finish(struct Queue *tokens,struct Scope *scope,struct Denoted_Base *base)
+void parse_direct_declarator_finish(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Base *base)
 {
 	while(1)
 	{
-		if(get_and_check(tokens,KW_OPEN_SQUARE))
+		if(get_and_check(translation_data,KW_OPEN_SQUARE))
 		{
-			base->type=get_array_type(base->type,parse_expression(tokens,scope));
-			if(!get_and_check(tokens,KW_CLOSE_NORMAL))
+			base->type=get_array_type(base->type,parse_expression(translation_data,scope));
+			if(!get_and_check(translation_data,KW_CLOSE_NORMAL))
 			{
 				base->type=get_type_error(base->type);
 				base->denotation=DT_Error;
 				return;
 			}
-		}else if(get_and_check(tokens,KW_OPEN_NORMAL))
+		}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 		{
 			struct Queue *parameters;
 			struct Scope *function_prototype_scope;
@@ -400,7 +496,7 @@ void parse_direct_declarator_finish(struct Queue *tokens,struct Scope *scope,str
 			parameters=malloc(sizeof(struct Queue));
 			Queue_Init(parameters);
 
-			parse_paramenter_list(tokens,function_prototype_scope,parameters);
+			parse_paramenter_list(translation_data,function_prototype_scope,parameters);
 			base->type=get_function_type(base->type,parameters,function_prototype_scope);
 			
 		}else
@@ -417,21 +513,22 @@ void parse_direct_declarator_finish(struct Queue *tokens,struct Scope *scope,str
 	struct-union-specifier-finish:
 		{ ( struct-declaration )* }
  */
-void parse_struct_union_specifier_finish(struct Queue *tokens,struct Scope *scope,struct Struct_Union *base)
+void parse_struct_union_specifier_finish(struct Translation_Data *translation_data,struct Scope *scope,struct Struct_Union *base)
 {
-	if(get_and_check(tokens,KW_OPEN_CURLY))
+	if(get_and_check(translation_data,KW_OPEN_CURLY))
 	{
 		base->is_finished=1;
-		while(parse_struct_declaration(tokens,base->inner_namespace,base->members))
+		while(parse_struct_declaration(translation_data,base->inner_namespace,base->members))
 		{
 			
-			if(get_and_check(tokens,KW_CLOSE_CURLY))
+			if(get_and_check(translation_data,KW_CLOSE_CURLY))
 			{
 				return ;
 			}
 		}
 
 		/*TODO error*/
+		push_translation_error("expected closing curly bracket from struct declaration",translation_data);
 		return ;
 
 		
@@ -447,14 +544,14 @@ void parse_struct_union_specifier_finish(struct Queue *tokens,struct Scope *scop
    struct-declaration:
 		specifier-qualifier-list  ( struct-declarator )*  ;
    */
-char parse_struct_declaration(struct Queue *tokens,struct Scope *struct_scope,struct Queue* members)
+char parse_struct_declaration(struct Translation_Data *translation_data,struct Scope *struct_scope,struct Queue* members)
 {
 	struct Denotation_Prototype *prototype;
 	struct Denoted *hold;
-	prototype=parse_specifier_qualifier_list(tokens,struct_scope);
+	prototype=parse_specifier_qualifier_list(translation_data,struct_scope);
 	while(1)
 	{
-		hold=parse_struct_declarator(tokens,struct_scope,prototype);
+		hold=parse_struct_declarator(translation_data,struct_scope,prototype);
 		if(hold!=NULL && hold->denotation!=DT_Error)
 		{
 			Scope_Push(struct_scope,hold);
@@ -464,16 +561,18 @@ char parse_struct_declaration(struct Queue *tokens,struct Scope *struct_scope,st
 		{
 			free(prototype);
 			/*todo error*/
+			push_translation_error("there is a problem with the declarator",translation_data);
 			return 0;
 		}
-		if(!get_and_check(tokens,KW_COMMA))
+		if(!get_and_check(translation_data,KW_COMMA))
 		{
-			if(get_and_check(tokens,KW_SEMI_COLUMN))
+			if(get_and_check(translation_data,KW_SEMI_COLUMN))
 			{
 				break;
 			}else
 			{
 				free(prototype);
+				push_translation_error("semi column expected in struct declaration",translation_data);
 				/*todo error*/
 				return 0;
 			}
@@ -488,29 +587,30 @@ char parse_struct_declaration(struct Queue *tokens,struct Scope *struct_scope,st
 		declarator
 		[ declarator ] : constant-expression
  */
-struct Denoted* parse_struct_declarator(struct Queue *tokens,struct Scope *scope,struct Denotation_Prototype *prototype)
+struct Denoted* parse_struct_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype)
 {
 	struct Denoted *hold;
-	if(get_and_check(tokens,KW_COLUMN))
+	if(get_and_check(translation_data,KW_COLUMN))
 	{
 		/*unnamed bitfields are possible*/
 		struct Denoted_Object *obj;
 		obj=(struct Denoted_Object*)get_denoted_object(NULL,SC_NONE,prototype->type);
-		obj->object->type=get_type_bitfield(prototype->type,parse_expression(tokens,scope));
+		obj->object->type=get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
 		return (struct Denoted*)obj;
 
 	}else
 	{
-		hold=parse_declarator(tokens,scope,prototype);
-		if(get_and_check(tokens,KW_COLUMN))
+		hold=parse_declarator(translation_data,scope,prototype);
+		if(get_and_check(translation_data,KW_COLUMN))
 		{
 			if(hold->denotation==DT_Object)
 			{
-				((struct Denoted_Object*)hold)->object->type=get_type_bitfield(((struct Denoted_Object*)hold)->object->type,parse_expression(tokens,scope));
+				((struct Denoted_Object*)hold)->object->type=get_type_bitfield(((struct Denoted_Object*)hold)->object->type,parse_expression(translation_data,scope));
 				return hold;
 			}else
 			{
 				/*TODO error*/
+				push_translation_error("bitfield must be ",translation_data);
 				return get_denoted_error(hold);
 			}
 		}else
@@ -524,22 +624,22 @@ struct Denoted* parse_struct_declarator(struct Queue *tokens,struct Scope *scope
 	enum-specifier-finish
 	{ ( enumeration-constant [ = constant-expression ] , )* }
 */
-void parse_enum_specifier_finish(struct Queue *tokens,struct Scope *scope,struct Enum *enumeration)
+void parse_enum_specifier_finish(struct Translation_Data *translation_data,struct Scope *scope,struct Enum *enumeration)
 {
 	struct token *id;
 	struct Denoted_Enum_Const *hold;
 	int where_in_enumeration=0;
-	if(get_and_check(tokens,KW_OPEN_CURLY))
+	if(get_and_check(translation_data,KW_OPEN_CURLY))
 	{
 		enumeration->is_finished=1;
 		do
 		{
-			if(check(tokens,KW_ID,0))
+			if(check(translation_data,KW_ID,0))
 			{
-				id=Queue_Pop(tokens);
-				if(get_and_check(tokens,KW_EQ))
+				id=Queue_Pop(translation_data->tokens);
+				if(get_and_check(translation_data,KW_EQ))
 				{
-					hold=(struct Denoted_Enum_Const*)get_denoted_enum_const_expr(id,enumeration,parse_expression(tokens,scope));
+					hold=(struct Denoted_Enum_Const*)get_denoted_enum_const_expr(id,enumeration,parse_expression(translation_data,scope));
 					Queue_Push(enumeration->consts,hold);
 					where_in_enumeration=hold->value+1;
 				}else
@@ -547,22 +647,24 @@ void parse_enum_specifier_finish(struct Queue *tokens,struct Scope *scope,struct
 					Queue_Push(enumeration->consts,get_denoted_enum_const_num(id,enumeration,where_in_enumeration));
 					++where_in_enumeration;
 				}
-				if(!get_and_check(tokens,KW_COMMA) && get_and_check(tokens,KW_CLOSE_CURLY))
+				if(!get_and_check(translation_data,KW_COMMA) && get_and_check(translation_data,KW_CLOSE_CURLY))
 				{
 					return;
 				}else
 				{
 					/*TODO error*/
+					push_translation_error("enum definition error",translation_data);
 					Queue_Push(enumeration->consts,get_denoted_error(NULL));
 					return ;
 				}
 			}else
 			{
 				/*TODO error*/
+				push_translation_error("enum definition error, expected an id",translation_data);
 				Queue_Push(enumeration->consts,get_denoted_error(NULL));
 				return ;
 			}
-		}while(!get_and_check(tokens,KW_CLOSE_CURLY));
+		}while(!get_and_check(translation_data,KW_CLOSE_CURLY));
 
 	}
 }
@@ -571,9 +673,9 @@ void parse_enum_specifier_finish(struct Queue *tokens,struct Scope *scope,struct
 	parameter-list:
 		(declaratoion-specifiers (declarator | abstract-declarator),)+
 */
-void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype_scope,struct Queue *parameters)
+void parse_paramenter_list(struct Translation_Data *translation_data,struct Scope *function_prototype_scope,struct Queue *parameters)
 {
-	if(get_and_check(tokens,KW_CLOSE_NORMAL))
+	if(get_and_check(translation_data,KW_CLOSE_NORMAL))
 		return;
 
 	struct Denotation_Prototype *prototype;
@@ -582,12 +684,12 @@ void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype
 	temp.denotation=DT_Prototype;
 	do
 	{
-		prototype=parse_declaration_specifiers(tokens,function_prototype_scope);
+		prototype=parse_declaration_specifiers(translation_data,function_prototype_scope);
 
 		temp.id=NULL;
 		temp.type=prototype->type;
 
-		parse_declarator_inner(tokens,function_prototype_scope,&temp);
+		parse_declarator_inner(translation_data,function_prototype_scope,&temp);
 
 		hold=extract_denoted(&temp,prototype,1);
 
@@ -595,10 +697,11 @@ void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype
 		Queue_Push(parameters,hold);
 
 		free(prototype);
-	}while(get_and_check(tokens,KW_COMMA));
-	if(!get_and_check(tokens,KW_CLOSE_NORMAL))
+	}while(get_and_check(translation_data,KW_COMMA));
+	if(!get_and_check(translation_data,KW_CLOSE_NORMAL))
 	{
 		/*TODO error*/
+		push_translation_error("expected a ')' finishing the parameter list",translation_data);
 		Queue_Push(parameters,get_denoted_error(NULL));
 		return;
 	}
@@ -608,12 +711,12 @@ void parse_paramenter_list(struct Queue *tokens,struct Scope *function_prototype
 	type-name:
 		specifier-qualifier-list [abstract-declarator]
 */
-struct Type* parse_type_name(struct Queue *tokens,struct Scope *scope)
+struct Type* parse_type_name(struct Translation_Data *translation_data,struct Scope *scope)
 {
 	struct Denotation_Prototype *prototype;
 	struct Type *ret;
-	prototype=parse_specifier_qualifier_list(tokens,scope);
-	ret=parse_abstract_declarator(tokens,scope,prototype->type);
+	prototype=parse_specifier_qualifier_list(translation_data,scope);
+	ret=parse_abstract_declarator(translation_data,scope,prototype->type);
 	free(prototype);
 	return ret;
 }
@@ -621,17 +724,18 @@ struct Type* parse_type_name(struct Queue *tokens,struct Scope *scope)
    	abstract-declarator:
 		( pointer )* abstract-direct-declarator
 */
-struct Type* parse_abstract_declarator(struct Queue *tokens,struct Scope *scope,struct Type *base)
+struct Type* parse_abstract_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Type *base)
 {
 	struct Denoted_Base hold;
 	hold.denotation=DT_Prototype;
 	hold.id=NULL;
 	hold.type=base;
-	parse_declarator_inner(tokens,scope,&hold);
+	parse_declarator_inner(translation_data,scope,&hold);
 
 	if(hold.denotation==DT_Error || hold.id!=NULL)
 	{
 		/*TODO error*/
+		push_translation_error("unexpedted id in abstract declarator",translation_data);
 		return get_type_error(hold.type);
 	}
 	return hold.type;
@@ -642,7 +746,7 @@ struct Type* parse_abstract_declarator(struct Queue *tokens,struct Scope *scope,
 		assignment-expression
 		{ initializer , ... [,] }
 */
-struct AST* parse_initializer(struct Queue *tokens,struct Scope *scope,struct Denoted_Object *base)
+struct AST* parse_initializer(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Object *base)
 {
 	
 }

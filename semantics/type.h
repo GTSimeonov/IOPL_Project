@@ -4,6 +4,7 @@
 #include <denoted.h>
 #include <scope.h>
 #include <limits.h>
+#include <program.h>
 
 #define PTR_SIZE 4
 
@@ -117,7 +118,7 @@ struct Type* get_array_type(struct Type *is_array_of,struct AST* number_of_eleme
 struct Type* get_enum_type(struct Denotation_Prototype *prototype);
 struct Type* get_type_bitfield(struct Type* base,struct AST* number_of_bits);
 struct Type* get_function_type(struct Type* return_type,struct Queue *parameters,struct Scope* function_prototype_scope);
-char is_type(struct Queue *tokens,struct Scope *scope);
+char is_type(struct Translation_Data *translation_data,struct Scope *scope);
 size_t get_type_size(struct Type *type);
 
 

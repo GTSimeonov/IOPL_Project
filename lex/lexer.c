@@ -1,146 +1,43 @@
 #ifndef LEXER_C
 #define LEXER_C LEXER_C
-#include "lexer.h"
+/*asdf*/#include <lexer.h>
 
-struct Queue* lex(struct Source_File *src,struct Program *prog)
+char *well_known_locations_base[]={"./",NULL};
+void lex(struct Source_File *src,struct Translation_Data *translation_data)
 {
 
 
 	struct token *current_token;
-	struct Queue *tokens;
 
-	tokens=malloc(sizeof(struct Queue));
-	Queue_Init(tokens);
 	while(src->src[src->where_in_src]!='\0')
 	{
 
-		if(src->which_column==0 && src->src[src->where_in_src]=='#')
+		if(src->which_column==0)
 		{
-			/*todo preprocesing*/
-			++src->where_in_src;
-			++src->which_column;
-			do_preproc_stuff(src,prog);
+			skip_white_space(src);
+			if(src->src[src->where_in_src]=='#')
+			{
+				/*todo preprocesing*/
+				++src->where_in_src;
+				++src->which_column;
+				parse_preproc_line(src,translation_data);
+				continue;
+			}
+		}
+
+		current_token=get_next_token(src,&chonky[0]);
+		if(current_token->type!=KW_NOTYPE)
+		{
+			Queue_Push(translation_data->tokens,current_token);
 		}else
 		{
-			current_token=get_next_token(src,prog,&chonky[0]);
-			if(current_token->type!=KW_NOTYPE)
-				Queue_Push(tokens,current_token);
-			else
-				free(current_token);
+			if(src->where_in_src!=src->src_size)
+				push_lexing_error("unexpected character",src,translation_data);
+			free(current_token);
+			return;
 		}
 	}
 
-
-	return tokens;
-
-}
-
-/*we have skipped the leading #*/
-/*
- 	#include string
-	#include <qchar>
-	#define [ id(list) replacement
-	#line number [string]
-	#if
-	#ifdef
-	#ifndef
-	#pragma
-	#error
-	#
-
-	these should be seperated from the ifs
-	#elif
-	#else
-	#endif
-
-	
-*/
-void do_preproc_stuff(struct Source_File *src,struct Program *prog)
-{
-	struct token *hold;
-	hold=get_next_token(src,prog,&chonky_jr[0]);
-	switch(hold->type)
-	{
-		case PKW_INCLUDE:
-			free(hold);
-			do_include_stuff(src,prog);
-			return;
-		case PKW_DEFINE:
-			free(hold);
-			do_define_stuff(src,prog);
-
-
-		default:
-			return;
-			/*TODO error*/
-
-	}
-}
-
-void do_include_stuff(struct Source_File *src,struct Program *prog)
-{
-	struct token *hold;
-	hold=get_next_token(src,prog,&chonky[0]);
-	if(hold->type==KW_STRING)
-	{
-		hold->data[hold->data_size-1]='\0';
-		hold->data_size-=2;
-		++hold->data;
-		handle_splicing(hold);
-		lex_program(hold->data,prog);
-		free(hold);
-	}else if(hold->type==KW_LESS)/*hack*/
-	{
-		++hold->data;
-		while(src->src[src->where_in_src]!='>')
-		{
-			++src->where_in_src;
-			++hold->data_size;
-		}
-		/*skip the >*/
-		++src->where_in_src;
-		hold->data[hold->data_size-1]='\0';
-		handle_splicing(hold);
-		
-		lex_program(hold->data,prog);
-		free(hold);
-
-	}else
-	{
-		/*TODO error*/
-		return;
-	}
-}
-struct define_directive* get_define_directive(struct token* macro_name)
-{
-	struct define_directive* ret;
-	ret=malloc(sizeof(struct define_directive));
-	ret->macro_name=macro_name;
-
-	Queue_Init(&ret->replacement_list);
-	Queue_Init(&ret->id_list);
-	ret->number_of_arguments=0;
-	Map_Init(&ret->arguments);
-	return ret;
-}
-/*
-	id[(list)] tokens \n 
- */
-void do_define_stuff(struct Source_File *src,struct Program *prog)
-{
-	struct token *hold;
-	struct define_directive *macro;
-	hold=get_next_token(src,prog,&chonky[0]);
-	if(hold->type==KW_ID)
-	{
-		macro=get_define_directive(hold);
-		Map_Push(&prog->defines,hold->data,hold->data_size,macro);
-		hold=get_next_token(src,prog,&chonky[0]);
-	}else
-	{
-		/*TODO error*/
-		return;
-	}
 }
 
 
@@ -150,6 +47,8 @@ void handle_splicing(struct token *word)
 {
 	size_t back;
 	size_t front;
+	if(word->data_size==0)
+		return;
 	front=0;
 	for(front;front<word->data_size-1;++front)
 	{
@@ -176,6 +75,37 @@ void handle_splicing(struct token *word)
 	}
 	word->data[back]=word->data[front];
 }
+void chase_new_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	while(src->src[src->where_in_src]!='\n' && src->src[src->where_in_src]!='\0')
+	{
+		if(src->src[src->where_in_src]!=' ' && src->src[src->where_in_src]!='\t')
+		{
+			push_lexing_error("expected a new line",src,translation_data);
+		}else
+		{
+			++src->which_column;
+		}
+		++src->where_in_src;
+	}
+	src->which_column=0;
+	++src->which_row;
+}
+void skip_white_space(struct Source_File *src)
+{
+	while(src->src[src->where_in_src]==' ' || src->src[src->where_in_src]=='\n' || src->src[src->where_in_src]=='\t')
+	{
+		if(src->src[src->where_in_src]=='\n')
+		{
+			src->which_column=0;
+			++src->which_row;
+		}else
+		{
+			++src->which_column;
+		}
+		++src->where_in_src;
+	}
+}
 struct token_vector Lex_Queue_Condense(struct Queue *tokens)
 {
 	size_t i;
@@ -197,16 +127,16 @@ struct token_vector Lex_Queue_Condense(struct Queue *tokens)
 	return ret;
 }
 
-char check(struct Queue *tokens,enum KEYWORDS kw,size_t ahead)
+char check(struct Translation_Data *translation_data,enum KEYWORDS kw,size_t ahead)
 {
 	size_t i;
 	struct Queue_Node *current;
-	if(tokens->size<=ahead)
+	if(translation_data->tokens->size<=ahead)
 	{
 		return 0;
 	}else
 	{
-		for(i=0,current=tokens->first;i<ahead;++i,current=current->prev);
+		for(i=0,current=translation_data->tokens->first;i<ahead;++i,current=current->prev);
 
 		if( ((struct token*)(current->data))->type == kw )
 		{
@@ -217,54 +147,54 @@ char check(struct Queue *tokens,enum KEYWORDS kw,size_t ahead)
 		}
 	}
 }
-char get_and_check(struct Queue  *tokens,enum KEYWORDS kw)
+char get_and_check(struct Translation_Data *translation_data,enum KEYWORDS kw)
 {
 	struct token *hold_token;
-	if(tokens->size==0)
+	if(translation_data->tokens->size==0)
 	{
 		return 0;
 	}else
 	{
-		hold_token=tokens->first->data;
+		hold_token=translation_data->tokens->first->data;
 		if(hold_token->type!=kw)
 		{
 			return 0;
 		}else
 		{
-			hold_token=Queue_Pop(tokens);
+			hold_token=Queue_Pop(translation_data->tokens);
 			free(hold_token);
 			return 1;
 		}
 	}
 }
-char get_and_check_unsafe(struct Queue  *tokens,enum KEYWORDS kw)
+char get_and_check_unsafe(struct Translation_Data *translation_data,enum KEYWORDS kw)
 {
 	struct token *hold_token;
-	hold_token=tokens->first->data;
+	hold_token=translation_data->tokens->first->data;
 	if(hold_token->type!=kw)
 	{
 		return 0;
 	}else
 	{
-		hold_token=Queue_Pop(tokens);
+		hold_token=Queue_Pop(translation_data->tokens);
 		free(hold_token);
 		return 1;
 	}
 }
-void chomp(struct Queue *tokens)
+void chomp(struct Translation_Data *translation_data)
 {
-	free(Queue_Pop(tokens));
+	free(Queue_Pop(translation_data->tokens));
 }
 
-enum KEYWORDS kw_get(struct Queue *tokens)
+enum KEYWORDS kw_get(struct Translation_Data *translation_data)
 {
-	if(tokens->size==0)
+	if(translation_data->tokens->size==0)
 		return KW_NOTYPE;
-	return ((struct token*)(tokens->first->data))->type;
+	return ((struct token*)(translation_data->tokens->first->data))->type;
 
 }
 
-struct token* get_next_token(struct Source_File *src,struct Program *prog,struct automata_entry *start_state)
+struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state)
 {
 	int temp;
 	size_t current_size;
@@ -281,6 +211,7 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 	{
 		ret=malloc(sizeof(struct token));
 		ret->type=KW_COMMENT;
+		ret->filename=src->src_name->filename;
 		ret->data=src->src + src->where_in_src;
 		src->where_in_src+=2;
 		while(src->where_in_src!=src->src_size && src->src[src->where_in_src]!='\n')
@@ -293,21 +224,11 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 				++src->where_in_src;
 			}
 		}
-
+		++src->which_row;
+		src->which_column=0;
 	}
-	/*ignore leading spaces and tabs and check for double slash comment*/
-	while(src->src[src->where_in_src]==' ' || src->src[src->where_in_src]=='\n' || src->src[src->where_in_src]=='\t')
-	{
-		if(src->src[src->where_in_src]=='\n')
-		{
-			src->which_column=0;
-			++src->which_row;
-		}else if(src->src[src->where_in_src]=='\t')
-		{
-			src->which_row+=5;
-		}
-		++src->where_in_src;
-	}
+	/*ignore leading spaces,tabs and newlines*/
+	skip_white_space(src);
 
 	while(src->src[src->where_in_src]!='\0')
 	{
@@ -333,6 +254,7 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 				ret->column=src->which_column;
 				ret->line=src->which_row;
 				ret->data=src->src+(src->where_in_src-current_size);
+				ret->filename=src->src_name->filename;
 				handle_splicing(ret);
 				return ret;
 			}
@@ -351,6 +273,7 @@ struct token* get_next_token(struct Source_File *src,struct Program *prog,struct
 	ret=malloc(sizeof(struct token));
 	ret->type=KW_NOTYPE;
 	ret->data_size=0;
+	ret->filename=src->src_name->filename;
 
 	return ret;
 }

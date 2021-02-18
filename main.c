@@ -51,17 +51,37 @@ int main(int argc,char **argv)
 //	print_expression(test_expression,stdout,0);
 
 	*/
-	if(argv[1]==NULL)
-	{
-		printf("Give me a file!\n");
-		return -1;
-	}
+	struct Command_Arguments *command_arguments;
 	struct Program *program;
+
+	command_arguments=parse_command_arguments(argv);
+	if(command_arguments->print_tokens && !command_arguments->is_quiet)
+	{
+		return print_tokens_of_program(stdout,command_arguments->source_names);
+	}else
+	{
+		program=parse_program(command_arguments->source_names);
+		if(program->errors->size>0)
+		{
+			if(!command_arguments->is_quiet)
+			{
+				print_errors(stdout,program->errors);
+			}
+			return 1;
+		}else if(command_arguments->print_ast && !command_arguments->is_quiet)
+		{
+			print_program_ast(stdout,program);
+		}
+	}
+	
+
+	/*
 	program=get_program();
 	lex_program(argv[1],program);
 	print_program_tokens(stdout,program);
 	parse_program(program);
 	print_program_ast(stdout,program);
+	*/
 
 	
 

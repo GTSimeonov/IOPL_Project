@@ -78,10 +78,18 @@ void* Queue_Pop(Queue *q)
 void Queue_Append(struct Queue *lead,struct Queue *follower)
 {
 	assert(lead!=NULL);	
-	lead->last->prev=follower->first;
-	lead->last=follower->last;
-
-	lead->size+=follower->size;
+	assert(follower!=NULL);	
+	if(lead->last==NULL)
+	{
+		lead->last=follower->last;
+		lead->first=follower->first;
+		lead->size=follower->size;
+	}else
+	{
+		lead->last->prev=follower->first;
+		lead->last=follower->last;
+		lead->size+=follower->size;
+	}
 }
 
 void Queue_Destroy(Queue *q)

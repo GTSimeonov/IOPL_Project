@@ -220,9 +220,7 @@ struct AST_Translation_Unit* get_translation_unit_tree(struct Scope* parent_scop
 	ret=malloc(sizeof(struct AST_Translation_Unit));
 	ret->type=TRANSLATION_UNIT;
 	Queue_Init(&ret->components);
-	/*TODO*/
-	//ret->scope=get_scope(parent_scope);
-	ret->scope=parent_scope;
+	ret->scope=get_scope(parent_scope);
 	return ret;
 }
 

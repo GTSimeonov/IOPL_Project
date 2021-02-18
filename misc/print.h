@@ -14,6 +14,7 @@ int indent;
 
 void print_token(FILE *out,struct token *token);
 void print_tokens(FILE *out,struct Queue *tokens);
+char print_tokens_of_program(FILE *out,char **base_names);
 void print_ast_enum(FILE *out,enum AST_Type op);
 void print_error_tree(FILE *out,struct AST_Error *error);
 void print_binary_expression_tree(FILE *out,struct AST_Binary_Expression *bin);
@@ -42,6 +43,7 @@ void print_program_tokens(FILE *out,struct Program *program);
 void print_program_ast(FILE *out,struct Program *program);
 void print_keyword_enum(FILE *out,enum KEYWORDS kw);
 void print_function_definition(FILE *out,struct Denoted_Function *function);
+void print_errors(FILE *out,struct Queue *errors);
 
 
 #endif

@@ -4,3 +4,5 @@ struct ke
 	int s;
 };
 typedef int List;
+
+struct ke asdf;

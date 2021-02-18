@@ -167,12 +167,12 @@ struct Type* get_function_type(struct Type* return_type,struct Queue *parameters
 
 	return (struct Type*)ret;
 }
-char is_type(struct Queue *tokens,struct Scope *scope)
+char is_type(struct Translation_Data *translation_data,struct Scope *scope)
 {
 	struct token *hold;
 	struct Denoted *thing;
 
-	hold=tokens->first->data;
+	hold=translation_data->tokens->first->data;
 
 	switch(hold->type)
 	{

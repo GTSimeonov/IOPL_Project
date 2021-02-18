@@ -2,6 +2,7 @@
 #define GCC_ALL GCC_ALL
 
 
+#include <gcc_arguments.h>
 
 #include <ast.h>
 #include <denoted.h>

@@ -16,6 +16,8 @@ set(SOURCES main.c
 	misc/queue.c
 	misc/stack.c
 	misc/print.c
+	misc/gcc_string.c
+	misc/gcc_arguments.c
 	lex/chonky.c
 	lex/chonky_jr.c
 	lex/lexer.c
@@ -27,6 +29,7 @@ set(SOURCES main.c
 	semantics/program.c
 	semantics/scope.c
 	semantics/semantics.c
+	semantics/gcc_error.c
    )
 
 add_executable(wonky ${SOURCES})

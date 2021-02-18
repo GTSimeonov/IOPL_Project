@@ -17,6 +17,70 @@ void print_token(FILE *out,struct token *token)
 //	fprintf(out,"]");
 }
 
+char print_tokens_of_program(FILE *out,char **base_source_names)
+{
+
+	struct Source_File *base_file;
+	struct Translation_Data *hold_translation_data;
+	char *this_directory[]={"./",NULL};
+	char ret;
+
+	assert(base_source_names!=NULL);
+
+	if(*base_source_names==NULL)
+	{
+		return 0;
+	}
+	ret=0;
+
+	hold_translation_data=get_translation_data();	
+	do
+	{
+		base_file=get_source_file(*base_source_names,this_directory);
+		if(base_file==NULL)
+		{
+			/*TODO error*/
+			continue;
+		}else
+		{
+			lex(base_file,hold_translation_data);
+			if(hold_translation_data->errors->size>0)
+			{
+				ret=1;
+				/*if we are here then the is_quiet flag has not been set*/
+				print_errors(out,hold_translation_data->errors);
+					free(base_file->src);
+					free(base_file->src_name);
+					free(base_file);
+				break;
+			}
+			fprintf(out,"\nTOKENS OF %s {\n",base_file->src_name->filename);
+			print_tokens(out,hold_translation_data->tokens);
+			fprintf(out,"\n} END OF TOKENS\n");
+
+			while(hold_translation_data->tokens->size!=0)
+			{
+				free(Queue_Pop(hold_translation_data->tokens));
+			}
+			free(base_file->src);
+			free(base_file->src_name);
+			free(base_file);
+		}
+	}while(*(++base_source_names));
+	
+	
+	while(hold_translation_data->errors->size>0)
+		free(Queue_Pop(hold_translation_data->errors));
+
+	free(hold_translation_data->errors);
+
+
+	free(hold_translation_data->tokens);
+
+	free(hold_translation_data->source_files);
+	free(hold_translation_data);
+	return ret;
+}
 void print_tokens(FILE *out,struct Queue *tokens)
 {
 	struct Queue_Node *it;
@@ -623,29 +687,15 @@ void print_function_definition(FILE *out,struct Denoted_Function *function)
 	print_type(out,function->type,1);
 	print_ast(out,(struct AST*)function->body);
 }
-void print_program_tokens(FILE *out,struct Program *program)
-{
-	struct Queue_Node *it;
-	struct Queue_Node *it2;
-	it=program->source_files.first;
-	it2=program->translation_units_tokens.first;
-	for(;it!=NULL && it2!=NULL;it=it->prev,it2=it2->prev)
-	{
-		fprintf(out,"TOKENS for %s\n{\n",((struct Source_File*)(it->data))->src_name);
-		print_tokens(out,it2->data);
-		fprintf(out,"TOKENS_END for %s\n}\n",((struct Source_File*)(it->data))->src_name);
-	}
-}
 void print_program_ast(FILE *out,struct Program *program)
 {
 	size_t i;
 	struct Queue_Node *it;
-	it=program->source_files.first;
-	for( i=0; (i<program->number_of_translation_units) && it!=NULL;++i,it=it->prev)
+	for(it=program->translation_units->first;it!=NULL;it=it->prev)
 	{
-		fprintf(out,"TRANSLATION_UNIT for %s\n{\n",((struct Source_File*)(it->data))->src_name);
-		print_ast(out,program->translation_units[i]);
-		fprintf(out,"TRANSLATION_UNIT_END for %s\n}\n",((struct Source_File*)(it->data))->src_name);
+		fprintf(out,"TRANSLATION_UNIT {\n");
+		print_ast(out,(struct AST*)it->data);
+		fprintf(out,"\n} TRANSLATION_UNIT_END\n");
 	}
 }
 void print_keyword_enum(FILE *out,enum KEYWORDS kw)
@@ -822,6 +872,14 @@ void print_keyword_enum(FILE *out,enum KEYWORDS kw)
 		fprintf(out," KW_ID ");break;
 	case  KW_STRING :
 		fprintf(out," KW_STRING ");break;
+	}
+}
+void print_errors(FILE *out,struct Queue *errors)
+{
+	struct Queue_Node *it;
+	for(it=errors->first;it!=NULL;it=it->prev)
+	{
+		print_translation_error(out,(struct Translation_Error*)it->data);
 	}
 }
 #undef TOK
