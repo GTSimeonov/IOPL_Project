@@ -1,5 +1,13 @@
+#include "../tests/test.c"
 #define max(a,b) (a>b?a:b)
+#define version 1
+#define current_version 3
+
+
+
+
 int main()
 {
-	return max(1,3);
+	max(1,1);
+	return version;
 }

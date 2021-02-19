@@ -19,7 +19,13 @@ struct AST* parse_translation_unit(struct Translation_Data *translation_data,str
 				free(Queue_Pop(translation_data->tokens));
 			break;
 		}
-		parse_declaration(translation_data,hold->scope,&hold->components,1);
+		if(is_type(translation_data,hold->scope) || kw_get(translation_data)==KW_ID)
+		{
+			parse_declaration(translation_data,hold->scope,&hold->components,1);
+		}else
+		{
+			push_translation_error("declaration expected",translation_data);
+		}
 	}
 	return (struct AST*)hold;
 

@@ -21,7 +21,7 @@ struct Translation_Error* get_translation_error_by_token(const char *error_messa
 		return get_translation_error(error_message,0,0,"");
 	}else
 	{
-		return get_translation_error(error_message,error_token->column+1,error_token->line+1,error_token->filename);
+		return get_translation_error(error_message,error_token->line+1,error_token->column+1,error_token->filename);
 	}
 }
 

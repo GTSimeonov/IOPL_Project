@@ -37,6 +37,10 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 			free(hold);
 			parse_define_line(src,translation_data);
 			return;
+		case PKW_IF:
+			free(hold);
+			//parse_preproc_if_line(src,translation_data);
+			return;
 		default:
 			return;
 			/*TODO error*/
@@ -67,7 +71,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 			if(hold_file==NULL)
 			{
 				/*TODO error*/
-				push_translation_error("include error",translation_data);
+				push_lexing_error("file in include directive not found",src,translation_data);
 				return;
 			}
 		}
@@ -96,7 +100,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 		if(hold_file==NULL)
 		{
 			/*TODO error*/
-			push_translation_error("include error",translation_data);
+			push_lexing_error("file in include directive not found",src,translation_data);
 			return;
 		}
 
@@ -106,7 +110,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 	}else
 	{
 		/*TODO error*/
-		push_translation_error("include error",translation_data);
+		push_lexing_error("include error",src,translation_data);
 		return;
 	}
 
@@ -150,6 +154,7 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 			}
 			hold_index=malloc(sizeof(int));
 			*hold_index=number_of_arguments;
+			++number_of_arguments;
 			Map_Push(new_macro->arguments,hold_token->data,hold_token->data_size,hold_index);
 			free(hold_token);
 			hold_token=get_next_token(src,&chonky[0],0);
@@ -167,10 +172,8 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 				}
 			}
 			free(hold_token);
-			++number_of_arguments;
 		}	
 		hold_token=get_next_token(src,&chonky[0],0);
-		make_define_argument_list(new_macro,number_of_arguments+1);
 
 	}else if(hold_token->type==KW_NOTYPE)
 	{
@@ -185,6 +188,8 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 
 	hold_tokens=translation_data->tokens;
 	translation_data->tokens=new_macro->macro_tokens;
+
+	new_macro->number_of_arguments=number_of_arguments;
 /*there is something in hold_token*/
 	do{
 		expand_macro(hold_token,src,translation_data);
@@ -215,40 +220,59 @@ struct define_directive* get_define_directive(struct token* macro_name)
 	Map_Init(ret->arguments);
 
 	ret->number_of_arguments=0;
-	ret->argument_list=NULL;	
 
 	return ret;
 }
 
-void make_define_argument_list(struct define_directive* directive,size_t number_of_arguments)
+/*returns an array of queues*/
+struct Queue* make_define_argument_list(size_t number_of_arguments)
 {
 	size_t i;
-	assert(directive->number_of_arguments==0 && directive->argument_list==NULL);
+	struct Queue *ret;
 
-	directive->number_of_arguments=number_of_arguments;
-	directive->argument_list=malloc(sizeof(struct Queue)*number_of_arguments);
+	if(number_of_arguments==0)
+		return NULL;
+
+	ret=malloc(sizeof(struct Queue)*number_of_arguments);
 
 	for(i=0;i<number_of_arguments;++i)
 	{
-		Queue_Init(directive->argument_list+i);
+		Queue_Init(ret+i);
 	}
+	return ret;
+}
+void delete_define_argument_list(size_t number_of_arguments,struct Queue *args)
+{
+	if(number_of_arguments==0)
+	{
+		assert(args==NULL);
+		return;
+	}
+	flush_macro_arguments(number_of_arguments,args);
+	free(args);
 }
 
-void expand_macro_argument(struct Queue *replacement_tokens,struct Translation_Data *translation_data)
+void expand_macro_argument(struct Queue *replacement_tokens,struct Source_File *src,struct Translation_Data *translation_data)
 {
 	struct Queue_Node *it;
+	struct token *hold_token;
 	for(it=replacement_tokens->first;it!=NULL;it=it->prev)
 	{
-		Queue_Push(translation_data->tokens,copy_token((struct token*)it->data));
+		hold_token=copy_token((struct token*)it->data);
+		hold_token->line=src->which_row;
+		hold_token->column=src->which_column;
+		Queue_Push(translation_data->tokens,hold_token);
+		//Queue_Push(translation_data->tokens,copy_token((struct token*)it->data));
 	}
 }
-void load_macro_arguments(struct define_directive *macro,struct Source_File *src,struct Translation_Data *translation_data)
+void load_macro_arguments(struct Queue  *args,size_t number_of_arguments,struct Source_File *src,struct Translation_Data *translation_data)
 {
 	struct token *hold;
 	struct Queue *hack;
 	size_t i;
+	size_t j;
 
-	if(macro->number_of_arguments==0)
+	if(number_of_arguments==0)
 		return;
 
 	hold=get_next_token(src,&chonky[0],1);
@@ -261,13 +285,13 @@ void load_macro_arguments(struct define_directive *macro,struct Source_File *src
 	free(hold);
 
 	hack=translation_data->tokens;
-	for(i=0;i<macro->number_of_arguments-1;++i)
+	for(i=0;i<number_of_arguments-1;++i)
 	{
-		translation_data->tokens=macro->argument_list+i;
+		translation_data->tokens=args+i;
 		for(
-		hold=get_next_token(src,&chonky[0],1);
+		hold=get_next_token(src,&chonky[0],1),j=0;
 		hold->type!=KW_COMMA && hold->type!=KW_NOTYPE;
-		hold=get_next_token(src,&chonky[0],1)
+		hold=get_next_token(src,&chonky[0],1),++j
 		   )
 		{
 			expand_macro(hold,src,translation_data);
@@ -278,13 +302,19 @@ void load_macro_arguments(struct define_directive *macro,struct Source_File *src
 			free(hold);
 			goto cleanup;
 		}
+		if(j==0)
+		{
+			push_lexing_error("expected argument in macro argument list",src,translation_data);
+			free(hold);
+			goto cleanup;
+		}
 	
 	}
-	translation_data->tokens=macro->argument_list+i;
+	translation_data->tokens=args+i;
 	for(
-	hold=get_next_token(src,&chonky[0],1);
+	hold=get_next_token(src,&chonky[0],1),j=0;
 	hold->type!=KW_CLOSE_NORMAL;
-	hold=get_next_token(src,&chonky[0],1)
+	hold=get_next_token(src,&chonky[0],1),++j
 	   )
 	{
 		if(hold->type==KW_NOTYPE)
@@ -295,19 +325,24 @@ void load_macro_arguments(struct define_directive *macro,struct Source_File *src
 		}
 		expand_macro(hold,src,translation_data);
 	}
+		if(j==0)
+		{
+			push_lexing_error("expected argument in macro argument list",src,translation_data);
+			free(hold);
+		}
 	
 cleanup:
 	translation_data->tokens=hack;
 	
 
 }
-void flush_macro_arguments(struct define_directive *macro)
+void flush_macro_arguments(size_t number_of_arguments,struct Queue *args)
 {
 	size_t i;
-	for(i=0;i<macro->number_of_arguments;++i)
+	for(i=0;i<number_of_arguments;++i)
 	{
-		while(macro->argument_list[i].size>0)
-			free(Queue_Pop(macro->argument_list+i));
+		while(args[i].size>0)
+			free(Queue_Pop(args+i));
 	}	
 }
 /*macro name token is freed on expansion , if it is not a macro name it is pushed into token queue*/
@@ -317,15 +352,20 @@ void expand_macro(struct token* macro_name,struct Source_File *src,struct Transl
 	struct token *hold_token;
 	int *index;
 	struct Queue_Node *it;
+	struct Queue *argument_list;
 
 	if(macro_name->type==KW_ID)
 		hold=Map_Check(translation_data->macros,macro_name->data,macro_name->data_size);
 	if(hold!=NULL)
 	{
 		free(macro_name);
-		load_macro_arguments(hold,src,translation_data);
+		argument_list=make_define_argument_list(hold->number_of_arguments);
+		load_macro_arguments(argument_list,hold->number_of_arguments,src,translation_data);
 		if(translation_data->errors->size>0)
+		{
+			delete_define_argument_list(hold->number_of_arguments,argument_list);
 			return;
+		}
 
 		
 		for(it=hold->macro_tokens->first;it!=NULL;it=it->prev)
@@ -334,13 +374,18 @@ void expand_macro(struct token* macro_name,struct Source_File *src,struct Transl
 			index=Map_Check(hold->arguments,hold_token->data,hold_token->data_size);
 			if(index!=NULL)
 			{
-				expand_macro_argument(hold->argument_list+*index,translation_data);
+				expand_macro_argument(argument_list+*index,src,translation_data);
 			}else
 			{
-				Queue_Push(translation_data->tokens,copy_token(hold_token));
+				hold_token=copy_token(hold_token);
+
+				hold_token->line=src->which_row;
+				hold_token->column=src->which_column;
+
+				Queue_Push(translation_data->tokens,hold_token);
 			}
 		}
-		flush_macro_arguments(hold);
+		delete_define_argument_list(hold->number_of_arguments,argument_list);
 	}else
 	{
 		/*this isn't a macro, so we just push it to the token queue*/

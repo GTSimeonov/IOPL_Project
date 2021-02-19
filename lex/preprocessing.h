@@ -20,24 +20,44 @@ struct define_directive
 	/*put arguments here*/
 	/*an array of token queues*/
 	size_t number_of_arguments;
-	struct Queue *argument_list;
 };
 
 void parse_preproc_line(struct Source_File *src,struct Translation_Data *translation_data);
 void parse_include_line(struct Source_File *src,struct Translation_Data *translation_data);
 void parse_define_line(struct Source_File *src,struct Translation_Data *translation_data);
+void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *translation_data);
 
 
+
+/*preproc if stuff*/
+/*
+   TODO 
+   TODO 
+   TODO 
+   TODO 
+char proproc_is_if(struct Source_File *src,struct Translation_Data *translation_data); 
+char proproc_is_else(struct Source_File *src,struct Translation_Data *translation_data); 
+void preproc_find_matching_else(struct Source_File *src,struct Translation_Data *translation_data);
+void preproc_find_endif(struct Source_File *src,struct Translation_Data *translation_data);
+   TODO 
+   TODO 
+   TODO 
+   TODO 
+*/
 
 /*define stuff*/
-struct define_directive* get_define_directive(struct token* macro_name);
-void make_define_argument_list(struct define_directive* directive,size_t number_of_arguments);
-
-void expand_macro_argument(struct Queue *replacement_tokens,struct Translation_Data *translation_data);
-void load_macro_arguments(struct define_directive *macro,struct Source_File *src,struct Translation_Data *translation_data);
-void flush_macro_arguments(struct define_directive *macro);
 void expand_macro(struct token* macro_name,struct Source_File *src,struct Translation_Data *translation_data);
+
+
+
+struct define_directive* get_define_directive(struct token* macro_name);
+struct Queue* make_define_argument_list(size_t number_of_arguments);
+
+void expand_macro_argument(struct Queue *replacement_tokens,struct Source_File *src,struct Translation_Data *translation_data);
+void load_macro_arguments(struct Queue  *args,size_t number_of_arguments,struct Source_File *src,struct Translation_Data *translation_data);
+void flush_macro_arguments(size_t number_of_arguments,struct Queue *args);
 void parse_define_line(struct Source_File *src,struct Translation_Data *translation_data);
 
+void delete_define_argument_list(size_t number_of_arguments,struct Queue *args);
 
 #endif

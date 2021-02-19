@@ -61,6 +61,8 @@ int main(int argc,char **argv)
 	}else
 	{
 		program=parse_program(command_arguments->source_names);
+		if(program==NULL)
+			return 0;
 		if(program->errors->size>0)
 		{
 			if(!command_arguments->is_quiet)
