@@ -84,18 +84,12 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 void print_tokens(FILE *out,struct Queue *tokens)
 {
 	struct Queue_Node *it;
-	for( it=tokens->first;
-		it!=tokens->last;
-		    it=it->prev)
+	for( it=tokens->first; it!=NULL; it=it->prev)
 	{
 			fprintf(out,"[");
 			print_keyword_enum(out,((struct token*)(it->data))->type);
 			print_token(out,(struct token*)(it->data));
 			fprintf(out,"] ");
-	}
-	if(it!=NULL)
-	{
-		print_token(out,(struct token*)(it->data));
 	}
 }
 
@@ -872,6 +866,8 @@ void print_keyword_enum(FILE *out,enum KEYWORDS kw)
 		fprintf(out," KW_ID ");break;
 	case  KW_STRING :
 		fprintf(out," KW_STRING ");break;
+	default:
+		fprintf(out," KW_ERROR ");break;
 	}
 }
 void print_errors(FILE *out,struct Queue *errors)

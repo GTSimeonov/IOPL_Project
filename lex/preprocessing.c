@@ -112,6 +112,8 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 
 	chase_new_line(src,translation_data);
 }
+
+/*TODO TODO*/
 void parse_define_line(struct Source_File *src,struct Translation_Data *translation_data)
 {
 }
@@ -120,6 +122,20 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
  */
 struct define_directive* get_define_directive(struct token* macro_name)
 {
+	struct define_directive *ret;
+	ret=malloc(sizeof(struct token));
+	ret->macro_name=macro_name;
+
+	ret->macro_tokens=malloc(sizeof(struct Queue));
+	Queue_Init(ret->macro_tokens);
+
+	ret->arguments=malloc(sizeof(struct Map));
+	Map_Init(ret->arguments);
+
+	ret->argument_list=NULL;	
+
+	return ret;
 }
+
 
 #endif

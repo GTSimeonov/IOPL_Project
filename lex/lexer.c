@@ -12,21 +12,12 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 	while(src->src[src->where_in_src]!='\0')
 	{
 
-		if(src->which_column==0)
-		{
-			skip_white_space(src);
-			if(src->src[src->where_in_src]=='#')
-			{
-				/*todo preprocesing*/
-				++src->where_in_src;
-				++src->which_column;
-				parse_preproc_line(src,translation_data);
-				continue;
-			}
-		}
 
 		current_token=get_next_token(src,&chonky[0]);
-		if(current_token->type!=KW_NOTYPE)
+		if(current_token->type==KW_HASHTAG)
+		{
+			parse_preproc_line(src,translation_data);
+		}else if(current_token->type!=KW_NOTYPE)
 		{
 			Queue_Push(translation_data->tokens,current_token);
 		}else
@@ -81,7 +72,9 @@ void chase_new_line(struct Source_File *src,struct Translation_Data *translation
 	{
 		if(src->src[src->where_in_src]!=' ' && src->src[src->where_in_src]!='\t')
 		{
+			/*TODO make comments acceptable (spliced lines also)*/
 			push_lexing_error("expected a new line",src,translation_data);
+			break;
 		}else
 		{
 			++src->which_column;
@@ -206,27 +199,6 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 	current_size=0;
 	best_state=current_state=start_state;
 
-	/*check for double slash comment*/
-	if(src->where_in_src<src->src_size-1 && src->src[src->where_in_src]=='/' && src->src[src->where_in_src+1]=='/')
-	{
-		ret=malloc(sizeof(struct token));
-		ret->type=KW_COMMENT;
-		ret->filename=src->src_name->filename;
-		ret->data=src->src + src->where_in_src;
-		src->where_in_src+=2;
-		while(src->where_in_src!=src->src_size && src->src[src->where_in_src]!='\n')
-		{
-			if(src->where_in_src<src->src_size-1 && src->src[src->where_in_src]=='\\' && src->src[src->where_in_src+1]=='\n')
-			{
-				src->where_in_src+=2;
-			}else
-			{
-				++src->where_in_src;
-			}
-		}
-		++src->which_row;
-		src->which_column=0;
-	}
 	/*ignore leading spaces,tabs and newlines*/
 	skip_white_space(src);
 
@@ -246,6 +218,7 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 			{
 				current_size=0;
 				best_state=current_state=start_state;
+				skip_white_space(src);
 			}else
 			{
 				ret=malloc(sizeof(struct token));
@@ -276,5 +249,9 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 	ret->filename=src->src_name->filename;
 
 	return ret;
+}
+struct token* copy_token(struct token *token)
+{
+	
 }
 #endif

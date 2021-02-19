@@ -49,6 +49,7 @@ struct Source_File
 
 void lex(struct Source_File *src,struct Translation_Data *translation_data);
 struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state);
+struct token* copy_token(struct token *token);
 struct token_vector Lex_Queue_Condense(struct Queue *tokens);
 void handle_splicing(struct token *word);
 void chase_new_line(struct Source_File *src,struct Translation_Data *translation_data);

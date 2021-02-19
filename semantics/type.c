@@ -125,7 +125,13 @@ struct Type* get_array_type(struct Type *is_array_of,struct AST* number_of_eleme
 	ret=malloc(sizeof(struct Type_Array));
 	ret->specifier=TS_ARRAY;
 	ret->size=0;
-	ret->number_of_elements=evaluate_const_expression_integer(number_of_elements);
+	if(number_of_elements!=NULL)
+	{
+		ret->number_of_elements=evaluate_const_expression_integer(number_of_elements);
+	}else
+	{
+		ret->number_of_elements=0;
+	}
 	ret->expression=number_of_elements;
 	ret->is_array_of=is_array_of;
 

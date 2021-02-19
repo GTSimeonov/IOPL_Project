@@ -479,12 +479,20 @@ void parse_direct_declarator_finish(struct Translation_Data *translation_data,st
 	{
 		if(get_and_check(translation_data,KW_OPEN_SQUARE))
 		{
-			base->type=get_array_type(base->type,parse_expression(translation_data,scope));
-			if(!get_and_check(translation_data,KW_CLOSE_NORMAL))
+			if(get_and_check(translation_data,KW_CLOSE_SQUARE))
 			{
-				base->type=get_type_error(base->type);
-				base->denotation=DT_Error;
-				return;
+				base->type=get_array_type(base->type,NULL);
+			}else
+			{
+				base->type=get_array_type(base->type,parse_expression(translation_data,scope));
+				if(!get_and_check(translation_data,KW_CLOSE_SQUARE))
+				{
+					/*TODO error*/
+					push_translation_error("']' expected",translation_data);
+					base->type=get_type_error(base->type);
+					base->denotation=DT_Error;
+					return;
+				}
 			}
 		}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 		{
