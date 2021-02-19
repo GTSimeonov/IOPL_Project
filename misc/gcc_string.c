@@ -13,7 +13,7 @@ size_t gstrlen(char *str)
 char* gstr_append(char *lead,char *follower)
 {
 	char *ret,*hold;
-	hold=ret=malloc(gstrlen(lead) + gstrlen(follower));
+	hold=ret=malloc(gstrlen(lead) + gstrlen(follower)+1);
 	while(*(hold++)=*(lead++));
 	hold--;
 	while(*(hold++)=*(follower++));

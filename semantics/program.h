@@ -23,6 +23,8 @@ struct Translation_Data
 	struct Queue *tokens;
 	struct Queue *errors;
 	struct Queue *source_files;
+
+	struct Map *macros;
 };
 
 struct Program* get_program();

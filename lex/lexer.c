@@ -13,13 +13,14 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 	{
 
 
-		current_token=get_next_token(src,&chonky[0]);
+		current_token=get_next_token(src,&chonky[0],1);
 		if(current_token->type==KW_HASHTAG)
 		{
 			parse_preproc_line(src,translation_data);
 		}else if(current_token->type!=KW_NOTYPE)
 		{
-			Queue_Push(translation_data->tokens,current_token);
+			//Queue_Push(translation_data->tokens,current_token);
+			expand_macro(current_token,src,translation_data);
 		}else
 		{
 			if(src->where_in_src!=src->src_size)
@@ -70,9 +71,9 @@ void chase_new_line(struct Source_File *src,struct Translation_Data *translation
 {
 	while(src->src[src->where_in_src]!='\n' && src->src[src->where_in_src]!='\0')
 	{
+		skip_line_splice(src);
 		if(src->src[src->where_in_src]!=' ' && src->src[src->where_in_src]!='\t')
 		{
-			/*TODO make comments acceptable (spliced lines also)*/
 			push_lexing_error("expected a new line",src,translation_data);
 			break;
 		}else
@@ -84,9 +85,21 @@ void chase_new_line(struct Source_File *src,struct Translation_Data *translation
 	src->which_column=0;
 	++src->which_row;
 }
-void skip_white_space(struct Source_File *src)
+/*returns the number of bytes skipped*/
+size_t skip_line_splice(struct Source_File *src)
 {
-	while(src->src[src->where_in_src]==' ' || src->src[src->where_in_src]=='\n' || src->src[src->where_in_src]=='\t')
+	size_t current_size=0;
+	while(src->where_in_src<src->src_size-1 && src->src[src->where_in_src]=='\\' && src->src[src->where_in_src+1]=='\n')
+	{
+		src->where_in_src+=2;
+		current_size+=2;
+	}
+	return current_size;
+}
+
+void skip_white_space(struct Source_File *src,char skip_new_line)
+{
+	while(src->src[src->where_in_src]==' ' || (src->src[src->where_in_src]=='\n' && skip_new_line) || src->src[src->where_in_src]=='\t')
 	{
 		if(src->src[src->where_in_src]=='\n')
 		{
@@ -187,7 +200,7 @@ enum KEYWORDS kw_get(struct Translation_Data *translation_data)
 
 }
 
-struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state)
+struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state,char skip_new_line)
 {
 	int temp;
 	size_t current_size;
@@ -200,16 +213,11 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 	best_state=current_state=start_state;
 
 	/*ignore leading spaces,tabs and newlines*/
-	skip_white_space(src);
+	skip_white_space(src,skip_new_line);
 
 	while(src->src[src->where_in_src]!='\0')
 	{
-
-		if(src->where_in_src<src->src_size-1 && src->src[src->where_in_src]=='\\' && src->src[src->where_in_src+1]=='\n')
-		{
-			src->where_in_src+=2;
-			current_size+=2;
-		}
+		current_size+=skip_line_splice(src);
 
 		current_state=current_state->delta[cmpr[src->src[src->where_in_src]]];
 		if(current_state==NULL)
@@ -218,7 +226,7 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 			{
 				current_size=0;
 				best_state=current_state=start_state;
-				skip_white_space(src);
+				skip_white_space(src,1);
 			}else
 			{
 				ret=malloc(sizeof(struct token));
@@ -250,8 +258,11 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 
 	return ret;
 }
-struct token* copy_token(struct token *token)
+struct token* copy_token(struct token *src)
 {
-	
+	struct token *cpy;
+	cpy=malloc(sizeof(struct token));
+	*cpy=*src;
+	return cpy;
 }
 #endif

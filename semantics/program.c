@@ -54,6 +54,9 @@ struct Translation_Data* get_translation_data()
 	Queue_Init(ret->errors);
 	Queue_Init(ret->source_files);
 
+	ret->macros=malloc(sizeof(struct Map));
+	Map_Init(ret->macros);
+
 	return ret;
 }
 struct Source_Name* get_source_name(char *filename,char *base)
@@ -134,7 +137,7 @@ void normalise_source_name(struct Source_Name *name)
 	++i;
 	/*prune the filename*/
 	offset=gstrlen(name->filename+i);
-	hold_base=malloc(offset);
+	hold_base=malloc(offset+1);
 	strmv(hold_base,name->filename+i);
 	free(name->filename);
 	name->filename=hold_base;

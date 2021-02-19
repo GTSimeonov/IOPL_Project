@@ -194,7 +194,15 @@ struct AST* parse_cast_expression(struct Translation_Data *translation_data,stru
 
 		}else
 		{
-			return (struct AST*)parse_unary_expression(translation_data,scope);
+			ret=(struct AST_Unary_Expression*)parse_expression(translation_data,scope);
+			if(get_and_check(translation_data,KW_CLOSE_NORMAL))
+			{
+				return (struct AST*)ret;
+			}else
+			{
+				return (struct AST*)get_error_tree((struct AST*)ret);
+			}
+
 		}
 	}else
 	{

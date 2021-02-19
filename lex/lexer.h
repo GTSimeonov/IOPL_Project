@@ -48,12 +48,13 @@ struct Source_File
 
 
 void lex(struct Source_File *src,struct Translation_Data *translation_data);
-struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state);
-struct token* copy_token(struct token *token);
+struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state,char skip_new_line);
+struct token* copy_token(struct token *src);
 struct token_vector Lex_Queue_Condense(struct Queue *tokens);
 void handle_splicing(struct token *word);
 void chase_new_line(struct Source_File *src,struct Translation_Data *translation_data);
-void skip_white_space(struct Source_File *src);
+void skip_white_space(struct Source_File *src,char skip_new_line);
+size_t skip_line_splice(struct Source_File *src);
 
 
 char check(struct Translation_Data *translation_data,enum KEYWORDS kw,size_t ahead);

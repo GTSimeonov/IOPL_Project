@@ -34,7 +34,7 @@ struct Command_Arguments* parse_command_arguments(char **argv)
 		}
 	}
 
-	ret->source_names=malloc(source_names->size+1);
+	ret->source_names=malloc((source_names->size+1)*sizeof(char*) );
 	ret->source_names[source_names->size]=NULL;
 	while(source_names->size)
 	{

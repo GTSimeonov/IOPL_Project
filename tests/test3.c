@@ -1,16 +1,5 @@
+#define max(a,b) (a>b?a:b)
 int main()
 {
-	struct A
-	{
-		int a;
-	}as;
-}
-void asd()
-{
-        
-
-
-
-	struct const; A b;
-	long long long short int a;
+	return max(1,3);
 }
