@@ -1,1 +1,6 @@
 C to JS transpiler
+
+--print-tokens
+	prints the tokens after preprocessing
+--print-ast
+	prints 'ast' of the program after parsing
