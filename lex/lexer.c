@@ -8,6 +8,9 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 
 
 	struct token *current_token;
+	/*this is a hack*/
+	/*lines start at 0 , this is 1 a directive at the start of the file can be processed correctly*/
+	size_t last_line=1;
 
 	while(src->src[src->where_in_src]!='\0')
 	{
@@ -16,10 +19,25 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 		current_token=get_next_token(src,&chonky[0],1);
 		if(current_token->type==KW_HASHTAG)
 		{
-			parse_preproc_line(src,translation_data);
+			if(last_line!=current_token->line)
+			{
+				parse_preproc_line(src,translation_data);
+				last_line=current_token->line;
+			}else
+			{
+				push_lexing_error("preprocessing directive must be at the beggining of the line",src,translation_data);
+				while((current_token=get_next_token(src,&chonky[0],0))->type!=KW_NOTYPE)
+				{
+					free(current_token);
+				}
+				free(current_token);
+				last_line+=2;
+			}
+
 		}else if(current_token->type!=KW_NOTYPE)
 		{
-			//Queue_Push(translation_data->tokens,current_token);
+			last_line=current_token->line;
+
 			expand_macro(current_token,src,translation_data);
 		}else
 		{
@@ -66,6 +84,17 @@ void handle_splicing(struct token *word)
 		}
 	}
 	word->data[back]=word->data[front];
+}
+void goto_new_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	while(src->src[src->where_in_src]!='\n' && src->src[src->where_in_src]!='\0')
+	{
+		skip_line_splice(src);
+		++src->which_column;
+		++src->where_in_src;
+	}
+	src->which_column=0;
+	++src->which_row;
 }
 void chase_new_line(struct Source_File *src,struct Translation_Data *translation_data)
 {
@@ -224,6 +253,7 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 		{
 			if(best_state->type==KW_COMMENT || best_state->type==PKW_COMMENT)
 			{
+				/*TODO account for new lines not counted in comment*/
 				current_size=0;
 				best_state=current_state=start_state;
 				skip_white_space(src,1);

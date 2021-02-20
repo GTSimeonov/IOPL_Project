@@ -83,6 +83,8 @@ struct AST* parse_finish_compound_statement(struct Translation_Data* translation
 		{
 			Queue_Push(&hold->components,parse_statement(translation_data,hold->scope));	
 		}
+		if(has_new_errors(translation_data))
+			chase_next_semicolumn(translation_data);
 	}
 
 	return (struct AST*)hold;
@@ -357,6 +359,15 @@ struct AST* parse_expression_statement(struct Translation_Data* translation_data
 	}else
 	{
 		return (struct AST*)get_error_tree(hold);
+	}
+}
+void chase_next_semicolumn(struct Translation_Data *translation_data)
+{
+/*chase ; and start parsing next declaration*/
+	while(!get_and_check(translation_data,KW_SEMI_COLUMN) &&
+		       	translation_data->tokens->size>0)
+	{
+		chomp(translation_data);
 	}
 }
 #endif

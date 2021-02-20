@@ -30,6 +30,7 @@ struct AST* parse_primary_expression(struct Translation_Data *translation_data,s
 	if(translation_data->tokens->size==0)
 	{
 		/*TODO error*/
+		push_translation_error("expected something here",translation_data);
 		return (struct AST*)get_error_tree(NULL);
 	}
 	hold_token=Queue_Pop(translation_data->tokens);
@@ -48,14 +49,17 @@ struct AST* parse_primary_expression(struct Translation_Data *translation_data,s
 			}else
 			{
 				/*TODO error*/
+				push_translation_error("expected ')' here",translation_data);
 				return (struct AST*)get_error_tree(hold);
 			}
 		default:
 			/*TODO error*/
+			push_translation_error("error in expression",translation_data);
 			return (struct AST*)get_error_tree(NULL);
 	}
 
 	/*just in case*/
+	assert(0);
 	return (struct AST*)get_error_tree(NULL);
 
 }
@@ -84,6 +88,7 @@ struct AST_Function_Expression* parse_arglist(struct Translation_Data *translati
 		return ret;
 	}else
 	{
+		push_translation_error("expected ')' here",translation_data);
 		return (struct AST_Function_Expression*)get_error_tree((struct AST*)ret);
 	}
 
@@ -151,6 +156,7 @@ struct AST* parse_postfix_expression(struct Translation_Data *translation_data,s
 					hold=(struct AST*)get_binary_expression_tree(hold,hold_expr,OP_ARR_SUBSCRIPT);
 					if(!get_and_check(translation_data,KW_CLOSE_SQUARE))
 					{
+						push_translation_error("expected ']' here",translation_data);
 						return (struct AST*)get_error_tree(hold);
 					}
 				}
@@ -188,6 +194,7 @@ struct AST* parse_cast_expression(struct Translation_Data *translation_data,stru
 				return (struct AST*)ret;
 			}else
 			{
+				push_translation_error("expected ')' here",translation_data);
 				return (struct AST*)get_error_tree((struct AST*)ret);
 
 			}
@@ -200,6 +207,7 @@ struct AST* parse_cast_expression(struct Translation_Data *translation_data,stru
 				return (struct AST*)ret;
 			}else
 			{
+				push_translation_error("expected ')' here",translation_data);
 				return (struct AST*)get_error_tree((struct AST*)ret);
 			}
 
@@ -233,6 +241,7 @@ struct AST* parse_unary_expression(struct Translation_Data *translation_data,str
 	if(translation_data->tokens->size==0)
 	{
 		/*TODO error*/
+		push_translation_error("expected something here",translation_data);
 		return (struct AST*)get_error_tree(NULL);
 	}
 
@@ -530,6 +539,7 @@ struct AST* parse_conditional_expression(struct Translation_Data *translation_da
 			return hold;
 		}else
 		{
+			push_translation_error("expected ':' here",translation_data);
 			return (struct AST*)get_error_tree(hold);
 		}
 	}else
@@ -549,6 +559,7 @@ struct AST* parse_assignment_expression(struct Translation_Data *translation_dat
 	if(translation_data->tokens->size==0)
 	{
 		/*TODO error*/
+		push_translation_error("expected something here",translation_data);
 		return (struct AST*)get_error_tree(NULL);
 	}
 

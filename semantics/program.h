@@ -21,7 +21,12 @@ struct Program
 struct Translation_Data
 {
 	struct Queue *tokens;
+
+
 	struct Queue *errors;
+	size_t number_of_errors_when_last_checked;
+
+
 	struct Queue *source_files;
 
 	struct Map *macros;
@@ -41,5 +46,6 @@ struct Program* parse_program(char **base_source_names);
 void lex_program(struct Translation_Data *hold,struct Source_File *file);
 
 
+char has_new_errors(struct Translation_Data *translation_data);
 
 #endif

@@ -2,6 +2,6 @@
 List main(int argc, char *argv[])
 {
 	long int c;
-	int a,b[sizeof(List)];
+	int a,b[111+1];
 	return 0;
 }

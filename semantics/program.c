@@ -57,6 +57,8 @@ struct Translation_Data* get_translation_data()
 	ret->macros=malloc(sizeof(struct Map));
 	Map_Init(ret->macros);
 
+	ret->number_of_errors_when_last_checked=0;
+
 	return ret;
 }
 struct Source_Name* get_source_name(char *filename,char *base)
@@ -198,5 +200,18 @@ void lex_program(struct Translation_Data *hold,struct Source_File *file)
 {
 	Queue_Push(hold->source_files,file);
 	lex(file,hold);
+}
+
+
+char has_new_errors(struct Translation_Data *translation_data)
+{
+	if(translation_data->errors->size<translation_data->number_of_errors_when_last_checked)
+	{
+		translation_data->number_of_errors_when_last_checked=translation_data->errors->size;
+		return 1;
+	}else
+	{
+		return 0;
+	}
 }
 #endif

@@ -21,6 +21,7 @@ struct AST* parse_expression_statement(struct Translation_Data* translation_data
 struct AST* parse_finish_labeled_statement(struct Translation_Data* translation_data,struct Scope *scope,enum AST_Type type);
 struct AST* parse_finish_default_statement(struct Translation_Data* translation_data,struct Scope *scope);
 
+void chase_next_semicolumn(struct Translation_Data *translation_data);
 
 
 #endif

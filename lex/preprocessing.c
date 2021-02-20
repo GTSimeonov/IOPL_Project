@@ -392,4 +392,66 @@ void expand_macro(struct token* macro_name,struct Source_File *src,struct Transl
 		Queue_Push(translation_data->tokens,macro_name);
 	}
 }
+
+struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct token *hold_token;
+	int indentation=1;
+
+	while(src->src[src->where_in_src]!='\0' && indentation)
+	{
+		/*BEWARE*/
+		goto_new_line(src,translation_data);
+		/*END BEWARE*/
+
+		hold_token=get_next_token(src,&chonky[0],1);
+		if(hold_token->type==KW_HASHTAG)
+		{
+			free(hold_token);
+			hold_token=get_next_token(src,&chonky_jr[0],0);
+			switch(hold_token->type)
+			{
+				case PKW_IF:
+				case PKW_IFDEF:
+				case PKW_IFNDEF:
+					++indentation;
+					break;
+
+				case PKW_ENDIF:
+					--indentation;
+					break;
+
+				case PKW_ELSE:
+				case PKW_ELIF:
+					if(indentation==1)
+					{
+						return hold_token;
+					}
+					else
+					{
+						break;
+					}
+				case PKW_NOTYPE:
+					push_lexing_error("unexpected character",src,translation_data);
+					free(hold_token);
+					return NULL;
+			}
+			free(hold_token);
+
+		}else if(hold_token->type!=KW_NOTYPE)
+		{
+			free(hold_token);
+		}else
+		{
+			if(src->where_in_src!=src->src_size)
+				push_lexing_error("unexpected character",src,translation_data);
+			free(hold_token);
+			return NULL;
+		}
+	}
+	/*BEWARE*/
+	goto_new_line(src,translation_data);	
+	/*END BEWARE*/
+	return NULL;
+}
 #endif

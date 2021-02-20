@@ -80,18 +80,18 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 
 	}
 
-	switch(prototype->specifier)
+	switch(ret->specifier)
 	{
 		case TS_DOUBLE:
-			if(prototype->constraint==TC_LONG_LONG 
-				|| prototype->constraint==TC_SHORT
-				|| prototype->sign!=TSIGN_NONE)
+			if(ret->constraint==TC_LONG_LONG 
+				|| ret->constraint==TC_SHORT
+				|| ret->sign!=TSIGN_NONE)
 			{
 				return (struct Type*)get_type_error((struct Type*)ret);
 			}
 			break;
 		case TS_CHAR:
-			if(prototype->constraint!=TC_NONE)
+			if(ret->constraint!=TC_NONE)
 			{
 				return (struct Type*)get_type_error((struct Type*)ret);
 			}
@@ -99,7 +99,7 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 		case TS_INT:
 			break;
 		default:
-			if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE)
+			if(ret->constraint!=TC_NONE || ret->sign!=TSIGN_NONE)
 			{
 				return (struct Type*)get_type_error((struct Type*)ret);
 			}

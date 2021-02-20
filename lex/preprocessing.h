@@ -30,20 +30,10 @@ void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *tran
 
 
 /*preproc if stuff*/
-/*
-   TODO 
-   TODO 
-   TODO 
-   TODO 
-char proproc_is_if(struct Source_File *src,struct Translation_Data *translation_data); 
-char proproc_is_else(struct Source_File *src,struct Translation_Data *translation_data); 
-void preproc_find_matching_else(struct Source_File *src,struct Translation_Data *translation_data);
-void preproc_find_endif(struct Source_File *src,struct Translation_Data *translation_data);
-   TODO 
-   TODO 
-   TODO 
-   TODO 
-*/
+/*returns an else or elif token, or if it hits matching endif before that return NULL and goto following line*/
+struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data);
+
+
 
 /*define stuff*/
 void expand_macro(struct token* macro_name,struct Source_File *src,struct Translation_Data *translation_data);
