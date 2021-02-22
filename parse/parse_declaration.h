@@ -11,11 +11,6 @@
 #include <lexer.h>
 #include <assert.h>
 
-struct Denoted_Base;
-struct Denotation_Prototype;
-struct Struct_Union;
-struct Denoted_Object;
-struct Enum;
 
 
 void parse_declaration(struct Translation_Data *translation_data,struct Scope *scope,struct Queue *where_to_push,char parse_function_definitions);
@@ -30,9 +25,9 @@ void parse_struct_union_specifier_finish(struct Translation_Data *translation_da
 char parse_struct_declaration(struct Translation_Data *translation_data,struct Scope *struct_scope,struct Queue* members);
 struct Denoted* parse_struct_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype);
 void parse_enum_specifier_finish(struct Translation_Data *translation_data,struct Scope *scope,struct Enum *enumeration);
-void parse_paramenter_list(struct Translation_Data *translation_data,struct Scope *function_prototype_scope,struct Queue *parameters);
+void parse_paramenter_list(struct Translation_Data *translation_data,struct Normal_Scope *function_prototype_scope,struct Queue *parameters);
 struct Type* parse_type_name(struct Translation_Data *translation_data,struct Scope *scope);
-struct Type* parse_abstract_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Type *base);
+struct Type* parse_abstract_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype);
 struct AST* parse_initializer(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Object *base);
 
 #endif

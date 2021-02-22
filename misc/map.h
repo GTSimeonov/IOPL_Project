@@ -18,7 +18,7 @@ struct Map
 	char is_final;
 	Map *delta[256];
 	/*ID cannot point to itself ( this is used in the deletion of the map ) */
-	void *ID; //I have integer ids in mind but can be a translation for exmpl.
+	void *ID; 
 };
 
 void Map_Init(Map *tree);
@@ -29,4 +29,8 @@ void Map_Remove(Map *tree, void *str,size_t size);
 void Map_Map(Map *tree,void (*map)(void*));
 void Map_Destroy(Map *tree);
 struct Condensed_Map* Map_Condense(Map* tree);
+
+struct Map* Map_Push_And_Get(struct Map* tree,void *str,size_t size,void *id);
+struct Map* Map_Check_And_Get(Map *tree, void *str,size_t size);
+
 #endif

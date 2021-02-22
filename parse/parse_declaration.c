@@ -33,10 +33,10 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 			Queue_Push(where_to_push,get_function_declaration_tree(scope,(struct Denoted_Function*)hold));
 		}else if(hold->denotation==DT_Typedef)
 		{
-			Queue_Push(where_to_push,get_type_definition_tree((struct Denoted_Typedef*)hold,scope));
+			Queue_Push(where_to_push,get_type_definition_tree((struct Denoted_Typedef*)hold));
 		}else if(hold->denotation==DT_Object)
 		{
-			Queue_Push(where_to_push,get_object_declaration_tree((struct Denoted_Object*)hold,NULL,scope));
+			Queue_Push(where_to_push,get_object_declaration_tree((struct Denoted_Object*)hold,NULL));
 		}else
 		{
 			/*TODO error*/
@@ -87,7 +87,7 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 {
 	enum KEYWORDS hold_kw;
 	struct Denotation_Prototype *ret;
-	ret=(struct Denotation_Prototype*)get_denotation_prototype();
+	ret=(struct Denotation_Prototype*)get_denotation_prototype(translation_data->types);
 
 	while(1)
 	{
@@ -348,9 +348,10 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 					hold=check_ordinary(scope,(struct token*)translation_data->tokens->first->data);
 					if(hold!=NULL && hold->denotation==DT_Typedef)
 					{
-						ret->type=((struct Denoted_Typedef*)hold)->type;
+						ret->pair->node=((struct Denoted_Typedef*)hold)->node;
+						ret->pair->type=(struct Type*)ret->pair->node->ID;
 						chomp(translation_data);
-						break;
+						return ret;
 					}
 					/*falltrough - this has not been typedefed*/
 				}
@@ -359,13 +360,13 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 			exit:
 				if(ret->specifier==TS_ENUM)
 				{
-					ret->type=get_enum_type(ret);
+					get_enum_type(ret);
 				}else if(ret->specifier==TS_STRUCT || ret->specifier==TS_UNION)
 				{
-					ret->type=get_struct_union_type(ret);
-				}else if(ret->type==NULL)
+					get_struct_union_type(ret);
+				}else if(ret->pair->type==NULL)
 				{
-					ret->type=get_basic_type(ret);
+					get_basic_type(ret);
 				}
 				return ret;
 		}
@@ -382,12 +383,10 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
  */
 struct Denoted* parse_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype)
 {
-	struct Denoted_Base temp;
-	temp.id=NULL;
-	temp.denotation=DT_Prototype;
-	temp.type=prototype->type;
-	parse_declarator_inner(translation_data,scope,&temp);
-	return extract_denoted(&temp,prototype,0);
+	struct Denoted_Base *temp;
+	temp=get_denoted_base(prototype);
+	parse_declarator_inner(translation_data,scope,temp);
+	return extract_denoted(temp,prototype,0);
 
 }
 
@@ -396,21 +395,22 @@ void parse_declarator_inner(struct Translation_Data *translation_data,struct Sco
 	enum KEYWORDS hold;
 	while(get_and_check(translation_data,KW_STAR))
 	{
-		base->type=get_pointer_type(base->type);
-		hold=kw_get(translation_data);
+		char is_constant=0,is_volatile=0;
 		while(1)
 		{
+			hold=kw_get(translation_data);
 			if(hold==KW_CONST)
 			{
-				((struct Type_Pointer*)(base->type))->is_const=1;
+				is_constant=1;
 			}else if(hold==KW_VOLATILE)
 			{
-				((struct Type_Pointer*)(base->type))->is_volatile=1;
+				is_volatile=1;
 			}else
 			{
 				break;
 			}
 		}
+		get_pointer_type(base->pair,is_volatile,is_constant);
 	}
 	parse_direct_declarator(translation_data,scope,base);
 
@@ -481,31 +481,30 @@ void parse_direct_declarator_finish(struct Translation_Data *translation_data,st
 		{
 			if(get_and_check(translation_data,KW_CLOSE_SQUARE))
 			{
-				base->type=get_array_type(base->type,NULL);
+				get_array_type(base->pair,NULL);
 			}else
 			{
-				base->type=get_array_type(base->type,parse_expression(translation_data,scope));
+				get_array_type(base->pair,parse_expression(translation_data,scope));
 				if(!get_and_check(translation_data,KW_CLOSE_SQUARE))
 				{
 					/*TODO error*/
 					push_translation_error("']' expected",translation_data);
-					base->type=get_type_error(base->type);
-					base->denotation=DT_Error;
+					get_type_error(base->pair);
 					return;
 				}
 			}
 		}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 		{
 			struct Queue *parameters;
-			struct Scope *function_prototype_scope;
+			struct Normal_Scope *function_prototype_scope;
 
-			function_prototype_scope=get_scope(scope);
+			function_prototype_scope=(struct Normal_Scope*)get_normal_scope(scope,FUNCTION_PROTOTYPE_SCOPE);
 
 			parameters=malloc(sizeof(struct Queue));
 			Queue_Init(parameters);
 
 			parse_paramenter_list(translation_data,function_prototype_scope,parameters);
-			base->type=get_function_type(base->type,parameters,function_prototype_scope);
+			get_function_type(base->pair,parameters,function_prototype_scope);
 			
 		}else
 		{
@@ -526,7 +525,7 @@ void parse_struct_union_specifier_finish(struct Translation_Data *translation_da
 	if(get_and_check(translation_data,KW_OPEN_CURLY))
 	{
 		base->is_finished=1;
-		while(parse_struct_declaration(translation_data,base->inner_namespace,base->members))
+		while(parse_struct_declaration(translation_data,(struct Scope*)base->inner_namespace,base->members))
 		{
 			
 			if(get_and_check(translation_data,KW_CLOSE_CURLY))
@@ -602,8 +601,8 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 	{
 		/*unnamed bitfields are possible*/
 		struct Denoted_Object *obj;
-		obj=(struct Denoted_Object*)get_denoted_object(NULL,SC_NONE,prototype->type);
-		obj->object->type=get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
+		obj=(struct Denoted_Object*)get_denoted_object(NULL,SC_NONE,prototype->pair->type);
+		get_type_bitfield(prototype->pair,parse_expression(translation_data,scope));
 		return (struct Denoted*)obj;
 
 	}else
@@ -613,7 +612,7 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 		{
 			if(hold->denotation==DT_Object)
 			{
-				((struct Denoted_Object*)hold)->object->type=get_type_bitfield(((struct Denoted_Object*)hold)->object->type,parse_expression(translation_data,scope));
+				/*TODO make bitfield*/
 				return hold;
 			}else
 			{
@@ -681,30 +680,42 @@ void parse_enum_specifier_finish(struct Translation_Data *translation_data,struc
 	parameter-list:
 		(declaratoion-specifiers (declarator | abstract-declarator),)+
 */
-void parse_paramenter_list(struct Translation_Data *translation_data,struct Scope *function_prototype_scope,struct Queue *parameters)
+void parse_paramenter_list(struct Translation_Data *translation_data,struct Normal_Scope *function_prototype_scope,struct Queue *parameters)
 {
 	if(get_and_check(translation_data,KW_CLOSE_NORMAL))
 		return;
 
 	struct Denotation_Prototype *prototype;
-	struct Denoted_Base temp;
+	struct Denoted_Base *base;
 	struct Denoted *hold;
-	temp.denotation=DT_Prototype;
 	do
 	{
-		prototype=parse_declaration_specifiers(translation_data,function_prototype_scope);
+		
 
-		temp.id=NULL;
-		temp.type=prototype->type;
+		prototype=parse_declaration_specifiers(translation_data,(struct Scope*)function_prototype_scope);
+		base=get_denoted_base(prototype);
 
-		parse_declarator_inner(translation_data,function_prototype_scope,&temp);
 
-		hold=extract_denoted(&temp,prototype,1);
+		parse_declarator_inner(translation_data,(struct Scope*)function_prototype_scope,base);
+		if(base->denotation!=DT_Object)
+		{
+			/*TODO error*/
+			push_translation_error("expected object declaration in function prototype",translation_data);
+		//	delete_denoted(hold);
+			delete_denoted_prototype(prototype);
+			delete_denoted_base(base);	
+			return;
+		}
 
-		Scope_Push(function_prototype_scope,hold);
-		Queue_Push(parameters,hold);
+		hold=extract_denoted(base,prototype,1);
 
-		free(prototype);
+		Scope_Push((struct Scope*)function_prototype_scope,hold);
+		Queue_Push(parameters,((struct Denoted_Object*)hold)->object->type);
+
+		delete_denoted(hold);
+		delete_denoted_prototype(prototype);
+		delete_denoted_base(base);	
+
 	}while(get_and_check(translation_data,KW_COMMA));
 	if(!get_and_check(translation_data,KW_CLOSE_NORMAL))
 	{
@@ -724,29 +735,37 @@ struct Type* parse_type_name(struct Translation_Data *translation_data,struct Sc
 	struct Denotation_Prototype *prototype;
 	struct Type *ret;
 	prototype=parse_specifier_qualifier_list(translation_data,scope);
-	ret=parse_abstract_declarator(translation_data,scope,prototype->type);
-	free(prototype);
+	ret=parse_abstract_declarator(translation_data,scope,prototype);
+	delete_denoted_prototype(prototype);
 	return ret;
 }
 /*
    	abstract-declarator:
 		( pointer )* abstract-direct-declarator
 */
-struct Type* parse_abstract_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Type *base)
+struct Type* parse_abstract_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype)
 {
-	struct Denoted_Base hold;
-	hold.denotation=DT_Prototype;
-	hold.id=NULL;
-	hold.type=base;
-	parse_declarator_inner(translation_data,scope,&hold);
+	struct Denoted_Base *base;
+	struct Type *ret;
 
-	if(hold.denotation==DT_Error || hold.id!=NULL)
+
+	get_denoted_base(prototype);
+	parse_declarator_inner(translation_data,scope,base);
+
+	if(base->denotation==DT_Error || base->id!=NULL)
 	{
 		/*TODO error*/
 		push_translation_error("unexpedted id in abstract declarator",translation_data);
-		return get_type_error(hold.type);
+		delete_denoted_prototype(prototype);
+		ret=base->pair->type;
+		delete_denoted_base(base);
+		return ret;
 	}
-	return hold.type;
+	delete_denoted_prototype(prototype);
+	ret=base->pair->type;
+	delete_denoted_base(base);
+	return ret;
+
 }
 
 /*

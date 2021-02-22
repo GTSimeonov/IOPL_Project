@@ -14,7 +14,9 @@ struct Program* get_program()
 	Queue_Init(ret->translation_units);
 	Queue_Init(ret->source_files);
 	Queue_Init(ret->errors);
-	ret->externs=get_scope(NULL);
+	/*this isn't really a scope,
+	 TODO rework*/
+	ret->externs=get_normal_scope(NULL,EXTERN_SCOPE);
 
 	return ret;
 }
@@ -56,6 +58,9 @@ struct Translation_Data* get_translation_data()
 
 	ret->macros=malloc(sizeof(struct Map));
 	Map_Init(ret->macros);
+
+	ret->types=malloc(sizeof(struct Map));
+	Map_Init(ret->types);
 
 	ret->number_of_errors_when_last_checked=0;
 

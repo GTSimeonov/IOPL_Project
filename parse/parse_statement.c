@@ -285,7 +285,7 @@ struct AST* parse_finish_labeled_statement(struct Translation_Data* translation_
 	struct AST_Labeled_Statement *ret;
 	if(check(translation_data,KW_ID,0))
 	{
-		ret=get_labeled_statement_tree(Queue_Pop(translation_data->tokens),NULL,scope,type);
+		ret=get_labeled_statement_tree(Queue_Pop(translation_data->tokens),NULL,type);
 		if(get_and_check(translation_data,KW_COLUMN))
 		{
 			ret->statement=parse_statement(translation_data,scope);
@@ -306,7 +306,7 @@ struct AST* parse_finish_labeled_statement(struct Translation_Data* translation_
 struct AST* parse_finish_default_statement(struct Translation_Data* translation_data,struct Scope *scope)
 {
 	struct AST_Labeled_Statement *ret;
-	ret=get_labeled_statement_tree(NULL,NULL,scope,ST_DEFAULT);
+	ret=get_labeled_statement_tree(NULL,NULL,ST_DEFAULT);
 	if(get_and_check(translation_data,KW_COLUMN))
 	{
 		ret->statement=parse_statement(translation_data,scope);

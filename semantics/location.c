@@ -68,4 +68,11 @@ struct Location *get_global_location()
 
 	return ret;
 }
+
+
+
+void delete_location(struct Location *location)
+{
+	free(location);
+}
 #endif

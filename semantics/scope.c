@@ -3,32 +3,78 @@
 #include "scope.h"
 
 
-struct Scope* get_scope(struct Scope *parent)
+struct Scope* get_normal_scope(struct Scope *parent,enum Scope_Type type)
 {
-	struct Scope *ret;
-	ret=malloc(sizeof(struct Scope));
-	Map_Init(&ret->labels);
+	struct Normal_Scope *ret;
+	assert(type==BLOCK_SCOPE || type==EXTERN_SCOPE || type==FILE_SCOPE || type==FUNCTION_PROTOTYPE_SCOPE);
+	ret=malloc(sizeof(struct Normal_Scope));
+	ret->type=type;
+
+	assert((type!=EXTERN_SCOPE) || parent==NULL);
+	assert((type!=FILE_SCOPE) || parent->type==EXTERN_SCOPE);
+	ret->parent=parent;
+
 	Map_Init(&ret->tags);
 	Map_Init(&ret->ordinary);
-	ret->parent=parent;
-	if(parent==NULL)
-	{
-		ret->location=get_global_location();
-	}else
-	{
-		ret->location=(struct Location*)get_relative_location(parent->location,0);
-	}
-	return ret;
+
+	return (struct Scope*)ret;
+
 }
+struct Scope* get_function_scope(struct Scope *parent)
+{
+	struct Function_Scope *ret;
+	assert(parent!=NULL && parent->type==FILE_SCOPE);
+
+	ret=malloc(sizeof(struct Function_Scope));
+	ret->type=FUNCTION_SCOPE;
+	ret->parent=parent;
+
+	Map_Init(&ret->labels);
+
+
+	return (struct Scope*)ret;
+}
+
+void delete_normal_scope(struct Normal_Scope *scope)
+{
+
+}
+
+void delete_function_scope(struct Function_Scope *scope)
+{
+
+}
+
+void delete_scope(struct Scope *scope)
+{
+	switch(scope->type)
+	{
+		case BLOCK_SCOPE:
+		case FILE_SCOPE:
+		case EXTERN_SCOPE:
+		case FUNCTION_PROTOTYPE_SCOPE:
+			delete_normal_scope((struct Normal_Scope*)scope);
+			break;
+		case FUNCTION_SCOPE:
+			delete_function_scope((struct Function_Scope*)scope);
+		default:
+			assert(0);
+	}
+}
+
 
 void* check_label(struct Scope *current,struct token *id)
 {
 	void *hold;
 	hold=NULL;
-	while(current!=NULL && hold==NULL)
+	while(current!=NULL && current->type!=FUNCTION_SCOPE)
 	{
-		hold=Map_Check(&current->labels,id->data,id->data_size);
 		current=current->parent;
+	}
+
+	if(current!=NULL)
+	{
+		hold=Map_Check(&((struct Function_Scope*)current)->labels,id->data,id->data_size);
 	}
 	return hold;
 }
@@ -37,9 +83,9 @@ struct Denoted* check_tag(struct Scope *current,struct token *id)
 {
 	void *hold;
 	hold=NULL;
-	while(current!=NULL && hold==NULL)
+	while(current!=NULL && hold==NULL && current->type!=FUNCTION_SCOPE)
 	{
-		hold=Map_Check(&current->tags,id->data,id->data_size);
+		hold=Map_Check(&((struct Normal_Scope*)current)->tags,id->data,id->data_size);
 		current=current->parent;
 	}
 	return hold;
@@ -50,7 +96,7 @@ void* check_ordinary(struct Scope *current,struct token *id)
 	hold=NULL;
 	while(current!=NULL && hold==NULL)
 	{
-		hold=Map_Check(&current->ordinary,id->data,id->data_size);
+		hold=Map_Check(&((struct Normal_Scope*)current)->ordinary,id->data,id->data_size);
 		current=current->parent;
 	}
 	return hold;
@@ -90,10 +136,14 @@ char check_if_typedefed(struct Scope* scope,struct token *id)
 }
 void push_tag(struct Scope *current,struct token *id,struct Denoted *denot)
 {
-	Map_Push(&current->tags,id->data,id->data_size,denot);
+	/*TODO fix this shit*/
+	assert(current->type!=FUNCTION_SCOPE);
+
+	Map_Push(&((struct Normal_Scope*)current)->tags,id->data,id->data_size,denot);
 }
 void push_ordinary(struct Scope *current,struct token *id,struct Denoted *denot)
 {
-	Map_Push(&current->ordinary,id->data,id->data_size,denot);
+	assert(current->type!=FUNCTION_SCOPE);
+	Map_Push(&((struct Normal_Scope*)current)->ordinary,id->data,id->data_size,denot);
 }
 #endif

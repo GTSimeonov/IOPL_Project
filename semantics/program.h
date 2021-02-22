@@ -30,6 +30,8 @@ struct Translation_Data
 	struct Queue *source_files;
 
 	struct Map *macros;
+
+	struct Map *types;
 };
 
 struct Program* get_program();

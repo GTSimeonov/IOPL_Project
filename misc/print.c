@@ -428,7 +428,7 @@ void print_type(FILE *out,struct Type *type,char should_print_struct_union)
 			return;
 		case TS_FUNC:
 			fprintf(out,"function taking arguments (");
-			print_list_of_denoted(out,((struct Type_Function*)type)->parameters);
+			print_function_args(out,(struct Type_Function*)type);
 			fprintf(out,") returning ");
 			print_type(out,((struct Type_Function*)type)->return_type,should_print_struct_union);
 			return;
@@ -466,7 +466,7 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			fprintf(out,"typedef ");
 			print_token(out,((struct Denoted_Typedef*)denoted)->id);	
 			fprintf(out," to ");
-			print_type(out,((struct Denoted_Typedef*)denoted)->type,0);	
+			print_type(out,((struct Denoted_Typedef*)denoted)->node->ID,0);	
 			return;
 		case DT_Function:
 			print_token(out,((struct Denoted_Function*)denoted)->id);
@@ -877,6 +877,19 @@ void print_errors(FILE *out,struct Queue *errors)
 	{
 		print_translation_error(out,(struct Translation_Error*)it->data);
 	}
+}
+void print_function_args(FILE *out,struct Type_Function *func)
+{
+	size_t i;
+	if(func->number_of_arguments==0)
+		return;
+
+	print_type(out,func->arguments[0],0);
+	for(i=1;i<func->number_of_arguments;++i)
+	{
+		fprintf(out,", ");
+		print_type(out,func->arguments[i],0);
+	}	
 }
 #undef TOK
 #undef INDENT

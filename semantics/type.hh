@@ -44,4 +44,6 @@ struct Type_Array;
 struct Type_Function;
 struct Type_Enum;
 struct Enum;
+struct Type_Map_Pair;
+
 #endif

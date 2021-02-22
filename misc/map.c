@@ -162,7 +162,6 @@ void Map_Destroy(Map *tree)
 
 }
 
-/*this isn't c++ i promise :)*/
 /*requres that cpy has no loops*/
 Map* Map_Copy(Map *cpy)
 {
@@ -185,5 +184,39 @@ Map* Map_Copy(Map *cpy)
 	return ret;
 }
 
+struct Map* Map_Check_And_Get(Map *tree, void *str,size_t size)
+{
+	size_t temp;
+	Map_Scour(tree,str,size,&temp,&tree);
+
+	if(temp<size)
+	{
+		return NULL;	
+	}else
+	{
+		return tree;
+	}
+}
+
+struct Map* Map_Push_And_Get(struct Map* tree,void *str,size_t size,void *id)
+{
+	size_t temp;
+	Map_Scour(tree,str,size,&temp,&tree);	
+
+	if(temp == size)
+	{
+		if(tree->ID!=NULL)tree->ID=id;
+		tree->is_final=1;
+		return tree;
+	}
+	for(temp;temp<size;++temp)
+	{
+		Map_Init(tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map)));
+	}
+
+	tree->ID=id;
+	tree->is_final=1;
+	return tree;
+}
 
 #endif //#ifndef GMAP

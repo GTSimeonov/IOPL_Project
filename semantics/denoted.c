@@ -1,6 +1,6 @@
 #ifndef GCC_DENOTED_C
 #define GCC_DENOTED_C GCC_DENOTED_C
-#include "denoted.h"
+#include <denoted.h>
 
 struct Denoted* get_denoted_error(struct Denoted *error)
 {
@@ -11,16 +11,15 @@ struct Denoted* get_denoted_error(struct Denoted *error)
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denoted_base(struct token *id,struct Type *type,enum Denotation_Type denotation)
+struct Denoted_Base* get_denoted_base(struct Denotation_Prototype *prototype)
 {
 	struct Denoted_Base *ret;
 	ret=malloc(sizeof(struct Denoted_Base));
-	ret->denotation=denotation;
-	ret->id=id;
-	ret->type=type;
+	ret->denotation=prototype->denotation;
+	ret->id=NULL;
+	ret->pair=get_type_map_pair(prototype->pair->type,prototype->pair->node);
 
-
-	return (struct Denoted*)ret;
+	return ret;
 }
 struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs)
 {
@@ -54,7 +53,7 @@ struct Denoted* get_denoted_typedef(struct Denoted_Base *base)
 	struct Denoted_Typedef *ret;
 	ret=malloc(sizeof(struct Denoted_Typedef));
 	ret->denotation=DT_Typedef;
-	ret->type=base->type;
+	ret->node=base->pair->node;
 	ret->id=base->id;
 
 	return (struct Denoted*)ret;
@@ -105,12 +104,12 @@ struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *s
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denotation_prototype()
+struct Denoted* get_denotation_prototype(struct Map *types)
 {
 	struct Denotation_Prototype *ret;
 	ret=malloc(sizeof(struct Denotation_Prototype));
 	ret->denotation=DT_Prototype;
-	ret->type=NULL;
+	ret->pair=get_type_map_pair(NULL,types);
 	ret->storage_class=SC_NONE;
 	ret->specifier=TS_NONE;
 	ret->constraint=TC_NONE;
@@ -125,14 +124,14 @@ struct Denoted* get_denotation_prototype()
 }
 struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prototype *prototype,char allow_abstract)
 {
-	if(base->type->specifier==TS_FUNC)
+	if(base->pair->type->specifier==TS_FUNC)
 	{
 		if(base->id==NULL && !allow_abstract)
 		{
-			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->type)->return_type,prototype->function_specifier));
+			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->pair->type)->return_type,prototype->function_specifier));
 		}else
 		{
-			return get_denoted_function(base->id,base->type,prototype->function_specifier);
+			return get_denoted_function(base->id,base->pair->type,prototype->function_specifier);
 		}
 	}else if(prototype->storage_class==SC_TYPEDEF)
 	{
@@ -147,11 +146,113 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 	{
 		if(base->id==NULL && !allow_abstract)
 		{
-			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->type));
+			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->pair->type));
 		}else
 		{
-			return get_denoted_object(base->id,prototype->storage_class,base->type);
+			return get_denoted_object(base->id,prototype->storage_class,base->pair->type);
 		}
 	}
+}
+
+void delete_denoted(struct Denoted *denoted)
+{
+	switch(denoted->denotation)
+	{
+		case DT_Label:
+			free(denoted);
+			break;
+		case DT_Object:
+			delete_denoted_object((struct Denoted_Object*)denoted);
+			break;
+		case DT_Typedef:
+			delete_denoted_typedef((struct Denoted_Typedef*)denoted);
+			break;
+		case DT_Function:
+			delete_denoted_function((struct Denoted_Function*)denoted);
+			break;
+		case DT_Enum:
+			delete_denoted_enum((struct Denoted_Enum*)denoted);
+			break;
+		case DT_Enum_Constant:
+			delete_denoted_enum_constant((struct Denoted_Enum_Const*)denoted);
+			break;
+		case DT_Struct_Union_Tag:
+			delete_denoted_struct_union((struct Denoted_Struct_Union*)denoted);
+			break;
+		case DT_Error:
+			delete_denoted_error((struct Denoted_Error*)denoted);
+			break;
+		case DT_Prototype:
+		default:
+			assert(0);
+	}
+}
+void delete_denoted_error(struct Denoted_Error *error)
+{
+	if(error->error!=NULL)
+		delete_denoted(error->error);
+	free(error);
+}
+void delete_denoted_function(struct Denoted_Function *function)
+{
+	if(function->id!=NULL)
+		free(function->id);
+	if(function->body!=NULL)
+		delete_ast_compound_statement(function->body);
+	free(function);
+}
+void delete_denoted_object(struct Denoted_Object *object)
+{
+	if(object->id!=NULL)
+		free(object->id);
+	if(object->object!=NULL)
+		delete_object(object->object);
+	free(object);
+}
+void delete_denoted_typedef(struct Denoted_Typedef *typedefed)
+{
+	if(typedefed->id!=NULL)
+		free(typedefed->id);
+	free(typedefed);
+}
+void delete_denoted_enum(struct Denoted_Enum *enumeration)
+{
+	if(enumeration->id!=NULL)
+		free(enumeration->id);
+	if(enumeration->enumeration!=NULL)
+		delete_enum(enumeration->enumeration);
+	free(enumeration);
+}
+void delete_denoted_enum_constant(struct Denoted_Enum_Const *enum_const)
+{
+	if(enum_const->id!=NULL)
+		free(enum_const->id);
+	if(enum_const->expression!=NULL)
+		delete_ast(enum_const->expression);
+	free(enum_const);
+}
+void delete_denoted_struct_union(struct Denoted_Struct_Union *su)
+{
+	if(su->id!=NULL)
+		free(su->id);
+	if(su->struct_union!=NULL)
+		delete_struct_union(su->struct_union);
+	free(su);
+}
+void delete_object(struct Object *object)
+{
+	if(object->location!=NULL)
+		delete_location(object->location);
+	free(object);
+}
+void delete_denoted_prototype(struct Denotation_Prototype *prototype)
+{
+	free(prototype->pair);
+	free(prototype);
+}
+void delete_denoted_base(struct Denoted_Base *base)
+{
+	free(base->pair);
+	free(base);
 }
 #endif
