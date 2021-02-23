@@ -53,6 +53,7 @@ struct Translation_Data* get_translation_data(struct Map *types);
 
 struct Program* parse_program(char **base_source_names);
 void lex_program(struct Translation_Data *hold,struct Source_File *file);
+void entype_program(struct Program *program);
 
 
 char has_new_errors(struct Translation_Data *translation_data);

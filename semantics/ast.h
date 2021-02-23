@@ -66,6 +66,7 @@ struct AST_Function_Expression
 	/*queue of astrees*/
 	struct Queue arguments;
 };
+/*TODO propperly name these*/
 struct AST_Rvalue_Expression
 {
 	enum AST_Type type;
@@ -228,6 +229,11 @@ void delete_ast_object_declaration(struct AST_Object_Declaration *object_declara
 void delete_ast_function_definition(struct AST_Function_Definition *function_definition);
 void delete_ast_function_declaration(struct AST_Function_Declaration *function_declaration);
 void delete_ast_translation_unit(struct AST_Translation_Unit *translation_unit);
+
+
+
+
+
 
 
 #define BIN_EXPR_PTR(x) ((struct AST_Binary_Expression*)(x))
