@@ -2,19 +2,22 @@
 #define LEXER_C LEXER_C
 /*asdf*/#include <lexer.h>
 
-char *well_known_locations_base[]={"./",NULL};
+char *well_known_locations_base[]={"./","/usr/include/","/usr/include/x86_64-linux-gnu/",NULL};
 void lex(struct Source_File *src,struct Translation_Data *translation_data)
 {
 
 
 	struct token *current_token;
 	/*this is a hack*/
-	/*lines start at 0 , this is 1 a directive at the start of the file can be processed correctly*/
-	size_t last_line=1;
+	ssize_t last_line=-1;
 
 	while(src->src[src->where_in_src]!='\0')
 	{
-
+		if(has_new_errors(translation_data))
+		{
+			push_lexing_error("could not process",src,translation_data);
+			return;
+		}
 
 		current_token=get_next_token(src,&chonky[0],1);
 		if(current_token->type==KW_HASHTAG)
@@ -281,11 +284,25 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 			++src->which_column;
 		}
 	}
-	ret=malloc(sizeof(struct token));
-	ret->type=KW_NOTYPE;
-	ret->data_size=0;
-	ret->filename=src->src_name->filename;
 
+	if(best_state->type==KW_COMMENT || best_state->type==PKW_COMMENT)
+	{
+		ret=malloc(sizeof(struct token));
+		ret->type=KW_NOTYPE;
+		ret->data_size=0;
+		ret->filename=src->src_name->filename;
+	}else
+	{
+		ret=malloc(sizeof(struct token));
+		ret->type=best_state->type;
+		ret->data_size=current_size;
+		ret->column=src->which_column;
+		ret->line=src->which_row;
+		ret->data=src->src+(src->where_in_src-current_size);
+		ret->filename=src->src_name->filename;
+		handle_splicing(ret);
+		return ret;
+	}
 	return ret;
 }
 struct token* copy_token(struct token *src)
@@ -294,5 +311,17 @@ struct token* copy_token(struct token *src)
 	cpy=malloc(sizeof(struct token));
 	*cpy=*src;
 	return cpy;
+}
+
+void delete_source_file(struct Source_File *src)
+{
+	delete_source_name(src->src_name);
+	free(src);
+}
+void delete_source_name(struct Source_Name *name)
+{
+	free(name->filename);
+	free(name->base);
+	free(name);
 }
 #endif

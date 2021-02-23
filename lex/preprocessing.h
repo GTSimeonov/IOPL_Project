@@ -6,6 +6,7 @@
 #include <chonky.h>
 #include <gcc_error.h>
 #include <map.h>
+#include <scope.h>
 
 struct define_directive
 {
@@ -26,13 +27,17 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 void parse_include_line(struct Source_File *src,struct Translation_Data *translation_data);
 void parse_define_line(struct Source_File *src,struct Translation_Data *translation_data);
 void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *translation_data);
-
+void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *translation_data);
+void parse_preproc_ifndef_line(struct Source_File *src,struct Translation_Data *translation_data);
+void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *translation_data);
 
 
 /*preproc if stuff*/
-/*returns an else or elif token, or if it hits matching endif before that return NULL and goto following line*/
-struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data);
+/*returns an else or elif token, or if it hits matching endif before that return NULL*/
+struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data,char jump_before);
 
+/*hack*/
+void preproc_lex_first_part(struct Source_File *src,struct Translation_Data *translation_data);
 
 
 /*define stuff*/
@@ -49,5 +54,6 @@ void flush_macro_arguments(size_t number_of_arguments,struct Queue *args);
 void parse_define_line(struct Source_File *src,struct Translation_Data *translation_data);
 
 void delete_define_argument_list(size_t number_of_arguments,struct Queue *args);
+void delete_macro(void *macro);
 
 #endif

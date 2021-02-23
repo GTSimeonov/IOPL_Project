@@ -33,7 +33,7 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 	}
 	ret=0;
 
-	hold_translation_data=get_translation_data();	
+	hold_translation_data=get_translation_data(NULL);	
 	do
 	{
 		base_file=get_source_file(*base_source_names,this_directory);
@@ -49,9 +49,7 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 				ret=1;
 				/*if we are here then the is_quiet flag has not been set*/
 				print_errors(out,hold_translation_data->errors);
-					free(base_file->src);
-					free(base_file->src_name);
-					free(base_file);
+				delete_source_file(base_file);
 				break;
 			}
 			fprintf(out,"\nTOKENS OF %s {\n",base_file->src_name->filename);
@@ -62,23 +60,12 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 			{
 				free(Queue_Pop(hold_translation_data->tokens));
 			}
-			free(base_file->src);
-			free(base_file->src_name);
-			free(base_file);
 		}
 	}while(*(++base_source_names));
 	
 	
-	while(hold_translation_data->errors->size>0)
-		free(Queue_Pop(hold_translation_data->errors));
+	delete_translation_data(hold_translation_data);
 
-	free(hold_translation_data->errors);
-
-
-	free(hold_translation_data->tokens);
-
-	free(hold_translation_data->source_files);
-	free(hold_translation_data);
 	return ret;
 }
 void print_tokens(FILE *out,struct Queue *tokens)
@@ -442,7 +429,7 @@ void print_type(FILE *out,struct Type *type,char should_print_struct_union)
 			fprintf(out,"ERROR!");return;
 
 	}
-	assert(1==0);
+	assert(!"reached end of switch");
 }
 void print_denoted(FILE *out,struct Denoted *denoted)
 {
@@ -466,7 +453,7 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			fprintf(out,"typedef ");
 			print_token(out,((struct Denoted_Typedef*)denoted)->id);	
 			fprintf(out," to ");
-			print_type(out,((struct Denoted_Typedef*)denoted)->node->ID,0);	
+			print_type(out,((struct Denoted_Typedef*)denoted)->type,0);	
 			return;
 		case DT_Function:
 			print_token(out,((struct Denoted_Function*)denoted)->id);

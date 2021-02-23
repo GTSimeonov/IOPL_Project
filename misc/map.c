@@ -16,7 +16,11 @@ void Map_Init(Map *tree)
 
 void Map_Scour(Map *tree,void *str,size_t size,size_t *where,Map **final_node)
 {
-	for(where[0]=0,final_node[0]=tree;where[0]<size && final_node[0]->delta[((unsigned char*)str)[ where[0] ]]!=NULL;++where[0])
+	for(
+		 *where=0,*final_node=tree;
+		*where<size && final_node[0]->delta[((unsigned char*)str)[ where[0] ]]!=NULL;
+		++where[0]
+	)
 	{
 		(*final_node) = (*final_node)->delta[((unsigned char*)str)[*where]];
 	}
@@ -34,13 +38,16 @@ void Map_Push(Map *tree,void *str,size_t size,void *id)
 
 	if(temp == size)
 	{
-		if(tree->ID!=NULL)tree->ID=id;
+		assert(tree->ID==NULL);
+		tree->ID=id;
 		tree->is_final=1;
 		return;
 	}
 	for(temp;temp<size;++temp)
 	{
-		Map_Init(tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map)));
+		Map_Init(
+			tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map))
+			);
 	}
 
 	tree->ID=id;
@@ -209,9 +216,14 @@ struct Map* Map_Push_And_Get(struct Map* tree,void *str,size_t size,void *id)
 		tree->is_final=1;
 		return tree;
 	}
+
 	for(temp;temp<size;++temp)
 	{
-		Map_Init(tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map)));
+		Map_Init(
+			tree=
+			tree->delta[((unsigned char*)str)[temp]]=
+			malloc(sizeof(Map))
+			);
 	}
 
 	tree->ID=id;

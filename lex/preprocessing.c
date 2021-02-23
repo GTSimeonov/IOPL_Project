@@ -8,6 +8,7 @@
  	#include string
 	#include <qchar>
 	#define [ id(list) replacement
+	#undef [ id ]
 	#line number [string]
 	#if
 	#ifdef
@@ -16,7 +17,6 @@
 	#error
 	#
 
-	these should be seperated from the ifs
 	#elif
 	#else
 	#endif
@@ -39,11 +39,36 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 			return;
 		case PKW_IF:
 			free(hold);
-			//parse_preproc_if_line(src,translation_data);
+			parse_preproc_if_line(src,translation_data);
+			return;
+		case PKW_IFDEF:
+			free(hold);
+			parse_preproc_ifdef_line(src,translation_data);
+			return;
+		case PKW_IFNDEF:
+			free(hold);
+			parse_preproc_ifndef_line(src,translation_data);
+			return;
+		case PKW_UNDEF:
+			free(hold);
+			parse_preproc_undef_line(src,translation_data);
+			return;
+		case PKW_ENDIF:
+			free(hold);
+			push_lexing_error("unmatched endif",src,translation_data);
+			return;
+		case PKW_ELSE:
+			free(hold);
+			push_lexing_error("unmatched else",src,translation_data);
+			return;
+		case PKW_ELIF:
+			free(hold);
+			push_lexing_error("unmatched elif",src,translation_data);
 			return;
 		default:
-			return;
 			/*TODO error*/
+			push_lexing_error("expected a preprocessing directive",src,translation_data);
+			return;
 
 	}
 }
@@ -177,11 +202,11 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 
 	}else if(hold_token->type==KW_NOTYPE)
 	{
-		push_lexing_error("empty define directive",src,translation_data);
+		//push_lexing_error("empty define directive",src,translation_data);
 		free(hold_token);
 		/*TODO destroy new define directive*/
 		/*TODO there is a memory leak here*/
-		return ;	
+	//	return ;	
 	}
 
 /*push things*/
@@ -201,7 +226,8 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 	translation_data->tokens=hold_tokens;
 /*push the directive into the macro map*/
 	Map_Push(translation_data->macros,macro_name->data,macro_name->data_size,new_macro);
-	free(macro_name);
+	//free(macro_name);
+	chase_new_line(src,translation_data);
 
 }
 /*
@@ -392,16 +418,113 @@ void expand_macro(struct token* macro_name,struct Source_File *src,struct Transl
 		Queue_Push(translation_data->tokens,macro_name);
 	}
 }
+void preproc_lex_first_part(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct Source_File temp_src;
+	struct token *hold_token;
+	char just_in_case;
 
-struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data)
+	temp_src=*src;
+	hold_token=preproc_find_else(src,translation_data,1);
+
+	temp_src.src_size=src->where_in_src;
+	just_in_case=src->src[src->where_in_src];
+	src->src[src->where_in_src]='\0';
+
+	lex(&temp_src,translation_data);
+
+	src->src[src->where_in_src]=just_in_case;
+
+	do
+		hold_token=preproc_find_else(src,translation_data,0);
+	while(hold_token && !has_new_errors(translation_data));
+	
+	if(hold_token!=NULL)
+	{
+		push_lexing_error("could not find matching #else, #elif or #endif",src,translation_data);
+	}
+}
+/*
+   we have skipped the #if part so this could be used for elif 
+ */
+void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	size_t hold_line;
+	struct Queue hold_tokens;
+	struct Queue *swap_tokens;
+	struct token *hold_token;
+	struct Scope *empty_scope;
+	struct AST *expression;
+	int result;
+
+	hold_line=src->which_row;
+	Queue_Init(&hold_tokens);
+	hold_token=get_next_token(src,&chonky[0],0);
+	empty_scope=get_normal_scope(NULL,EXTERN_SCOPE);
+
+	swap_tokens=translation_data->tokens;
+	translation_data->tokens=&hold_tokens;
+	while(hold_token->type!=KW_NOTYPE && hold_token->line==hold_line)
+	{
+		expand_macro(hold_token,src,translation_data);
+		hold_token=get_next_token(src,&chonky[0],0);	
+	}
+
+	/*NOTYPE*/
+	free(hold_token);
+		
+	expression=parse_expression(translation_data,empty_scope);
+	result=evaluate_const_expression_integer(expression);
+
+	delete_ast(expression);
+	delete_scope(empty_scope);
+	translation_data->tokens=swap_tokens;
+
+	if(hold_tokens.size>0)
+	{
+		push_lexing_error("unexpected token",src,translation_data);
+		while(hold_tokens.size>0)
+			free(Queue_Pop(&hold_tokens));
+	}
+	
+	if(has_new_errors(translation_data))
+	{
+		push_lexing_error("fatal error",src,translation_data);
+		return ;
+	}else
+	{
+
+		if(result)
+		{
+			preproc_lex_first_part(src,translation_data);	
+		}else
+		{
+			hold_token=preproc_find_else(src,translation_data,0);
+			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
+			{
+				//preproc_find_else(src,translation_data,0);
+				parse_preproc_if_line(src,translation_data);
+			}
+			else
+			{
+				preproc_lex_first_part(src,translation_data);
+			}
+		}	
+		
+	}
+	
+}
+struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data,char jump_before)
 {
 	struct token *hold_token;
+	struct Source_File temp_src;
 	int indentation=1;
 
 	while(src->src[src->where_in_src]!='\0' && indentation)
 	{
 		/*BEWARE*/
 		goto_new_line(src,translation_data);
+		temp_src=*src;
 		/*END BEWARE*/
 
 		hold_token=get_next_token(src,&chonky[0],1);
@@ -425,6 +548,8 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 				case PKW_ELIF:
 					if(indentation==1)
 					{
+						if(jump_before)
+							*src=temp_src;
 						return hold_token;
 					}
 					else
@@ -450,8 +575,100 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 		}
 	}
 	/*BEWARE*/
-	goto_new_line(src,translation_data);	
+	//goto_new_line(src,translation_data);	
 	/*END BEWARE*/
+	if(jump_before)
+		*src=temp_src;
 	return NULL;
+}
+void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct token *hold_token;
+	hold_token=get_next_token(src,&chonky[0],0);
+	if(hold_token==NULL || hold_token->type!=KW_ID)
+	{
+		push_lexing_error("expected an id here",src,translation_data);
+		chase_new_line(src,translation_data);
+	}else
+	{
+		if(Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
+		{
+			preproc_lex_first_part(src,translation_data);
+		}else
+		{
+			hold_token=preproc_find_else(src,translation_data,1);
+			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
+			{
+				parse_preproc_if_line(src,translation_data);
+			}
+			else
+			{
+				preproc_find_else(src,translation_data,0);
+				preproc_lex_first_part(src,translation_data);
+			}
+		}
+
+	}
+	chase_new_line(src,translation_data);
+}
+void parse_preproc_ifndef_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct token *hold_token;
+	hold_token=get_next_token(src,&chonky[0],0);
+	if(hold_token==NULL || hold_token->type!=KW_ID)
+	{
+		push_lexing_error("expected an id here",src,translation_data);
+		chase_new_line(src,translation_data);
+	}else
+	{
+		if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
+		{
+			preproc_lex_first_part(src,translation_data);
+		}else
+		{
+			hold_token=preproc_find_else(src,translation_data,1);
+			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
+			{
+				parse_preproc_if_line(src,translation_data);
+			}
+			else
+			{
+				preproc_find_else(src,translation_data,0);
+				preproc_lex_first_part(src,translation_data);
+			}
+		}
+
+	}
+	chase_new_line(src,translation_data);
+}
+void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct define_directive *hold_macro;
+	struct token *id;
+	
+	id=get_next_token(src,&chonky[0],0);
+	if(id->type!=KW_ID)
+	{
+		push_lexing_error("expected an id here",src,translation_data);
+		return;
+	}else
+	{
+		hold_macro=Map_Check(translation_data->macros,id->data,id->data_size);
+		if(hold_macro!=NULL)
+		{
+			delete_macro(hold_macro);
+		}
+	}
+	chase_new_line(src,translation_data);
+}
+void delete_macro(void *macro)
+{
+#define AS_MACRO(x) ((struct define_directive*)macro)
+	free(AS_MACRO(macro)->macro_name);
+	while(AS_MACRO(macro)->macro_tokens->size>0)
+		free(Queue_Pop(AS_MACRO(macro)->macro_tokens));
+	Map_Map(AS_MACRO(macro)->arguments,free);
+	free(macro);
+#undef AS_MACRO
 }
 #endif

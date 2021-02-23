@@ -27,7 +27,13 @@ struct Translation_Error* get_translation_error_by_token(const char *error_messa
 
 void push_translation_error(const char *error_message,struct Translation_Data *translation_data)
 {
-	Queue_Push(translation_data->errors,get_translation_error_by_token(error_message,(struct token*)translation_data->tokens->first->data));
+	if(translation_data->tokens->size==0)
+	{
+		get_translation_error(error_message,0,0,"");
+	}else
+	{
+		Queue_Push(translation_data->errors,get_translation_error_by_token(error_message,(struct token*)translation_data->tokens->first->data));
+	}
 }
 
 void push_lexing_error(const char *error_message,struct Source_File *src,struct Translation_Data *translation_data)
@@ -46,4 +52,8 @@ void print_translation_error(FILE *out,struct Translation_Error *error)
 }
 
 
+void delete_translation_error(struct Translation_Error *translation_error)
+{
+	free(translation_error);
+}
 #endif

@@ -37,12 +37,18 @@ struct Scope* get_function_scope(struct Scope *parent)
 
 void delete_normal_scope(struct Normal_Scope *scope)
 {
-
+	Map_Map(&scope->tags,delete_denoted_wrapper);
+	Map_Destroy(&scope->tags);
+	Map_Map(&scope->ordinary,delete_denoted_wrapper);
+	Map_Destroy(&scope->ordinary);
+	free(scope);
 }
 
 void delete_function_scope(struct Function_Scope *scope)
 {
-
+	Map_Map(&scope->labels,delete_denoted_wrapper);
+	Map_Destroy(&scope->labels);
+	free(scope);
 }
 
 void delete_scope(struct Scope *scope)
@@ -138,12 +144,13 @@ void push_tag(struct Scope *current,struct token *id,struct Denoted *denot)
 {
 	/*TODO fix this shit*/
 	assert(current->type!=FUNCTION_SCOPE);
-
+	assert(denot!=NULL);
 	Map_Push(&((struct Normal_Scope*)current)->tags,id->data,id->data_size,denot);
 }
 void push_ordinary(struct Scope *current,struct token *id,struct Denoted *denot)
 {
 	assert(current->type!=FUNCTION_SCOPE);
+	assert(denot!=NULL);
 	Map_Push(&((struct Normal_Scope*)current)->ordinary,id->data,id->data_size,denot);
 }
 #endif

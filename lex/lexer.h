@@ -64,4 +64,7 @@ char get_and_check_unsafe(struct Translation_Data *translation_data,enum KEYWORD
 void chomp(struct Translation_Data *translation_data);
 enum KEYWORDS kw_get(struct Translation_Data *translation_data);
 
+
+void delete_source_file(struct Source_File *src);
+void delete_source_name(struct Source_Name *name);
 #endif

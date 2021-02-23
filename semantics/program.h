@@ -17,6 +17,12 @@ struct Program
 	struct Queue *source_files;
 	struct Queue *errors;
 	struct Scope *externs;
+
+	/*
+	   we the type node structures from 
+	   all the translation units are stored here
+	 */
+	struct Map *types;
 };
 struct Translation_Data
 {
@@ -31,6 +37,7 @@ struct Translation_Data
 
 	struct Map *macros;
 
+	/*passed from program struct*/
 	struct Map *types;
 };
 
@@ -41,7 +48,7 @@ struct Source_File* extract_source_file(FILE *in,struct Source_Name *name);
 struct Source_File* get_source_file(char *filename,char **where_to_search);
 void normalise_source_name(struct Source_Name *name);
 
-struct Translation_Data* get_translation_data();
+struct Translation_Data* get_translation_data(struct Map *types);
 
 
 struct Program* parse_program(char **base_source_names);
@@ -49,5 +56,9 @@ void lex_program(struct Translation_Data *hold,struct Source_File *file);
 
 
 char has_new_errors(struct Translation_Data *translation_data);
+
+void delete_program(struct Program *program);
+void delete_translation_data(struct Translation_Data *translation_data);
+void assimilate_translation_data(struct Program *program,struct Translation_Data *translation_data);
 
 #endif

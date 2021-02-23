@@ -1,6 +1,6 @@
 #ifndef GSTACK_H
 #define GSTACK_H GSTACK_H
-#include<stdlib.h>//malloc free et alii
+#include<stdlib.h>
 typedef struct Stack Stack;
 
 struct Stack

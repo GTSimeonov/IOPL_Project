@@ -26,7 +26,7 @@ struct Denoted_Base
 {
 	enum Denotation_Type denotation;
 	struct token *id;
-	struct Type_Map_Pair *pair;
+	struct Type *type;
 };
 struct Denoted_Function
 {
@@ -49,7 +49,7 @@ struct Denoted_Typedef
 {
 	enum Denotation_Type denotation;
 	struct token *id;
-	struct Map *node;
+	struct Type *type;
 
 };
 struct Denoted_Enum
@@ -80,7 +80,8 @@ struct Denoted_Struct_Union
 struct Denotation_Prototype
 {
 	enum Denotation_Type denotation;
-	struct Type_Map_Pair *pair;
+	struct Type *type;
+	struct Map *node;
 
 
 	enum Storage_Class storage_class;
@@ -120,6 +121,7 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 struct Denoted* get_denotation_prototype(struct Map *types);
 
 
+void delete_denoted_wrapper(void *denoted);
 void delete_denoted(struct Denoted *denoted);
 void delete_denoted_error(struct Denoted_Error *error);
 void delete_denoted_function(struct Denoted_Function *function);

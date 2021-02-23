@@ -3,92 +3,55 @@
 #include "type.h"
 
 
-void type_check_and_push_heavy(struct Type_Map_Pair *pair,struct Type *type)
-{
-	switch(type->specifier)
-	{
-		case TS_VOID:
-		case TS_CHAR:
-		case TS_INT:
-		case TS_FLOAT:
-		case TS_DOUBLE:
-			type_check_and_push(pair,type,sizeof(struct Type_Basic));
-			break;
-		case TS_STRUCT:
-		case TS_UNION:
-			type_check_and_push(pair,type,sizeof(struct Type_Struct_Union));
-			break;
-		case TS_ENUM:
-			type_check_and_push(pair,type,sizeof(struct Type_Enum));
-			break;
-		case TS_POINTER:
-			type_check_and_push(pair,type,sizeof(struct Type_Pointer));
-			break;
-		case TS_ARRAY:
-			type_check_and_push(pair,type,sizeof(struct Type_Array));
-			break;
-		case TS_FUNC:
-			type_check_and_push(pair,type,sizeof(struct Type_Function));
-			break;
-		case TS_BITFIELD:
-			type_check_and_push(pair,type,sizeof(struct Type_Bit_Field));
-			break;
-		case TS_ERROR:
-			type_check_and_push(pair,type,sizeof(struct Type_Error));
-			break;
-		case TS_NONE:
-		default:
-			assert(0);
-	}
-}
 
-void type_check_and_push(struct Type_Map_Pair *pair,struct Type *type,size_t struct_size)
+struct Type* type_check_and_push(struct Type *type,struct Map *base,size_t struct_size)
 {
-
 	struct Map *hold_node;
-	hold_node=Map_Check_And_Get(pair->node,type,struct_size);
+	hold_node=Map_Check_And_Get(base,type,struct_size);
 
 	if(hold_node==NULL)
 	{
-		pair->type=type;
-		pair->node=Map_Push_And_Get(pair->node,type,struct_size,pair->type);
+		type->node=Map_Push_And_Get(base,type,struct_size,type);
+		return type;
 	}else
 	{
 		free(type);
-		pair->node=hold_node;
-		pair->type=(struct Type*)hold_node->ID;
+		return (struct Type*)hold_node->ID;
 	}
 }
 
-void get_type_error(struct Type_Map_Pair *pair)
+struct Type* get_type_error(struct Type *type)
 {
 	struct Type_Error *ret;
 
-	ret=malloc(sizeof(struct Type_Error));
+	ret=calloc(1,sizeof(struct Type_Error));
 	ret->specifier=TS_ERROR;
-	ret->error=pair->type;
-
-	type_check_and_push(pair,(struct Type*)ret,sizeof(struct Type_Error));
+	ret->error=type;
+	ret=(struct Type_Error*)type_check_and_push((struct Type*)ret,type->node,sizeof(struct Type_Error));
+	return (struct Type*)ret;
 	
 }
-void get_struct_union_type(struct Denotation_Prototype *prototype)
+struct Type* get_struct_union_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Struct_Union *ret;
 	
 	assert(prototype->denotation=DT_Prototype);
 	prototype->denotation=DT_Object;
 
-	ret=malloc(sizeof(struct Type_Struct_Union));
+	ret=calloc(1,sizeof(struct Type_Struct_Union));
 	ret->specifier=prototype->specifier;
 	ret->struct_union=prototype->struct_union;
 
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
 
-	type_check_and_push(prototype->pair,(struct Type*)ret,sizeof(struct Type_Struct_Union));
+	ret=(struct Type_Struct_Union*)type_check_and_push((struct Type*)ret,prototype->node,sizeof(struct Type_Struct_Union));
 	if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE || (prototype->specifier!=TS_UNION && prototype->specifier!=TS_STRUCT))
 	{
-		get_type_error(prototype->pair);
+		return get_type_error((struct Type*)ret);
+	}else
+	{
+		return (struct Type*)ret;
 	}
 }
 struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specifier struct_or_union)
@@ -96,7 +59,7 @@ struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specif
 	struct Struct_Union *ret;
 
 
-	ret=malloc(sizeof(struct Struct_Union));
+	ret=calloc(1,sizeof(struct Struct_Union));
 	ret->specifier=struct_or_union;
 	ret->members=malloc(sizeof(struct Queue));
 	Queue_Init(ret->members);
@@ -118,10 +81,10 @@ struct Enum *get_enum_base()
 
 	return ret;
 }
-void get_basic_type(struct Denotation_Prototype *prototype)
+struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Basic *ret;
-	ret=malloc(sizeof(struct Type_Basic));
+	ret=calloc(1,sizeof(struct Type_Basic));
 
 
 	assert(prototype->denotation=DT_Prototype);
@@ -131,7 +94,7 @@ void get_basic_type(struct Denotation_Prototype *prototype)
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
 	ret->constraint=prototype->constraint;
-	ret->size=prototype->sign;
+	ret->sign=prototype->sign;
 	
 
 	if(prototype->specifier==TS_NONE)
@@ -143,22 +106,22 @@ void get_basic_type(struct Denotation_Prototype *prototype)
 
 	}
 
-	type_check_and_push(prototype->pair,(struct Type*)ret,sizeof(struct Type_Basic));
+	ret=(struct Type_Basic*)type_check_and_push((struct Type*)ret,prototype->node,sizeof(struct Type_Basic));
 
-	switch(prototype->pair->type->specifier)
+	switch(ret->specifier)
 	{
 		case TS_DOUBLE:
-			if(prototype->constraint==TC_LONG_LONG 
+			if(ret->constraint==TC_LONG_LONG 
 				|| prototype->constraint==TC_SHORT
 				|| prototype->sign!=TSIGN_NONE)
 			{
-				get_type_error(prototype->pair);
+				return get_type_error((struct Type*)ret);
 			}
 			break;
 		case TS_CHAR:
 			if(prototype->constraint!=TC_NONE)
 			{
-				get_type_error(prototype->pair);
+				return get_type_error((struct Type*)ret);
 			}
 			break;
 		case TS_INT:
@@ -166,29 +129,31 @@ void get_basic_type(struct Denotation_Prototype *prototype)
 		default:
 			if(prototype->constraint!=TC_NONE || prototype->sign!=TSIGN_NONE)
 			{
-				get_type_error(prototype->pair);
+				return get_type_error((struct Type*)ret);
 			}
 			
 	}
+	return (struct Type*)ret;
 
 }
-void get_pointer_type(struct Type_Map_Pair *pair,char is_volatile,char is_constant)
+struct Type* get_pointer_type(struct Type *points_to)
 {
 	struct Type_Pointer *ret;
-	ret=malloc(sizeof(struct Type_Pointer));
+	ret=calloc(1,sizeof(struct Type_Pointer));
 	ret->specifier=TS_POINTER;
 	ret->size=PTR_SIZE;
-	ret->points_to=pair->type;
-	ret->is_const=is_constant;
-	ret->is_volatile=is_volatile;
+	ret->points_to=points_to;
+	ret->is_const=0;
+	ret->is_volatile=0;
 
-	type_check_and_push(pair,(struct Type*)ret,sizeof(struct Type_Pointer));
+	ret=(struct Type_Pointer*)type_check_and_push((struct Type*)ret,points_to->node,sizeof(struct Type_Pointer));
+	return (struct Type*)ret;
 
 }
-void get_array_type(struct Type_Map_Pair *pair,struct AST* number_of_elements)
+struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements)
 {
 	struct Type_Array *ret;
-	ret=malloc(sizeof(struct Type_Array));
+	ret=calloc(1,sizeof(struct Type_Array));
 	ret->specifier=TS_ARRAY;
 	ret->size=0;
 	if(number_of_elements!=NULL)
@@ -199,54 +164,58 @@ void get_array_type(struct Type_Map_Pair *pair,struct AST* number_of_elements)
 	{
 		ret->number_of_elements=0;
 	}
-	ret->is_array_of=pair->type;
-	type_check_and_push(pair,(struct Type*)ret,sizeof(struct Type_Array));
+	ret->is_array_of=array_of;
+	ret=(struct Type_Array*)type_check_and_push((struct Type*)ret,array_of->node,sizeof(struct Type_Array));
+	return (struct Type*)ret;
+
 
 }
-void get_enum_type(struct Denotation_Prototype *prototype)
+struct Type* get_enum_type(struct Denotation_Prototype *prototype)
 {
 	struct Type_Enum *ret;
 
 	assert(prototype->denotation=DT_Prototype);
 	prototype->denotation=DT_Object;
 
-	ret=malloc(sizeof(struct Type_Enum));
+	ret=calloc(1,sizeof(struct Type_Enum));
 	ret->specifier=TS_ENUM;
 	ret->enumeration=prototype->enumerator;
 	ret->is_const=prototype->is_const;
 	ret->is_volatile=prototype->is_volatile;
 
-	type_check_and_push(prototype->pair,(struct Type*)ret,sizeof(struct Type_Enum));
+	ret=(struct Type_Enum*)type_check_and_push((struct Type*)ret,prototype->node,sizeof(struct Type_Enum));
 	if(prototype->sign!=TSIGN_NONE || prototype->constraint!=TC_NONE)
 	{
-		get_type_error(prototype->pair);
+		return get_type_error((struct Type*)ret);
 	}
+	return (struct Type*)ret;
 }
-void get_type_bitfield(struct Type_Map_Pair *pair,struct AST* number_of_bits)
+struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits)
 {
 	struct Type_Bit_Field *ret;
-	ret=malloc(sizeof(struct Type_Bit_Field));
+	ret=calloc(1,sizeof(struct Type_Bit_Field));
 	ret->specifier=TS_BITFIELD;
 
 	assert(number_of_bits!=NULL);
 	ret->number_of_bits=evaluate_const_expression_integer(number_of_bits);
 	delete_ast(number_of_bits);
 
-	ret->base=pair->type;
+	ret->base=base;
 
-	type_check_and_push(pair,(struct Type*)ret,sizeof(struct Type_Bit_Field));
+	ret=(struct Type_Bit_Field*)type_check_and_push((struct Type*)ret,base->node,sizeof(struct Type_Bit_Field));
+	return (struct Type*)ret;
 }
 
-void get_function_type(struct Type_Map_Pair *pair,struct Queue *parameters,struct Normal_Scope* function_prototype_scope)
+struct Type* get_function_type(struct Type *return_type,struct Queue *parameters,struct Normal_Scope* function_prototype_scope)
 {
 	struct Type_Function *ret;
 	size_t i;
 	struct Map *hold_node;
 
-	ret=malloc(sizeof(struct Type_Function));
+	ret=calloc(1,sizeof(struct Type_Function));
 	ret->specifier=TS_FUNC;
 
-	ret->return_type=pair->type;
+	ret->return_type=return_type;
 
 
 	ret->function_prototype_scope=function_prototype_scope;
@@ -258,7 +227,7 @@ void get_function_type(struct Type_Map_Pair *pair,struct Queue *parameters,struc
 	{
 		ret->arguments[i]=(struct Type*)Queue_Pop(parameters);
 	}
-	type_check_and_push(pair,(struct Type*)ret,sizeof(struct Type_Function));
+	ret=(struct Type_Function*)type_check_and_push((struct Type*)ret,return_type->node,sizeof(struct Type_Function));
 
 }
 char is_type(struct Translation_Data *translation_data,struct Scope *scope)
@@ -332,15 +301,6 @@ size_t get_type_size(struct Type *type)
 	}	
 }
 
-struct Type_Map_Pair* get_type_map_pair(struct Type *type,struct Map *types)
-{
-	struct Type_Map_Pair *ret;
-	ret=malloc(sizeof(struct Type_Map_Pair));
-	ret->type=type;
-	ret->node=types;
-
-	return ret;
-}
 
 void delete_enum(struct Enum *enumeration)
 {

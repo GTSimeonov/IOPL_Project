@@ -22,4 +22,5 @@ void push_translation_error(const char *error_message,struct Translation_Data *t
 void push_lexing_error(const char *error_message,struct Source_File *src,struct Translation_Data *translation_data);
 void print_translation_error(FILE *out,struct Translation_Error *error);
 
+void delete_translation_error(struct Translation_Error *translation_error);
 #endif

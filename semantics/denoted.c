@@ -17,7 +17,7 @@ struct Denoted_Base* get_denoted_base(struct Denotation_Prototype *prototype)
 	ret=malloc(sizeof(struct Denoted_Base));
 	ret->denotation=prototype->denotation;
 	ret->id=NULL;
-	ret->pair=get_type_map_pair(prototype->pair->type,prototype->pair->node);
+	ret->type=prototype->type;
 
 	return ret;
 }
@@ -53,7 +53,7 @@ struct Denoted* get_denoted_typedef(struct Denoted_Base *base)
 	struct Denoted_Typedef *ret;
 	ret=malloc(sizeof(struct Denoted_Typedef));
 	ret->denotation=DT_Typedef;
-	ret->node=base->pair->node;
+	ret->type=base->type;
 	ret->id=base->id;
 
 	return (struct Denoted*)ret;
@@ -109,7 +109,8 @@ struct Denoted* get_denotation_prototype(struct Map *types)
 	struct Denotation_Prototype *ret;
 	ret=malloc(sizeof(struct Denotation_Prototype));
 	ret->denotation=DT_Prototype;
-	ret->pair=get_type_map_pair(NULL,types);
+	ret->type=NULL;
+	ret->node=types;
 	ret->storage_class=SC_NONE;
 	ret->specifier=TS_NONE;
 	ret->constraint=TC_NONE;
@@ -124,14 +125,14 @@ struct Denoted* get_denotation_prototype(struct Map *types)
 }
 struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prototype *prototype,char allow_abstract)
 {
-	if(base->pair->type->specifier==TS_FUNC)
+	if(base->type->specifier==TS_FUNC)
 	{
 		if(base->id==NULL && !allow_abstract)
-		{
-			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->pair->type)->return_type,prototype->function_specifier));
+			{
+			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->type)->return_type,prototype->function_specifier));
 		}else
 		{
-			return get_denoted_function(base->id,base->pair->type,prototype->function_specifier);
+			return get_denoted_function(base->id,base->type,prototype->function_specifier);
 		}
 	}else if(prototype->storage_class==SC_TYPEDEF)
 	{
@@ -146,10 +147,10 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 	{
 		if(base->id==NULL && !allow_abstract)
 		{
-			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->pair->type));
+			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->type));
 		}else
 		{
-			return get_denoted_object(base->id,prototype->storage_class,base->pair->type);
+			return get_denoted_object(base->id,prototype->storage_class,base->type);
 		}
 	}
 }
@@ -247,12 +248,14 @@ void delete_object(struct Object *object)
 }
 void delete_denoted_prototype(struct Denotation_Prototype *prototype)
 {
-	free(prototype->pair);
 	free(prototype);
 }
 void delete_denoted_base(struct Denoted_Base *base)
 {
-	free(base->pair);
 	free(base);
+}
+void delete_denoted_wrapper(void *denoted)
+{
+	delete_denoted(denoted);
 }
 #endif
