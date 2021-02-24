@@ -98,8 +98,8 @@ struct Type_Function
 	struct Type *return_type;
 	/*types*/
 	size_t number_of_arguments;
-	/*array of pointers to Type*/
-	struct Type** arguments;
+
+	struct Denoted_Object** arguments;
 	struct Normal_Scope *function_prototype_scope;
 
 };

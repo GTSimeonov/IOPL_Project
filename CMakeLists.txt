@@ -6,6 +6,7 @@ include_directories(misc)
 include_directories(parse)
 include_directories(semantics)
 include_directories(lex)
+include_directories(code_generation/js)
 
 set(SOURCES main.c 
 	parse/parse_declaration.c
@@ -30,6 +31,7 @@ set(SOURCES main.c
 	semantics/scope.c
 	semantics/semantics.c
 	semantics/gcc_error.c
+	code_generation/js/transpile_to_js.c
    )
 
 add_executable(wonky ${SOURCES})

@@ -657,6 +657,7 @@ void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *t
 		if(hold_macro!=NULL)
 		{
 			delete_macro(hold_macro);
+			Map_Remove(translation_data->macros,id->data,id->data_size);
 		}
 	}
 	chase_new_line(src,translation_data);

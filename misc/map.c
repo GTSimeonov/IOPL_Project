@@ -113,6 +113,18 @@ void Map_Map(Map *tree,void (*map)(void*))
 	}
 }
 
+/*first argument of map is the node id , the second is pass_data*/
+void Map_Map_Extended(Map *tree,void (*map)(void*,void*),void* pass_data)
+{
+	if(tree->is_final==1)map(tree->ID,pass_data);
+	for(int i=0;i<256;++i)
+	{
+		if(tree->delta[i]!=NULL)
+		{
+			Map_Map_Extended(tree->delta[i],map,pass_data);
+		}
+	}
+}
 
 
 /*this does not destroy(free) any memory pointed to by a node in the Map. This does not free() the root (Map *tree) */

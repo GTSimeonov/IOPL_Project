@@ -24,6 +24,13 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 			if(get_and_check(translation_data,KW_OPEN_CURLY))
 			{
 				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(translation_data,scope);
+				((struct Denoted_Function*)hold)->storage_class=(prototype->storage_class==SC_NONE?
+										SC_EXTERN:
+										prototype->storage_class);
+
+
+
+
 				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
 				Scope_Push(scope,hold);
 				free(prototype);
@@ -714,9 +721,8 @@ void parse_paramenter_list(struct Translation_Data *translation_data,struct Norm
 		hold=extract_denoted(base,prototype,1);
 
 		Scope_Push((struct Scope*)function_prototype_scope,hold);
-		Queue_Push(parameters,((struct Denoted_Object*)hold)->object->type);
+		Queue_Push(parameters,((struct Denoted_Object*)hold));
 
-		delete_denoted(hold);
 		delete_denoted_prototype(prototype);
 		delete_denoted_base(base);	
 

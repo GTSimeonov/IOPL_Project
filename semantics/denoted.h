@@ -36,6 +36,8 @@ struct Denoted_Function
 
 
 	enum Function_Specifier function_specifier;
+	enum Storage_Class storage_class;
+
 	struct AST_Compound_Statement *body;
 };
 struct Denoted_Object
@@ -135,4 +137,5 @@ void delete_denoted_prototype(struct Denotation_Prototype *prototype);
 void delete_denoted_base(struct Denoted_Base *base);
 
 
+enum Storage_Class get_denoted_function_storage_class(struct Denoted_Function *function);
 #endif

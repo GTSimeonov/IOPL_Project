@@ -55,6 +55,11 @@ int main(int argc,char **argv)
 	struct Program *program;
 
 	command_arguments=parse_command_arguments(argv);
+	if(command_arguments->error_message!=NULL)
+	{
+		fprintf(stderr,command_arguments->error_message);
+		return 1;
+	}
 	if(command_arguments->print_tokens && !command_arguments->is_quiet)
 	{
 		return print_tokens_of_program(stdout,command_arguments->source_names);
@@ -74,6 +79,9 @@ int main(int argc,char **argv)
 		}else if(command_arguments->print_ast && !command_arguments->is_quiet)
 		{
 			print_program_ast(stdout,program);
+		}else if(command_arguments->transpile_to_js)
+		{
+			transpile_to_javascript(command_arguments->output_file,program,command_arguments);
 		}
 	}
 	

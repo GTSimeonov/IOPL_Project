@@ -118,10 +118,23 @@ void Scope_Push(struct Scope *scope,struct Denoted *declarator)
 			return 1;
 			*/
 		case DT_Function:
-		case DT_Typedef:
+			if(((struct Denoted_Function*)declarator)->storage_class==SC_EXTERN)
+			{
+				while(scope->type!=EXTERN_SCOPE)
+					scope=scope->parent;
+			}
+			goto hack;
 		case DT_Object:
+			if(((struct Denoted_Object*)declarator)->object->storage_class==SC_EXTERN)
+			{
+				while(scope->type!=EXTERN_SCOPE)
+					scope=scope->parent;
+			}
+			goto hack;
+		case DT_Typedef:
 		case DT_Enum_Constant:
 		case DT_Struct_Union_Member:
+			hack:
 			push_ordinary(scope,((struct Denoted_Object*)declarator)->id,declarator);
 			return;
 		case DT_Enum:

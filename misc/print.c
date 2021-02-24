@@ -103,7 +103,7 @@ void print_ast_enum(FILE *out,enum AST_Type op)
 	case OP_ASSIGN:
 		fprintf(out,"=");break;
 	case OP_ADD_ASSIGN:
-		fprintf(out,"&=");break;
+		fprintf(out,"+=");break;
 	case OP_SUBTRACT_ASSIGN:
 		fprintf(out,"-=");break;
 	case OP_MULTIPLY_ASSIGN:
@@ -476,6 +476,8 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			fprintf(out,"denotation error");return;
 		case DT_Prototype:
 			fprintf(out,"denotation prototyep");return;
+		default:
+			assert(0);
 		
 	}
 }
@@ -871,11 +873,11 @@ void print_function_args(FILE *out,struct Type_Function *func)
 	if(func->number_of_arguments==0)
 		return;
 
-	print_type(out,func->arguments[0],0);
+	print_denoted(out,(struct Denoted*)func->arguments[0]);
 	for(i=1;i<func->number_of_arguments;++i)
 	{
 		fprintf(out,", ");
-		print_type(out,func->arguments[i],0);
+		print_denoted(out,(struct Denoted*)func->arguments[i]);
 	}	
 }
 #undef TOK

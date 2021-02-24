@@ -4,3 +4,9 @@ C to JS transpiler
 	prints the tokens after preprocessing
 --print-ast
 	prints 'ast' of the program after parsing
+--transpile-to-js || -js
+	tries to transpile C code to JS
+		--add-html
+			Encases resulting JS in simple html
+-o FILENAME
+	specifies output filename

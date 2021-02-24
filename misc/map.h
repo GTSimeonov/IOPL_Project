@@ -27,6 +27,7 @@ void Map_Push(Map *tree,void *str,size_t size,void *id);
 void* Map_Check(Map *tree, void *str,size_t size);
 void Map_Remove(Map *tree, void *str,size_t size);
 void Map_Map(Map *tree,void (*map)(void*));
+void Map_Map_Extended(Map *tree,void (*map)(void*,void*),void* pass_data);
 void Map_Destroy(Map *tree);
 struct Condensed_Map* Map_Condense(Map* tree);
 

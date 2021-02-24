@@ -30,6 +30,7 @@ struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,e
 	ret->type=return_type;
 	ret->function_specifier=fs;
 	ret->body=NULL;
+	ret->storage_class=SC_NONE;
 
 	return (struct Denoted*)ret;
 }
@@ -258,4 +259,9 @@ void delete_denoted_wrapper(void *denoted)
 {
 	delete_denoted(denoted);
 }
+
+
+
+
+
 #endif

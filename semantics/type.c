@@ -222,10 +222,10 @@ struct Type* get_function_type(struct Type *return_type,struct Queue *parameters
 
 
 	ret->number_of_arguments=parameters->size;
-	ret->arguments=malloc(sizeof(struct Type*)*ret->number_of_arguments);
+	ret->arguments=malloc(sizeof(struct Denoted_Object*)*ret->number_of_arguments);
 	for(i=0;parameters->size>0;++i)
 	{
-		ret->arguments[i]=(struct Type*)Queue_Pop(parameters);
+		ret->arguments[i]=(struct Denoted_Object*)Queue_Pop(parameters);
 	}
 	ret=(struct Type_Function*)type_check_and_push((struct Type*)ret,return_type->node,sizeof(struct Type_Function));
 
