@@ -10,6 +10,7 @@ void print_token(FILE *out,struct token *token)
 {
 	size_t i;
 //	fprintf(out,"[");
+	if(token==NULL)return;
 	for(i=0;i<token->data_size;++i)
 	{
 		fprintf(out,"%c",token->data[i]);

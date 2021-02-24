@@ -720,7 +720,8 @@ void parse_paramenter_list(struct Translation_Data *translation_data,struct Norm
 
 		hold=extract_denoted(base,prototype,1);
 
-		Scope_Push((struct Scope*)function_prototype_scope,hold);
+		if(((struct Denoted_Object*)hold)->id!=NULL)
+			Scope_Push((struct Scope*)function_prototype_scope,hold);
 		Queue_Push(parameters,((struct Denoted_Object*)hold));
 
 		delete_denoted_prototype(prototype);

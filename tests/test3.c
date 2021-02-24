@@ -23,11 +23,11 @@ static int fib(int n)
 	return a;
 
 }
-int main(int argc,char *argv[])
+extern void alert(int a);
+int main()
 {
 	int k[10*10];
-	a=b=c=d;
 	external_int++;
-	fib(10);
+	alert(fib(10));
 	return 0;
 }
