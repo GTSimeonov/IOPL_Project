@@ -7,7 +7,12 @@
 
 
 void transpile_to_javascript(FILE* out,struct Program *program,struct Command_Arguments *command_arguments);
+
+void _to_js_print_externs(void *denoted,void *args);
 void to_js_print_externs(FILE* out,struct Program *program,struct Command_Arguments *command_arguments);
+
+void _to_js_print_statics(void *denoted,void *args);
+void to_js_print_statics(FILE* out,struct AST_Translation_Unit *translation_unit,struct Command_Arguments* command_arguments);
 
 void to_js_print_ast(FILE* out,struct AST *tree,struct Program *program);
 void to_js_print_translation_unit_tree(FILE* out,struct AST_Translation_Unit *translation_unit,struct Program *program);

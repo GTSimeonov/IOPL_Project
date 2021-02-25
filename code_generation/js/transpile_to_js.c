@@ -16,6 +16,8 @@ void transpile_to_javascript(FILE* out,struct Program *program,struct Command_Ar
 	for(it=program->translation_units->first;it!=NULL;it=it->prev)
 	{
 		fprintf(out,"{");
+		to_js_print_statics(out,(struct AST_Translation_Unit*)it->data,command_arguments);
+		fprintf(out,"\n");
 		to_js_print_translation_unit_tree(out,(struct AST_Translation_Unit*)it->data,program);
 		fprintf(out,"\n}\n");
 	}
@@ -35,20 +37,49 @@ void _to_js_print_externs(void *denoted,void *args)
 #define DOBJ(x) ((struct Denoted_Object*)x)
 	if(DENOTED(denoted)->denotation==DT_Function)
 	{
-		fprintf(ARGS(args)->output_file,"var ");
-		print_token(ARGS(args)->output_file,DFUNC(denoted)->id);
-		fprintf(ARGS(args)->output_file,"; /*FUNCTION*/ ");
 		if(DFUNC(denoted)->body==NULL)
 		{
 			fprintf(ARGS(args)->output_file,"/*UNDEFINED*/");
 		}
+		fprintf(ARGS(args)->output_file,"var ");
+		print_token(ARGS(args)->output_file,DFUNC(denoted)->id);
+		fprintf(ARGS(args)->output_file,";");
 		fprintf(ARGS(args)->output_file,"\n");
 
 	}else if(DENOTED(denoted)->denotation==DT_Object)
 	{
 		fprintf(ARGS(args)->output_file,"var ");
 		print_token(ARGS(args)->output_file,DFUNC(denoted)->id);
-		fprintf(ARGS(args)->output_file,"; /*VARIABLE*/");
+		fprintf(ARGS(args)->output_file,";\n");
+	}
+
+#undef DOBJ
+#undef DFUNC
+#undef ARGS
+#undef DENOTED
+}
+void _to_js_print_statics(void *denoted,void *args)
+{
+#define ARGS(x) ((struct Command_Arguments*)x)
+#define DENOTED(x) ((struct Denoted*)x)
+#define DFUNC(x) ((struct Denoted_Function*)x)
+#define DOBJ(x) ((struct Denoted_Object*)x)
+	if(DENOTED(denoted)->denotation==DT_Function)
+	{
+		if(DFUNC(denoted)->body==NULL)
+		{
+			fprintf(ARGS(args)->output_file,"/*UNDEFINED*/");
+		}
+		fprintf(ARGS(args)->output_file,"let ");
+		print_token(ARGS(args)->output_file,DFUNC(denoted)->id);
+		fprintf(ARGS(args)->output_file,";");
+		fprintf(ARGS(args)->output_file,"\n");
+
+	}else if(DENOTED(denoted)->denotation==DT_Object)
+	{
+		fprintf(ARGS(args)->output_file,"let ");
+		print_token(ARGS(args)->output_file,DFUNC(denoted)->id);
+		fprintf(ARGS(args)->output_file,";");
 	}
 
 #undef DOBJ
@@ -64,6 +95,15 @@ void to_js_print_externs(FILE* out,struct Program *program,struct Command_Argume
 			,_to_js_print_externs
 			,command_arguments);
 	fprintf(out,"\n/*EXTERNS END*/\n");
+}
+
+void to_js_print_statics(FILE* out,struct AST_Translation_Unit *translation_unit,struct Command_Arguments* command_arguments)
+{
+
+	Map_Map_Extended(
+			&((struct Normal_Scope*)translation_unit->scope)->ordinary
+			,_to_js_print_statics
+			,command_arguments);
 }
 void to_js_print_ast(FILE* out,struct AST *tree,struct Program *program)
 {

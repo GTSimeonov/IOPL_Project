@@ -118,17 +118,37 @@ void Scope_Push(struct Scope *scope,struct Denoted *declarator)
 			return 1;
 			*/
 		case DT_Function:
-			if(((struct Denoted_Function*)declarator)->storage_class==SC_EXTERN)
+			if(scope->type==FILE_SCOPE)
 			{
-				while(scope->type!=EXTERN_SCOPE)
-					scope=scope->parent;
+				((struct Denoted_Function*)declarator)->storage_class=SC_EXTERN;
+			}
+			switch(((struct Denoted_Function*)declarator)->storage_class)
+			{
+				case SC_EXTERN:
+					while(scope->type!=EXTERN_SCOPE)
+						scope=scope->parent;
+					break;
+				case SC_STATIC:
+					assert(scope->type!=EXTERN_SCOPE);
+
+					while(scope->type!=FILE_SCOPE)
+						scope=scope->parent;
+					break;
 			}
 			goto hack;
 		case DT_Object:
-			if(((struct Denoted_Object*)declarator)->object->storage_class==SC_EXTERN)
+			switch(((struct Denoted_Object*)declarator)->object->storage_class)
 			{
-				while(scope->type!=EXTERN_SCOPE)
-					scope=scope->parent;
+				case SC_EXTERN:
+					while(scope->type!=EXTERN_SCOPE)
+						scope=scope->parent;
+					break;
+				case SC_STATIC:
+					assert(scope->type!=EXTERN_SCOPE);
+
+					while(scope->type!=FILE_SCOPE)
+						scope=scope->parent;
+					break;
 			}
 			goto hack;
 		case DT_Typedef:

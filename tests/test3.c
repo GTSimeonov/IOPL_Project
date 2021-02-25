@@ -11,6 +11,7 @@ char asdf;
 #endif
 
 extern int external_int;
+static int static_int;
 static int fib(int n)
 {
 	int a=1,b=1,c;
@@ -24,9 +25,9 @@ static int fib(int n)
 
 }
 extern void alert(int a);
-int main()
+extern int main()
 {
-	int k[10*10];
+	int k[10*10][3][5];
 	external_int++;
 	alert(fib(10));
 	return 0;

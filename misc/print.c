@@ -444,6 +444,15 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 		case DT_Label:
 			fprintf(out,"label ");return;
 		case DT_Object:
+			switch(((struct Denoted_Object*)denoted)->object->storage_class)
+			{
+				case SC_EXTERN:
+					fprintf(out,"extern ");
+					break;
+				case SC_STATIC:
+					fprintf(out,"static ");
+					break;
+			}
 			fprintf(out,"denoted object ");
 			print_token(out,((struct Denoted_Object*)denoted)->id);
 			fprintf(out," is a ");
@@ -457,6 +466,15 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			print_type(out,((struct Denoted_Typedef*)denoted)->type,0);	
 			return;
 		case DT_Function:
+			switch(((struct Denoted_Function*)denoted)->storage_class)
+			{
+				case SC_EXTERN:
+					fprintf(out,"extern ");
+					break;
+				case SC_STATIC:
+					fprintf(out,"static ");
+					break;
+			}
 			print_token(out,((struct Denoted_Function*)denoted)->id);
 			fprintf(out," is ");
 			print_type(out,((struct Denoted_Function*)denoted)->type,1);
