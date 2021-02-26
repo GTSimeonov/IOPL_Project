@@ -26,7 +26,7 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(translation_data,scope);
 
 				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
-				Scope_Push(scope,hold);
+				Scope_Push(scope,hold,translation_data);
 				free(prototype);
 				return;
 			}
@@ -58,7 +58,7 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 			return;
 		}
 
-		Scope_Push(scope,hold);
+		Scope_Push(scope,hold,translation_data);
 		parse_function_definitions=0;
 		if(!get_and_check(translation_data,KW_COMMA))
 		{
@@ -283,7 +283,7 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 					{
 						struct Struct_Union *body;
 						body=get_struct_union_base(scope,ret->specifier);
-						Scope_Push(scope,get_denoted_struct_union(id,body));
+						Scope_Push(scope,get_denoted_struct_union(id,body),translation_data);
 
 						parse_struct_union_specifier_finish(translation_data,scope,body);
 						ret->struct_union=body;
@@ -326,7 +326,7 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 					{
 						struct Enum *body;
 						body=get_enum_base();
-						Scope_Push(scope,get_denoted_enum(id,body));
+						Scope_Push(scope,get_denoted_enum(id,body),translation_data);
 						parse_enum_specifier_finish(translation_data,scope,body);
 						ret->enumerator=body;
 					}else
@@ -399,23 +399,28 @@ struct Denoted* parse_declarator(struct Translation_Data *translation_data,struc
 void parse_declarator_inner(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Base *base)
 {
 	enum KEYWORDS hold;
+	char is_const;
+	char is_volatile;
 	while(get_and_check(translation_data,KW_STAR))
 	{
-		base->type=(struct Type*)get_pointer_type(base->type);
+		is_const=is_volatile=0;
 		while(1)
 		{
 			hold=kw_get(translation_data);
 			if(hold==KW_CONST)
 			{
-				((struct Type_Pointer*)base)->is_const=1;
+				chomp(translation_data);
+				is_const=1;
 			}else if(hold==KW_VOLATILE)
 			{
-				((struct Type_Pointer*)base)->is_volatile=1;
+				chomp(translation_data);
+				is_volatile=1;
 			}else
 			{
 				break;
 			}
 		}
+		base->type=(struct Type*)get_pointer_type(base->type,is_const,is_volatile);
 	}
 	parse_direct_declarator(translation_data,scope,base);
 
@@ -480,24 +485,30 @@ void parse_direct_declarator(struct Translation_Data *translation_data,struct Sc
 */
 void parse_direct_declarator_finish(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Base *base)
 {
+	struct AST *hold_expression;
 	while(1)
 	{
 		if(get_and_check(translation_data,KW_OPEN_SQUARE))
 		{
 			if(get_and_check(translation_data,KW_CLOSE_SQUARE))
 			{
-				base->type=(struct Type*)get_array_type(base->type,NULL);
+				hold_expression=NULL;
 			}else
 			{
-				base->type=(struct Type*)get_array_type(base->type,parse_expression(translation_data,scope));
+				hold_expression=parse_expression(translation_data,scope);
 				if(!get_and_check(translation_data,KW_CLOSE_SQUARE))
 				{
 					/*TODO error*/
 					push_translation_error("']' expected",translation_data);
 					base->type=(struct Type*)get_type_error(base->type);
+					delete_ast(hold_expression);
 					return;
 				}
 			}
+
+			parse_direct_declarator_finish(translation_data,scope,base);
+			base->type=get_array_type(base->type,hold_expression);
+
 		}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 		{
 			struct Queue *parameters;
@@ -566,7 +577,7 @@ char parse_struct_declaration(struct Translation_Data *translation_data,struct S
 		hold=parse_struct_declarator(translation_data,struct_scope,prototype);
 		if(hold!=NULL && hold->denotation!=DT_Error)
 		{
-			Scope_Push(struct_scope,hold);
+			Scope_Push(struct_scope,hold,translation_data);
 			Queue_Push(members,hold);
 
 		}else
@@ -610,15 +621,13 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 	}else
 	{
 		hold=parse_declarator(translation_data,scope,prototype);
-		if(!get_and_check(translation_data,KW_COLUMN))
+		if(get_and_check(translation_data,KW_COLUMN))
 		{
-			push_translation_error("column expected in struct declaration",translation_data);
-			return get_denoted_error(hold);
+		/*TODO move error detection in get_type_bitfield*/
+			((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
 		}
 	}
 	
-	/*TODO move error detection in get_type_bitfield*/
-	((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
 	return hold;
 }
 /*
@@ -704,7 +713,7 @@ void parse_paramenter_list(struct Translation_Data *translation_data,struct Norm
 		hold=extract_denoted(base,prototype,1);
 
 		if(((struct Denoted_Object*)hold)->id!=NULL)
-			Scope_Push((struct Scope*)function_prototype_scope,hold);
+			Scope_Push((struct Scope*)function_prototype_scope,hold,translation_data);
 		Queue_Push(parameters,((struct Denoted_Object*)hold));
 
 		delete_denoted_prototype(prototype);

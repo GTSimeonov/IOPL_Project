@@ -45,6 +45,7 @@ void print_keyword_enum(FILE *out,enum KEYWORDS kw);
 void print_function_definition(FILE *out,struct Denoted_Function *function);
 void print_errors(FILE *out,struct Queue *errors);
 void print_function_args(FILE *out,struct Type_Function *func);
+void print_type_qualifier(FILE *out,struct Type *type);
 
 
 #endif

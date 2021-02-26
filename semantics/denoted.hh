@@ -1,6 +1,12 @@
 #ifndef GCC_DENOTED_HH
 #define GCC_DENOTED_HH GCC_DENOTED_HH
 
+#define AS_DENOTED_OBJECT_PTR(x) ((struct Denoted_Object*)x)
+#define AS_DENOTED_FUNCTION(x) ((struct Denoted_Object*)x)
+#define AS_DENOTED_TYPEDEF(x) ((struct Denoted_Object*)x)
+#define AS_DENOTED_ENUM(x) ((struct Denoted_Object*)x)
+#define AS_DENOTED_ENUM_CONST(x) ((struct Denoted_Object*)x)
+#define AS_DENOTED_STRUCT_UNION(x) ((struct denoted_object*)x)
 
 enum Denotation_Type
 {

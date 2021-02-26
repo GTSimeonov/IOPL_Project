@@ -12,11 +12,11 @@ char asdf;
 
 struct A
 {
-	int c:123;
+	int a:1;
 }a;
-extern int external_int;
-static int static_int;
-static int fib(int n)
+int external_int;
+int static_int;
+int fib(int n)
 {
 	int a=1,b=1,c;
 	for(n;n>0;--n)
@@ -28,10 +28,9 @@ static int fib(int n)
 	return a;
 
 }
-extern void alert(int a);
-extern int main()
+int main()
 {
-	int k[10*10][3][5];
+	int *a;
 	external_int++;
 	alert(fib(10));
 	return 0;

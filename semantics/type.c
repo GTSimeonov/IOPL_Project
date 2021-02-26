@@ -136,15 +136,15 @@ struct Type* get_basic_type(struct Denotation_Prototype *prototype)
 	return (struct Type*)ret;
 
 }
-struct Type* get_pointer_type(struct Type *points_to)
+struct Type* get_pointer_type(struct Type *points_to,char is_const,char is_volatile)
 {
 	struct Type_Pointer *ret;
 	ret=calloc(1,sizeof(struct Type_Pointer));
 	ret->specifier=TS_POINTER;
 	ret->size=PTR_SIZE;
 	ret->points_to=points_to;
-	ret->is_const=0;
-	ret->is_volatile=0;
+	ret->is_const=is_const;
+	ret->is_volatile=is_volatile;
 
 	ret=(struct Type_Pointer*)type_check_and_push((struct Type*)ret,points_to->node,sizeof(struct Type_Pointer));
 	return (struct Type*)ret;

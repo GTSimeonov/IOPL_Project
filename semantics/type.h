@@ -8,14 +8,6 @@
 #include <map.h>
 #include <ast.h>
 
-#define PTR_SIZE 4
-
-#define INT_SIZE 4
-
-#define CHAR_SIZE 1
-
-#define FLOAT_SIZE 4
-#define DOUBLE_SIZE 8
 
 
 
@@ -130,7 +122,7 @@ struct Type* get_struct_union_type(struct Denotation_Prototype *prototype);
 struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specifier struct_or_union);
 struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
-struct Type* get_pointer_type(struct Type *points_to);
+struct Type* get_pointer_type(struct Type *points_to,char is_const,char is_volatile);
 struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements);
 struct Type* get_enum_type(struct Denotation_Prototype *prototype);
 struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits);

@@ -108,60 +108,45 @@ void* check_ordinary(struct Scope *current,struct token *id)
 	return hold;
 }
 
-void Scope_Push(struct Scope *scope,struct Denoted *declarator)
+void Scope_Push(struct Scope *scope,struct Denoted *declarator,struct Translation_Data *translation_data)
 {
+	/*TODO remove this macro */
+#define CHECK_IF_ID_IS_TAKEN_THEN_PUSH(type,namespace) \
+	if(check_##namespace(scope,((type*)declarator)->id))\
+	{ push_translation_error("redeclaration of id",translation_data);delete_denoted(declarator); return;}\
+	else { push_##namespace(scope,((type*)declarator)->id,declarator); }
+
+
 	switch(declarator->denotation)
 	{
-		/*
 		case DT_Label:
-			if(check_label(scope,((struct Denoted_Object
-			return 1;
-			*/
+			/*perhaps lables should be denoted*/
+			assert(0);
 		case DT_Function:
-			if(scope->type==FILE_SCOPE)
-			{
-				((struct Denoted_Function*)declarator)->storage_class=SC_EXTERN;
-			}
-			switch(((struct Denoted_Function*)declarator)->storage_class)
-			{
-				case SC_EXTERN:
-					while(scope->type!=EXTERN_SCOPE)
-						scope=scope->parent;
-					break;
-				case SC_STATIC:
-					assert(scope->type!=EXTERN_SCOPE);
-
-					while(scope->type!=FILE_SCOPE)
-						scope=scope->parent;
-					break;
-			}
-			goto hack;
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Function,ordinary);
+			break;
 		case DT_Object:
-			switch(((struct Denoted_Object*)declarator)->object->storage_class)
-			{
-				case SC_EXTERN:
-					while(scope->type!=EXTERN_SCOPE)
-						scope=scope->parent;
-					break;
-				case SC_STATIC:
-					assert(scope->type!=EXTERN_SCOPE);
-
-					while(scope->type!=FILE_SCOPE)
-						scope=scope->parent;
-					break;
-			}
-			goto hack;
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Object,ordinary);
+			break;
 		case DT_Typedef:
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Typedef,ordinary);
+			break;
 		case DT_Enum_Constant:
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Enum_Const,ordinary);
+			break;
 		case DT_Struct_Union_Member:
-			hack:
-			push_ordinary(scope,((struct Denoted_Object*)declarator)->id,declarator);
-			return;
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Object,ordinary);
+			break;
 		case DT_Enum:
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Enum,tag);
+			break;
 		case DT_Struct_Union_Tag:
-			push_tag(scope,((struct Denoted_Object*)declarator)->id,declarator);
-			return;
+			CHECK_IF_ID_IS_TAKEN_THEN_PUSH(struct Denoted_Struct_Union,tag);
+			break;
 	}
+
+
+#undef CHECK_IF_ID_IS_TAKEN_THEN_PUSH
 }
 char check_if_typedefed(struct Scope* scope,struct token *id)
 {

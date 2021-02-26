@@ -382,6 +382,7 @@ void print_goto_statement_tree(FILE *out,struct AST_Goto_Statement *got)
 
 void print_type(FILE *out,struct Type *type,char should_print_struct_union)
 {
+	print_type_qualifier(out,type);
 	switch(type->specifier)
 	{
 		case TS_VOID:
@@ -899,6 +900,50 @@ void print_function_args(FILE *out,struct Type_Function *func)
 		fprintf(out,", ");
 		print_denoted(out,(struct Denoted*)func->arguments[i]);
 	}	
+}
+void print_type_qualifier(FILE *out,struct Type *type)
+{
+
+	switch(type->specifier)
+	{
+		case TS_VOID:
+		case TS_CHAR:
+		case TS_INT:
+		case TS_FLOAT:
+		case TS_DOUBLE:
+			fprintf(out,"%s %s",
+				(AS_BASIC_TYPE_PTR(type)->is_const?"constant ":""),
+				(AS_BASIC_TYPE_PTR(type)->is_volatile ?"volatile ":"")
+			       );
+			break;	
+		case TS_STRUCT:
+		case TS_UNION:
+			fprintf(out,"%s %s",
+				(AS_STRUCT_UNION_PTR(type)->is_const?"constant ":""),
+				(AS_STRUCT_UNION_PTR(type)->is_volatile ?"volatile ":"")
+			       );
+			break;
+		case TS_ENUM:
+			fprintf(out,"%s %s",
+				(AS_STRUCT_UNION_PTR(type)->is_const?"constant ":""),
+				(AS_STRUCT_UNION_PTR(type)->is_volatile ?"volatile ":"")
+			       );
+			break;
+		case TS_POINTER:
+			fprintf(out,"%s %s",
+				(AS_TYPE_PTR_PTR(type)->is_const?"constant ":""),
+				(AS_TYPE_PTR_PTR(type)->is_volatile ?"volatile ":"")
+			       );
+			break;
+		case TS_ARRAY:
+		case TS_FUNC:
+		case TS_BITFIELD:
+			break;
+		case TS_NONE:
+		case TS_ERROR:
+		default:
+			fprintf(out,"error");
+	}
 }
 #undef TOK
 #undef INDENT
