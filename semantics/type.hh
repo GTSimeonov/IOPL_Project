@@ -6,11 +6,14 @@
 #define CHAR_SIZE 1
 #define FLOAT_SIZE 4
 #define DOUBLE_SIZE 8
+
+
 #define AS_BASIC_TYPE_PTR(x) ((struct Type_Basic*)x)
 #define AS_STRUCT_UNION_PTR(x) ((struct Type_Struct_Union*)x)
 #define AS_TYPE_PTR_PTR(x) ((struct Type_Pointer*)x)
 #define AS_TYPE_ARR_PTR(x) ((struct Type_Array*)x)
 #define AS_TYPE_ENUM_PTR(x) ((struct Type_Enum*)x)
+#define AS_TYPE_FUNC_PTR(x) ((struct Type_Function*)x)
 
 /*this isn't just type-specifier :DD*/
 enum Type_Specifier

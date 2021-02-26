@@ -3,14 +3,15 @@
 #include<stdlib.h>
 typedef struct Stack Stack;
 
+struct Stack_Node
+{
+	struct Stack_Node *next;
+	void *data;
+};
 struct Stack
 {
-    struct Stack_Node
-    {
-        struct Stack_Node *next;
-        void *data;
-    }*first;
-    size_t size;
+	struct Stack_Node *first;
+	size_t size;
 };
 
 void Stack_Init(Stack *stack);

@@ -227,6 +227,7 @@ struct Type* get_function_type(struct Type *return_type,struct Queue *parameters
 	{
 		ret->arguments[i]=(struct Denoted_Object*)Queue_Pop(parameters);
 	}
+	free(parameters);
 	ret=(struct Type_Function*)type_check_and_push((struct Type*)ret,return_type->node,sizeof(struct Type_Function));
 
 }
@@ -315,5 +316,18 @@ void delete_struct_union(struct Struct_Union *su)
 		Queue_Pop(su->members);
 
 	free(su);
+}
+
+void delete_type(void *type)
+{
+	if(((struct Type*)type)->specifier!=TS_FUNC)
+	{
+		free(type);
+	}else
+	{
+		delete_normal_scope(AS_TYPE_FUNC_PTR(type)->function_prototype_scope);
+		free(AS_TYPE_FUNC_PTR(type)->arguments);
+		free(type);
+	}
 }
 #endif

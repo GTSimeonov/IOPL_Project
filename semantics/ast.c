@@ -491,6 +491,7 @@ void delete_ast_object_declaration(struct AST_Object_Declaration *object_declara
 {
 	if(object_declaration->initializer!=NULL)
 		delete_ast(object_declaration->initializer);
+	free(object_declaration);
 
 }
 void delete_ast_function_definition(struct AST_Function_Definition *function_definition)

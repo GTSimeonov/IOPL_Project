@@ -74,6 +74,7 @@ int main(int argc,char **argv)
 			{
 				print_errors(stdout,program->errors);
 			}
+			delete_command_arguments(command_arguments);
 			delete_program(program);
 			return 1;
 		}else if(command_arguments->print_ast && !command_arguments->is_quiet)
@@ -96,6 +97,7 @@ int main(int argc,char **argv)
 
 	
 
+	delete_command_arguments(command_arguments);
 	delete_program(program);
 	return 0;
 }

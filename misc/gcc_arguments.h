@@ -24,5 +24,6 @@ struct Command_Arguments
 };
 
 struct Command_Arguments* parse_command_arguments(char **argv);
+void delete_command_arguments(struct Command_Arguments *args);
 
 #endif

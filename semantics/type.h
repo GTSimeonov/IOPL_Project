@@ -130,7 +130,7 @@ struct Type* get_function_type(struct Type *return_type,struct Queue *parameters
 
 void delete_enum(struct Enum *enumeration);
 void delete_struct_union(struct Struct_Union *su);
-
+void delete_type(void *type);
 
 char is_type(struct Translation_Data *translation_data,struct Scope *scope);
 size_t get_type_size(struct Type *type);

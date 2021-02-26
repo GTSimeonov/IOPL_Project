@@ -13,7 +13,7 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 	while(1)
 	{
 		if(get_and_check(translation_data,KW_SEMI_COLUMN))
-			return;
+			goto finish;
 
 		hold=parse_declarator(translation_data,scope,prototype);
 
@@ -27,8 +27,7 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 
 				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
 				Scope_Push(scope,hold,translation_data);
-				free(prototype);
-				return;
+				goto finish;
 			}
 
 			Queue_Push(where_to_push,get_function_declaration_tree(scope,(struct Denoted_Function*)hold));
@@ -49,13 +48,12 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 			/*TODO error*/
 			Queue_Push(where_to_push,get_declaration_error_tree(hold));
 			push_translation_error("declaration expected",translation_data);
-			free(prototype);
 			/*search for end of erronous declaration*/
 			while(!get_and_check(translation_data,KW_SEMI_COLUMN))
 			{
 				free(Queue_Pop(translation_data->tokens));
 			}
-			return;
+			goto finish;
 		}
 
 		Scope_Push(scope,hold,translation_data);
@@ -64,16 +62,18 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 		{
 			if(get_and_check(translation_data,KW_SEMI_COLUMN))
 			{
-				return;
+				goto finish;
 			}else
 			{
 				/*TODO error*/
 				Queue_Push(where_to_push,get_declaration_error_tree(NULL));
 				push_translation_error("semi column expected",translation_data);
-				return;
+				goto finish;
 			}
 		}
 	}
+
+finish:
 	free(prototype);
 
 }
@@ -390,9 +390,12 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 struct Denoted* parse_declarator(struct Translation_Data *translation_data,struct Scope *scope,struct Denotation_Prototype *prototype)
 {
 	struct Denoted_Base *temp;
+	struct Denoted *ret;
 	temp=get_denoted_base(prototype);
 	parse_declarator_inner(translation_data,scope,temp);
-	return extract_denoted(temp,prototype,0);
+	ret=extract_denoted(temp,prototype,0);
+	delete_denoted_base(temp);
+	return ret;
 
 }
 

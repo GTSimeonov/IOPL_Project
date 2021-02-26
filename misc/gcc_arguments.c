@@ -10,7 +10,7 @@ struct Command_Arguments* parse_command_arguments(char **argv)
 	struct Queue *source_names;
 
 	ret=malloc(sizeof(struct Command_Arguments));
-	ret->print_ast=ret->print_tokens=ret->transpile_to_js=0;
+	ret->print_ast=ret->print_tokens=ret->transpile_to_js=ret->is_quiet=0;
 	ret->output_file=ret->javascript_extern_file=NULL;
 
 	source_names=malloc(sizeof(struct Queue));
@@ -88,5 +88,16 @@ struct Command_Arguments* parse_command_arguments(char **argv)
 	return ret;
 }
 
+
+void delete_command_arguments(struct Command_Arguments *args)
+{
+	if(args->output_file!=NULL)
+		fclose(args->output_file);
+	if(args->javascript_extern_file!=NULL)
+		fclose(args->javascript_extern_file);
+
+	free(args->source_names);
+	free(args);
+}
 
 #endif

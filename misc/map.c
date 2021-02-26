@@ -177,6 +177,8 @@ void Map_Destroy(Map *tree)
 		 */
 		free(current_node);
 	}
+	/*this is where the root is at- we don't delete it , but we must free the last stack node*/
+	Stack_Pop(&nodes);
 
 
 }

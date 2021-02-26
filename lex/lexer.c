@@ -26,9 +26,11 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 			{
 				parse_preproc_line(src,translation_data);
 				last_line=current_token->line;
+				free(current_token);
 			}else
 			{
 				push_lexing_error("preprocessing directive must be at the beggining of the line",src,translation_data);
+				free(current_token);
 				while((current_token=get_next_token(src,&chonky[0],0))->type!=KW_NOTYPE)
 				{
 					free(current_token);
@@ -236,6 +238,7 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 {
 	int temp;
 	size_t current_size;
+	char hold_char;
 
 	struct token *ret;
 	struct automata_entry *current_state;
@@ -305,6 +308,35 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 	}
 	return ret;
 }
+char src_getc(struct Source_File *src,char skip_line_splice)
+{
+superhack:
+	if(src->src[src->where_in_src]=='\\' && skip_line_splice)
+	{
+		if(src->where_in_src < src->src_size-1 && src->src[src->where_in_src+1]=='\n')
+		{
+			++src->where_in_src;
+			++src->which_row;
+			src->which_column=0;
+			goto superhack;
+		}else
+		{
+			return '\\';
+		}
+	}else
+	{
+		if(src->src[src->where_in_src]=='\n')
+		{
+			++src->which_row;
+			src->which_column=0;
+			goto superhack;
+		}else
+		{
+			++src->which_column;
+		}
+		return src->src[src->where_in_src++];
+	}
+}
 struct token* copy_token(struct token *src)
 {
 	struct token *cpy;
@@ -316,6 +348,7 @@ struct token* copy_token(struct token *src)
 void delete_source_file(struct Source_File *src)
 {
 	delete_source_name(src->src_name);
+	free(src->src);
 	free(src);
 }
 void delete_source_name(struct Source_Name *name)

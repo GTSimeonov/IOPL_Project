@@ -235,13 +235,15 @@ void delete_program(struct Program *program)
 	free(program->source_files);
 
 
-
 	while(program->errors->size>0)
 		delete_translation_error(Queue_Pop(program->errors));
+	free(program->errors);
+
+
 	delete_scope(program->externs);
 
 	/*BEWARE*/
-	Map_Map(program->types,free);
+	Map_Map(program->types,delete_type);
 	Map_Destroy(program->types);
 	free(program->types);
 
@@ -260,6 +262,8 @@ void delete_translation_data(struct Translation_Data *translation_data)
 	Map_Map(translation_data->macros,delete_macro);
 	Map_Destroy(translation_data->macros);
 	free(translation_data->macros);
+
+	free(translation_data);
 	
 }
 void assimilate_translation_data(struct Program *program,struct Translation_Data *translation_data)

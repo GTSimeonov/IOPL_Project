@@ -10,10 +10,6 @@ int err;
 char asdf;
 #endif
 
-struct A
-{
-	int a:1;
-}a;
 int external_int;
 int static_int;
 int fib(int n)
@@ -33,5 +29,6 @@ int main()
 	int *a;
 	external_int++;
 	alert(fib(10));
+	+1;
 	return 0;
 }

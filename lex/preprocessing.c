@@ -66,6 +66,7 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 			push_lexing_error("unmatched elif",src,translation_data);
 			return;
 		default:
+			free(hold);
 			/*TODO error*/
 			push_lexing_error("expected a preprocessing directive",src,translation_data);
 			return;
@@ -97,6 +98,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 			{
 				/*TODO error*/
 				push_lexing_error("file in include directive not found",src,translation_data);
+				free(hold);
 				return;
 			}
 		}
@@ -114,6 +116,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 		if(src->where_in_src==src->src_size)
 		{
 			/*TODO error*/
+			free(hold);
 			return;
 		}
 		/*skip the >*/
@@ -126,6 +129,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 		{
 			/*TODO error*/
 			push_lexing_error("file in include directive not found",src,translation_data);
+			free(hold);
 			return;
 		}
 
@@ -136,6 +140,7 @@ void parse_include_line(struct Source_File *src,struct Translation_Data *transla
 	{
 		/*TODO error*/
 		push_lexing_error("include error",src,translation_data);
+		free(hold);
 		return;
 	}
 
@@ -427,6 +432,7 @@ void preproc_lex_first_part(struct Source_File *src,struct Translation_Data *tra
 	temp_src=*src;
 	hold_token=preproc_find_else(src,translation_data,1);
 
+
 	temp_src.src_size=src->where_in_src;
 	just_in_case=src->src[src->where_in_src];
 	src->src[src->where_in_src]='\0';
@@ -435,12 +441,20 @@ void preproc_lex_first_part(struct Source_File *src,struct Translation_Data *tra
 
 	src->src[src->where_in_src]=just_in_case;
 
+	if(hold_token!=NULL)
+		free(hold_token);
 	do
+	{
 		hold_token=preproc_find_else(src,translation_data,0);
-	while(hold_token && !has_new_errors(translation_data));
+		if(hold_token)
+			free(hold_token);
+		else
+			break;
+	}while(!has_new_errors(translation_data));
 	
 	if(hold_token!=NULL)
 	{
+		free(hold_token);
 		push_lexing_error("could not find matching #else, #elif or #endif",src,translation_data);
 	}
 }
@@ -587,8 +601,10 @@ void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *t
 	hold_token=get_next_token(src,&chonky[0],0);
 	if(hold_token==NULL || hold_token->type!=KW_ID)
 	{
+		free(hold_token);
 		push_lexing_error("expected an id here",src,translation_data);
 		chase_new_line(src,translation_data);
+		return;
 	}else
 	{
 		if(Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
@@ -596,7 +612,10 @@ void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *t
 			preproc_lex_first_part(src,translation_data);
 		}else
 		{
+			free(hold_token);
+
 			hold_token=preproc_find_else(src,translation_data,1);
+
 			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
 			{
 				parse_preproc_if_line(src,translation_data);
@@ -606,6 +625,8 @@ void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *t
 				preproc_find_else(src,translation_data,0);
 				preproc_lex_first_part(src,translation_data);
 			}
+
+			free(hold_token);
 		}
 
 	}
@@ -619,13 +640,18 @@ void parse_preproc_ifndef_line(struct Source_File *src,struct Translation_Data *
 	{
 		push_lexing_error("expected an id here",src,translation_data);
 		chase_new_line(src,translation_data);
+		free(hold_token);
+		return;
 	}else
 	{
 		if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
 		{
+			free(hold_token);
 			preproc_lex_first_part(src,translation_data);
 		}else
 		{
+			free(hold_token);
+
 			hold_token=preproc_find_else(src,translation_data,1);
 			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
 			{
@@ -636,6 +662,8 @@ void parse_preproc_ifndef_line(struct Source_File *src,struct Translation_Data *
 				preproc_find_else(src,translation_data,0);
 				preproc_lex_first_part(src,translation_data);
 			}
+
+			free(hold_token);
 		}
 
 	}
@@ -650,7 +678,6 @@ void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *t
 	if(id->type!=KW_ID)
 	{
 		push_lexing_error("expected an id here",src,translation_data);
-		return;
 	}else
 	{
 		hold_macro=Map_Check(translation_data->macros,id->data,id->data_size);
@@ -660,6 +687,7 @@ void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *t
 			Map_Remove(translation_data->macros,id->data,id->data_size);
 		}
 	}
+	free(id);
 	chase_new_line(src,translation_data);
 }
 void delete_macro(void *macro)
@@ -668,7 +696,9 @@ void delete_macro(void *macro)
 	free(AS_MACRO(macro)->macro_name);
 	while(AS_MACRO(macro)->macro_tokens->size>0)
 		free(Queue_Pop(AS_MACRO(macro)->macro_tokens));
+	free(AS_MACRO(macro)->macro_tokens);
 	Map_Map(AS_MACRO(macro)->arguments,free);
+	free(AS_MACRO(macro)->arguments);
 	free(macro);
 #undef AS_MACRO
 }
