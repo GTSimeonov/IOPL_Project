@@ -5,6 +5,7 @@
 
 
 
+int indent=0;
 
 void print_token(FILE *out,struct token *token)
 {

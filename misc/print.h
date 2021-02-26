@@ -10,7 +10,7 @@
 #define TOK(s) ((struct token*)(s))
 #define ASTPTR(s) ((struct AST*)(s))
 
-int indent;
+extern int indent;
 
 void print_token(FILE *out,struct token *token);
 void print_tokens(FILE *out,struct Queue *tokens);
