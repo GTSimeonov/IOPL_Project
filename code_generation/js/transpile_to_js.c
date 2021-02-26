@@ -421,11 +421,14 @@ void to_js_print_function_definition(FILE* out,struct AST_Function_Definition *f
 
 	/*print parameters*/
 	fprintf(out,"(");
-	print_token(out,cache_type->arguments[0]->id);
-	for(i=1;i<cache_type->number_of_arguments;++i)
+	if(cache_type->number_of_arguments!=0)
 	{
-		fprintf(out,",");
-		print_token(out,cache_type->arguments[i]->id);
+		print_token(out,cache_type->arguments[0]->id);
+		for(i=1;i<cache_type->number_of_arguments;++i)
+		{
+			fprintf(out,",");
+			print_token(out,cache_type->arguments[i]->id);
+		}
 	}
 
 	fprintf(out,")");
