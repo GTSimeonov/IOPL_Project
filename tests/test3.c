@@ -10,6 +10,10 @@ int err;
 char asdf;
 #endif
 
+struct A
+{
+	int c:123;
+}a;
 extern int external_int;
 static int static_int;
 static int fib(int n)

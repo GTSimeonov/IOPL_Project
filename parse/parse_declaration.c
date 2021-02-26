@@ -605,32 +605,21 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 	if(get_and_check(translation_data,KW_COLUMN))
 	{
 		/*unnamed bitfields are possible*/
-		struct Denoted_Object *obj;
-		obj=(struct Denoted_Object*)get_denoted_object(NULL,SC_NONE,prototype->type);
-		obj->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
-		return (struct Denoted*)obj;
+		hold=get_denoted_object(NULL,SC_NONE,prototype->type);
 
 	}else
 	{
 		hold=parse_declarator(translation_data,scope,prototype);
-		if(get_and_check(translation_data,KW_COLUMN))
+		if(!get_and_check(translation_data,KW_COLUMN))
 		{
-			if(hold->denotation==DT_Object)
-			{
-				/*TODO make bitfield*/
-				return hold;
-			}else
-			{
-				/*TODO error*/
-				push_translation_error("bitfield must be ",translation_data);
-				return get_denoted_error(hold);
-			}
-		}else
-		{
-			return hold;
+			push_translation_error("column expected in struct declaration",translation_data);
+			return get_denoted_error(hold);
 		}
 	}
 	
+	/*TODO move error detection in get_type_bitfield*/
+	((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
+	return hold;
 }
 /*
 	enum-specifier-finish
