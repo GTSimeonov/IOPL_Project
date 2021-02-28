@@ -66,6 +66,10 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 			free(hold);
 			push_lexing_error("unmatched elif",src,translation_data);
 			return;
+		case PKW_LINE:
+			free(hold);
+			parse_preproc_line_line(src,translation_data);
+			return;
 		case PKW_ERROR:
 			free(hold);
 			parse_preproc_error_line(src,translation_data);
@@ -208,15 +212,10 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 			}
 			free(hold_token);
 		}	
-		hold_token=get_next_token(src,&chonky[0],0);
 
 	}else if(hold_token->type==KW_NOTYPE)
 	{
-		//push_lexing_error("empty define directive",src,translation_data);
 		free(hold_token);
-		/*TODO destroy new define directive*/
-		/*TODO there is a memory leak here*/
-	//	return ;	
 	}
 
 /*push things*/
@@ -226,9 +225,10 @@ void parse_define_line(struct Source_File *src,struct Translation_Data *translat
 
 	new_macro->number_of_arguments=number_of_arguments;
 /*there is something in hold_token*/
-	do{
+	while( (hold_token=get_next_token(src,&chonky[0],0))->type != KW_NOTYPE)
+	{
 		expand_macro(hold_token,src,translation_data);
-	}while( (hold_token=get_next_token(src,&chonky[0],0))->type != KW_NOTYPE);
+	}
 
 /*removing the notype token*/
 	free(hold_token);
@@ -468,68 +468,42 @@ void preproc_lex_first_part(struct Source_File *src,struct Translation_Data *tra
  */
 void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *translation_data)
 {
-	size_t hold_line;
-	struct Queue hold_tokens;
-	struct Queue *swap_tokens;
+
+	struct Queue *tokens;
+	struct Queue *swap;
+	struct AST *condition;
+	struct Scope *null_scope;
 	struct token *hold_token;
-	struct Scope *empty_scope;
-	struct AST *expression;
 	int result;
 
-	hold_line=src->which_row;
-	Queue_Init(&hold_tokens);
-	hold_token=get_next_token(src,&chonky[0],0);
-	empty_scope=get_normal_scope(NULL,EXTERN_SCOPE);
+	null_scope=get_normal_scope(NULL,EXTERN_SCOPE);
 
-	swap_tokens=translation_data->tokens;
-	translation_data->tokens=&hold_tokens;
-	while(hold_token->type!=KW_NOTYPE && hold_token->line==hold_line)
+	tokens=lex_line(src,translation_data,1);
+
+	swap=translation_data->tokens;
+	translation_data->tokens=tokens;
+
+	condition=parse_expression(translation_data,null_scope);
+	result=evaluate_const_expression_integer(condition);
+	delete_normal_scope((struct Normal_Scope*)null_scope);
+	delete_ast(condition);
+
+	if(result)
 	{
-		expand_macro(hold_token,src,translation_data);
-		hold_token=get_next_token(src,&chonky[0],0);	
-	}
-
-	/*NOTYPE*/
-	free(hold_token);
-		
-	expression=parse_expression(translation_data,empty_scope);
-	result=evaluate_const_expression_integer(expression);
-
-	delete_ast(expression);
-	delete_scope(empty_scope);
-	translation_data->tokens=swap_tokens;
-
-	if(hold_tokens.size>0)
-	{
-		push_lexing_error("unexpected token",src,translation_data);
-		while(hold_tokens.size>0)
-			free(Queue_Pop(&hold_tokens));
-	}
-	
-	if(has_new_errors(translation_data))
-	{
-		push_lexing_error("fatal error",src,translation_data);
-		return ;
+		preproc_lex_first_part(src,translation_data);	
 	}else
 	{
-
-		if(result)
+		hold_token=preproc_find_else(src,translation_data,0);
+		if(hold_token!=NULL && hold_token->type==PKW_ELIF)
 		{
-			preproc_lex_first_part(src,translation_data);	
-		}else
+			parse_preproc_if_line(src,translation_data);
+		}
+		else if(hold_token!=NULL)
 		{
-			hold_token=preproc_find_else(src,translation_data,0);
-			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
-			{
-				//preproc_find_else(src,translation_data,0);
-				parse_preproc_if_line(src,translation_data);
-			}else if(hold_token!=NULL)
-			{
-				preproc_lex_first_part(src,translation_data);
-			}
-		}	
+			preproc_lex_first_part(src,translation_data);
+		}
+	}	
 		
-	}
 	
 }
 struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data,char jump_before)
@@ -537,18 +511,11 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 	struct token *hold_token;
 	struct Source_File temp_src;
 	int indentation=1;
-	if(!jump_before)
-	{
-		free(get_next_token(src,&chonky[0],1));
-		free(get_next_token(src,&chonky[0],1));
-		return NULL;
-	}
 
 		temp_src=*src;
 	while(src->src[src->where_in_src]!='\0' && indentation)
 	{
 		/*BEWARE*/
-		goto_new_line(src,translation_data);
 		temp_src=*src;
 		/*END BEWARE*/
 
@@ -582,8 +549,8 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 						break;
 					}
 				case PKW_NOTYPE:
-					push_lexing_error("unexpected character",src,translation_data);
 					free(hold_token);
+					goto_new_line(src,translation_data);
 					return NULL;
 			}
 			free(hold_token);
@@ -598,6 +565,7 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 			free(hold_token);
 			return NULL;
 		}
+		goto_new_line(src,translation_data);
 	}
 	/*BEWARE*/
 	//goto_new_line(src,translation_data);	
@@ -721,13 +689,14 @@ void parse_preproc_line_line(struct Source_File *src,struct Translation_Data *tr
 	struct token *hold_line;
 	struct token *hold_name;
 
-	tokens=lex_line(src,translation_data);
+	tokens=lex_line(src,translation_data,0);
 	hack=*translation_data;
 	hack.tokens=tokens;
-	if(check(&hack,KW_NUMBER,1))
+	if(check(&hack,KW_NUMBER,0))
 	{
 		hold_line=(struct token*)Queue_Pop(tokens);
-		if(check(&hack,KW_STRING,1))
+		src->which_row=evaluate_number_literal(hold_line);
+		if(check(&hack,KW_STRING,0))
 		{
 			hold_name=(struct token*)Queue_Pop(tokens);
 			hold_name->data[hold_name->data_size]='\0';
@@ -764,21 +733,21 @@ void delete_macro(void *macro)
 {
 #define AS_MACRO(x) ((struct define_directive*)macro)
 	free(AS_MACRO(macro)->macro_name);
-	while(AS_MACRO(macro)->macro_tokens->size>0)
-		free(Queue_Pop(AS_MACRO(macro)->macro_tokens));
+	flush_tokens(AS_MACRO(macro)->macro_tokens);
 	free(AS_MACRO(macro)->macro_tokens);
 	Map_Map(AS_MACRO(macro)->arguments,free);
 	free(AS_MACRO(macro)->arguments);
 	free(macro);
 #undef AS_MACRO
 }
-struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translation_data)
+struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translation_data,char lex_defined_token)
 {
 
 	struct Source_File temp_src;
 	struct token *hold_token;
 	struct Queue *tokens;
 	char just_in_case;
+
 	tokens=malloc(sizeof(struct Queue));
 	Queue_Init(tokens);
 
@@ -789,9 +758,65 @@ struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translat
 	src->src[src->where_in_src]='\0';
 
 	translation_data->tokens=tokens;
+	
+	while((hold_token=get_next_token(&temp_src,&chonky[0],0))->type!=KW_NOTYPE)
+	{
+		if(lex_defined_token && hold_token->type==KW_ID && hold_token->data_size==7 && gstrn_cmp(hold_token->data,"defined",7))
+		{
+			free(hold_token);
+			hold_token=get_next_token(&temp_src,&chonky[0],0);
+			if(hold_token->type==KW_OPEN_NORMAL)
+			{
+				free(hold_token);
+				hold_token=get_next_token(&temp_src,&chonky[0],0);
+				if(hold_token->type!=KW_ID)
+				{
+					push_lexing_error("expected an id after '(' in defined",src,translation_data);
+				}else
+				{
+					struct token *hold_closing_token;
+					hold_closing_token=get_next_token(&temp_src,&chonky[0],0);
+					if(hold_closing_token->type!=KW_CLOSE_NORMAL)
+					{
+						push_lexing_error("expected an ')' after id in define",src,translation_data);
+					}else
+					{
+						if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
+						{
+							hold_token->type=KW_NUMBER;
+							hold_token->data="0";
+							hold_token->data_size=1;
+						}else
+						{
+							hold_token->type=KW_NUMBER;
+							hold_token->data="1";
+							hold_token->data_size=1;
+						}
 
-	lex(&temp_src,translation_data);
+					}
+				}
+			}else if(hold_token->type!=KW_ID)
+			{
+				push_lexing_error("expected an id after define",src,translation_data);
+			}else
+			{
+				if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
+				{
+					hold_token->type=KW_NUMBER;
+					hold_token->data="0";
+					hold_token->data_size=1;
+				}else
+				{
+					hold_token->type=KW_NUMBER;
+					hold_token->data="1";
+					hold_token->data_size=1;
+				}
+			}
+		}
+		Queue_Push(tokens,hold_token);
+	}
 
+	free(hold_token);
 	src->src[src->where_in_src]=just_in_case;
 
 	return tokens;

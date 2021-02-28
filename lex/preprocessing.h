@@ -34,7 +34,7 @@ void parse_preproc_error_line(struct Source_File *src,struct Translation_Data *t
 void parse_preproc_line_line(struct Source_File *src,struct Translation_Data *translation_data);
 
 
-struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translation_data);
+struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translation_data,char lex_defined_token);
 /*preproc if stuff*/
 /*returns an else or elif token, or if it hits matching endif before that return NULL*/
 struct token* preproc_find_else(struct Source_File *src,struct Translation_Data *translation_data,char jump_before);

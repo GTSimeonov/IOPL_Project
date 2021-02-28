@@ -1,20 +1,18 @@
-#define VERSION 2
-#ifndef VERSION
-#define VERSION 1
+#define max(x,y) (x>y?x:y)
+#if defined VERSION == 1
 int kak;
 #else
 int err;
 #endif
 
-#undef VERSION
-#ifdef VERSION
-char asdf;
-#endif
+
+
 
 int external_int;
 int static_int;
 int fib(int n)
 {
+	max(1,max(1,2));
 	int a=1,b=1,c;
 	for(n;n>0;--n)
 	{

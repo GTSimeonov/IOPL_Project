@@ -296,6 +296,7 @@ superhack:
 		{
 			++src->token_size;
 			++src->which_column;
+			++src->where_in_src;
 			src->is_in_the_begining_of_line=0;
 			return '\\';
 		}

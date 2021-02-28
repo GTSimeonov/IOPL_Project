@@ -39,4 +39,12 @@ char gstr_cmp(const char *a,const char *b)
 	else
 		return 0;
 }
+char gstrn_cmp(const char *a,const char *b,size_t size)
+{
+	size_t i;
+	for(i=0;i<size;++i)
+		if(a[i]!=b[i])
+			return 0;
+	return 1;
+}
 #endif

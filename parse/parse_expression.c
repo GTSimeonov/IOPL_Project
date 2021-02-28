@@ -513,7 +513,7 @@ struct AST* parse_logical_or_expression(struct Translation_Data *translation_dat
 	
 	struct AST *hold;
 	hold=parse_logical_and_expression(translation_data,scope);
-	while(get_and_check(translation_data,KW_AND_AND))
+	while(get_and_check(translation_data,KW_PIPE_PIPE))
 	{
 		hold=(struct AST*)get_binary_expression_tree(hold,parse_logical_and_expression(translation_data,scope),OP_LOGICAL_OR);
 	}

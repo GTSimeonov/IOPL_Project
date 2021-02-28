@@ -236,12 +236,6 @@ void delete_ast_translation_unit(struct AST_Translation_Unit *translation_unit);
 
 
 
-#define BIN_EXPR_PTR(x) ((struct AST_Binary_Expression*)(x))
-#define UN_EXPR_PTR(x) ((struct AST_Unary_Expression*)(x))
-#define LVAL_EXPR_PTR(x) ((struct AST_Lvalue_Expression*)(x))
-#define RVAL_EXPR_PTR(x) ((struct AST_Rvalue_Expression*)(x))
-#define DECLR_PTR(x) ((struct AST_Declaration*)(x))
-#define IF_ST_PTR(s) ((struct AST_If_Statement*)(x))
 
 
 
