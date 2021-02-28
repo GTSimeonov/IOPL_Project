@@ -14,6 +14,7 @@ struct AST* parse_statement(struct Translation_Data* translation_data,struct Sco
 	switch(kw_get(translation_data))
 	{
 		case KW_NOTYPE:
+			push_translation_error("statement expected",translation_data);
 			return (struct AST*)get_error_tree(NULL);
 
 		case KW_OPEN_CURLY:
@@ -105,6 +106,7 @@ struct AST* parse_finish_if_statement(struct Translation_Data* translation_data,
 			hold->body_statement=parse_statement(translation_data,scope);
 		}else
 		{
+			push_translation_error(" ')' expected",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)hold);
 		}
 		if(get_and_check(translation_data,KW_ELSE)) 
@@ -118,6 +120,7 @@ struct AST* parse_finish_if_statement(struct Translation_Data* translation_data,
 		}
 	}else
 	{
+		push_translation_error(" '(' expected",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
 	}
 	return (struct AST*)hold;
@@ -137,10 +140,12 @@ struct AST* parse_finish_switch_statement(struct Translation_Data* translation_d
 			hold->body_statement=parse_statement(translation_data,scope);
 		}else
 		{
+			push_translation_error(" ')' expected",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)hold);
 		}
 	}else
 	{
+		push_translation_error(" '(' expected",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
 	}
 
@@ -162,10 +167,12 @@ struct AST* parse_finish_while_statement(struct Translation_Data* translation_da
 			hold->body_statement=parse_statement(translation_data,scope);
 		}else
 		{
+			push_translation_error(" ')' expected",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)hold);
 		}
 	}else
 	{
+		push_translation_error(" '(' expected",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
 	}
 
@@ -188,10 +195,12 @@ struct AST* parse_finish_do_while_statement(struct Translation_Data* translation
 			return (struct AST*)hold;
 		}else
 		{
+			push_translation_error(" ';' expected",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)hold);
 		}
 	}else
 	{
+		push_translation_error("'do-while' statement is unfinished",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
 	}
 
@@ -204,7 +213,10 @@ struct AST* parse_finish_for_statement(struct Translation_Data* translation_data
 	struct AST_For_Statement *hold;
 	hold=get_for_statement_tree();
 	if(!get_and_check(translation_data,KW_OPEN_NORMAL))
+	{
+		push_translation_error(" '(' expected",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
+	}
 
 	hold->initialisation=parse_expression_statement(translation_data,scope);
 	hold->condition=parse_expression_statement(translation_data,scope);
@@ -215,7 +227,10 @@ struct AST* parse_finish_for_statement(struct Translation_Data* translation_data
 	{
 		hold->update=parse_expression(translation_data,scope);
 		if(!get_and_check(translation_data,KW_CLOSE_NORMAL))
+		{
+			push_translation_error(" ')' expected",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)hold);
+		}
 	}
 	hold->body_statement=parse_statement(translation_data,scope);
 	return (struct AST*)hold;
@@ -235,11 +250,13 @@ struct AST* parse_finish_goto_statement(struct Translation_Data* translation_dat
 			return ret;
 		}else
 		{
+			push_translation_error(" ';' expected",translation_data);
 			return (struct AST*)get_error_tree(ret);
 		}
 	}
 	else
 	{
+		push_translation_error(" label expected in goto statement",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)get_goto_statement_tree(NULL,NULL));
 	}
 
@@ -257,6 +274,7 @@ struct AST* parse_finish_continue_statement(struct Translation_Data* translation
 		return hold;
 	}else
 	{
+		push_translation_error(" ';' expected",translation_data);
 		return (struct AST*)get_error_tree(hold);
 	}
 }
@@ -273,6 +291,7 @@ struct AST* parse_finish_break_statement(struct Translation_Data* translation_da
 		return hold;
 	}else
 	{
+		push_translation_error(" ';' expected",translation_data);
 		return (struct AST*)get_error_tree(hold);
 	}
 }
@@ -292,10 +311,12 @@ struct AST* parse_finish_labeled_statement(struct Translation_Data* translation_
 			return (struct AST*)ret;
 		}else
 		{
+			push_translation_error(" ':' expected in labeled statement",translation_data);
 			return (struct AST*)get_error_tree((struct AST*)ret);
 		}
 	}else
 	{
+		push_translation_error(" label expected in labeled statement",translation_data);
 		return (struct AST*)get_error_tree(NULL);
 	}
 }
@@ -313,6 +334,7 @@ struct AST* parse_finish_default_statement(struct Translation_Data* translation_
 		return (struct AST*)ret;
 	}else
 	{
+		push_translation_error(" ':' expected in default statement",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)ret);
 	}
 }
@@ -336,6 +358,7 @@ struct AST* parse_finish_return_statement(struct Translation_Data* translation_d
 		return (struct AST*)hold;
 	}else
 	{
+		push_translation_error(" ';' expected",translation_data);
 		return (struct AST*)get_error_tree((struct AST*)hold);
 	}
 }
@@ -358,6 +381,7 @@ struct AST* parse_expression_statement(struct Translation_Data* translation_data
 		return hold;
 	}else
 	{
+		push_translation_error(" ';' expected",translation_data);
 		return (struct AST*)get_error_tree(hold);
 	}
 }

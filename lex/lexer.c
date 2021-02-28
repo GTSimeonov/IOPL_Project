@@ -2,30 +2,27 @@
 #define LEXER_C LEXER_C
 /*asdf*/#include <lexer.h>
 
-char *well_known_locations_base[]={"./","/usr/include/","/usr/include/x86_64-linux-gnu/",NULL};
+char *well_known_locations_base[]={"","/usr/include/","/usr/include/x86_64-linux-gnu/",NULL};
 void lex(struct Source_File *src,struct Translation_Data *translation_data)
 {
 
 
 	struct token *current_token;
-	/*this is a hack*/
-	ssize_t last_line=-1;
 
 	while(src->src[src->where_in_src]!='\0')
 	{
 		if(has_new_errors(translation_data))
 		{
-			push_lexing_error("could not process",src,translation_data);
+			push_lexing_error("Fatal error",src,translation_data);
 			return;
 		}
 
 		current_token=get_next_token(src,&chonky[0],1);
 		if(current_token->type==KW_HASHTAG)
 		{
-			if(last_line!=current_token->line)
+			if(src->is_in_the_begining_of_line)
 			{
 				parse_preproc_line(src,translation_data);
-				last_line=current_token->line;
 				free(current_token);
 			}else
 			{
@@ -36,12 +33,10 @@ void lex(struct Source_File *src,struct Translation_Data *translation_data)
 					free(current_token);
 				}
 				free(current_token);
-				last_line+=2;
 			}
 
 		}else if(current_token->type!=KW_NOTYPE)
 		{
-			last_line=current_token->line;
 
 			expand_macro(current_token,src,translation_data);
 		}else
@@ -92,32 +87,25 @@ void handle_splicing(struct token *word)
 }
 void goto_new_line(struct Source_File *src,struct Translation_Data *translation_data)
 {
-	while(src->src[src->where_in_src]!='\n' && src->src[src->where_in_src]!='\0')
-	{
-		skip_line_splice(src);
-		++src->which_column;
-		++src->where_in_src;
-	}
-	src->which_column=0;
+	char hold_char;
+	while( (hold_char=src_getc(src,1,1,0)) != '\0' && hold_char != '\n');
+	src->is_in_the_begining_of_line=1;
+	++src->where_in_src;
 	++src->which_row;
+	src->which_column=0;
 }
 void chase_new_line(struct Source_File *src,struct Translation_Data *translation_data)
 {
-	while(src->src[src->where_in_src]!='\n' && src->src[src->where_in_src]!='\0')
-	{
-		skip_line_splice(src);
-		if(src->src[src->where_in_src]!=' ' && src->src[src->where_in_src]!='\t')
-		{
-			push_lexing_error("expected a new line",src,translation_data);
-			break;
-		}else
-		{
-			++src->which_column;
-		}
-		++src->where_in_src;
-	}
-	src->which_column=0;
+	char hold_char;
+	for(hold_char=src_getc(src,1,1,0);hold_char!='\n' && hold_char!='\0';
+			hold_char=src_getc(src,1,1,0));
+
+	++src->where_in_src;
 	++src->which_row;
+	src->is_in_the_begining_of_line=1;
+	src->which_column=0;
+
+
 }
 /*returns the number of bytes skipped*/
 size_t skip_line_splice(struct Source_File *src)
@@ -133,17 +121,18 @@ size_t skip_line_splice(struct Source_File *src)
 
 void skip_white_space(struct Source_File *src,char skip_new_line)
 {
-	while(src->src[src->where_in_src]==' ' || (src->src[src->where_in_src]=='\n' && skip_new_line) || src->src[src->where_in_src]=='\t')
+	char hold_char;
+	while(hold_char=src_getc(src,1,1,skip_new_line))
 	{
-		if(src->src[src->where_in_src]=='\n')
+		if(hold_char=='\n' && !skip_new_line)
 		{
-			src->which_column=0;
-			++src->which_row;
-		}else
-		{
-			++src->which_column;
+			return ;
 		}
-		++src->where_in_src;
+		if(hold_char!=' ' && hold_char!='\t')
+		{
+			src_ungetc(src);
+			return ;
+		}
 	}
 }
 struct token_vector Lex_Queue_Condense(struct Queue *tokens)
@@ -237,43 +226,38 @@ enum KEYWORDS kw_get(struct Translation_Data *translation_data)
 struct token* get_next_token(struct Source_File *src,struct automata_entry *start_state,char skip_new_line)
 {
 	int temp;
-	size_t current_size;
 	char hold_char;
 
 	struct token *ret;
 	struct automata_entry *current_state;
 	struct automata_entry *best_state;
 
-	current_size=0;
-	best_state=current_state=start_state;
-
 	/*ignore leading spaces,tabs and newlines*/
 	skip_white_space(src,skip_new_line);
 
-	while(src->src[src->where_in_src]!='\0')
-	{
-		current_size+=skip_line_splice(src);
+	src_reset_token_data(src,1);
 
-		current_state=current_state->delta[cmpr[src->src[src->where_in_src]]];
+	best_state=current_state=start_state;
+
+
+	while( (hold_char=src_getc(src,1,0,0)) !='\0')
+	{
+		if(hold_char=='\n' && !skip_new_line)
+		{
+			break;
+		}
+		current_state=current_state->delta[cmpr[hold_char]];
 		if(current_state==NULL)
 		{
 			if(best_state->type==KW_COMMENT || best_state->type==PKW_COMMENT)
 			{
 				/*TODO account for new lines not counted in comment*/
-				current_size=0;
+				src_reset_token_data(src,0);
 				best_state=current_state=start_state;
 				skip_white_space(src,1);
 			}else
 			{
-				ret=malloc(sizeof(struct token));
-				ret->type=best_state->type;
-				ret->data_size=current_size;
-				ret->column=src->which_column;
-				ret->line=src->which_row;
-				ret->data=src->src+(src->where_in_src-current_size);
-				ret->filename=src->src_name->filename;
-				handle_splicing(ret);
-				return ret;
+				return src_extract_token(src,best_state->type);
 			}
 
 		}else
@@ -281,60 +265,107 @@ struct token* get_next_token(struct Source_File *src,struct automata_entry *star
 			if(current_state->is_final)
 			{
 				best_state=current_state;
+				src_assimilate_into_best_token(src);
 			}
-			++current_size;
-			++src->where_in_src;
-			++src->which_column;
 		}
 	}
 
 	if(best_state->type==KW_COMMENT || best_state->type==PKW_COMMENT)
 	{
-		ret=malloc(sizeof(struct token));
-		ret->type=KW_NOTYPE;
-		ret->data_size=0;
-		ret->filename=src->src_name->filename;
+		return src_extract_token(src,KW_NOTYPE);
 	}else
 	{
-		ret=malloc(sizeof(struct token));
-		ret->type=best_state->type;
-		ret->data_size=current_size;
-		ret->column=src->which_column;
-		ret->line=src->which_row;
-		ret->data=src->src+(src->where_in_src-current_size);
-		ret->filename=src->src_name->filename;
-		handle_splicing(ret);
-		return ret;
+		return src_extract_token(src,best_state->type);
 	}
 	return ret;
 }
-char src_getc(struct Source_File *src,char skip_line_splice)
+/*here be dragons*/
+char src_getc(struct Source_File *src,char skip_line_splice,char skip_comments,char skip_new_line)
 {
 superhack:
 	if(src->src[src->where_in_src]=='\\' && skip_line_splice)
 	{
 		if(src->where_in_src < src->src_size-1 && src->src[src->where_in_src+1]=='\n')
 		{
-			++src->where_in_src;
+			src->where_in_src+=2;
 			++src->which_row;
+			src->token_size+=2;
 			src->which_column=0;
 			goto superhack;
 		}else
 		{
+			++src->token_size;
+			++src->which_column;
+			src->is_in_the_begining_of_line=0;
 			return '\\';
 		}
 	}else
 	{
-		if(src->src[src->where_in_src]=='\n')
+		if(src->src[src->where_in_src]=='\n' && skip_new_line)
 		{
 			++src->which_row;
 			src->which_column=0;
+			src->is_in_the_begining_of_line=1;
+
+			++src->where_in_src;
 			goto superhack;
+		}else if(src->src[src->where_in_src]=='/' && skip_comments)
+		{
+			if(src->src[src->where_in_src+1]=='*')
+			{
+				char hold_char;
+
+
+				src->where_in_src+=2;
+				hold_char=src_getc(src,1,0,1);
+				while(hold_char)
+				{
+					if(hold_char=='*')
+					{
+						hold_char=src_getc(src,1,0,1);
+						if(hold_char=='\0')
+						{
+							src->where_in_src=src->src_size;
+							return '\0';
+						}
+						else if(hold_char=='/')
+						{
+							goto superhack;
+						}
+					}else
+					{
+						hold_char=src_getc(src,1,0,1);
+					}
+				}
+				src->where_in_src=src->src_size;
+				return '\0';
+
+			}
 		}else
 		{
 			++src->which_column;
 		}
-		return src->src[src->where_in_src++];
+		++src->token_size;
+		if(src->src[src->where_in_src]!='#' || src->is_in_the_begining_of_line!=1)
+			src->is_in_the_begining_of_line=0;
+		if(src->src[src->where_in_src]=='\n')
+		{
+			return '\n';
+		}
+
+		if(src->src[src->where_in_src]=='\0')
+			return src->src[src->where_in_src];
+		else
+			return src->src[src->where_in_src++];
+	}
+}
+void src_ungetc(struct Source_File *src)
+{
+	--src->where_in_src;
+	if(src->src[src->where_in_src]=='\n')
+	{
+		--src->which_row;
+		src->which_column=0;
 	}
 }
 struct token* copy_token(struct token *src)
@@ -344,7 +375,46 @@ struct token* copy_token(struct token *src)
 	*cpy=*src;
 	return cpy;
 }
+struct token* src_extract_token(struct Source_File *src,enum KEYWORDS kw)
+{
+	struct token *ret;
+	ret=malloc(sizeof(struct token));
+	ret->type=kw;
 
+	ret->data_size=src->best_token_size;
+	ret->column=src->best_token_column;
+	ret->line=src->best_token_line;
+	ret->data=src->src+src->best_token_where_in_src_start;
+	ret->filename=src->src_name->filename;
+	handle_splicing(ret);
+	src->where_in_src=src->best_token_where_in_src_end;
+	src->is_in_the_begining_of_line=src->best_token_beg_line;
+	return ret;
+}
+
+void src_reset_token_data(struct Source_File *src,char use_src_as_base)
+{
+	src->token_size=0;
+	src->best_token_size=0;
+	src->best_token_line=src->which_row;
+	src->best_token_column=src->which_column;
+	if(use_src_as_base)
+	{
+		src->best_token_where_in_src_end=src->where_in_src;
+	}else
+	{
+		src->where_in_src=src->best_token_where_in_src_end;
+	}
+	src->best_token_where_in_src_start=src->where_in_src;
+}
+void src_assimilate_into_best_token(struct Source_File *src)
+{
+	src->best_token_size=src->token_size;
+	src->best_token_line=src->which_row;
+	src->best_token_column=src->which_column;
+	src->best_token_where_in_src_end=src->where_in_src;
+	src->best_token_beg_line=src->is_in_the_begining_of_line;
+}
 void delete_source_file(struct Source_File *src)
 {
 	delete_source_name(src->src_name);
@@ -356,5 +426,10 @@ void delete_source_name(struct Source_Name *name)
 	free(name->filename);
 	free(name->base);
 	free(name);
+}
+void flush_tokens(struct Queue *tokens)
+{
+	while(tokens->size>0)
+		free(Queue_Pop(tokens));
 }
 #endif

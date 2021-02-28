@@ -42,9 +42,13 @@ struct Source_File* extract_source_file(FILE *in,struct Source_Name *name)
 
 	src->src=malloc(file_size+1);
 	src->src_size=file_size;
+
 	src->where_in_src=0;
+
 	src->which_column=0;
 	src->which_row=0;
+	src->is_in_the_begining_of_line=1;
+
 	src->src[file_size]='\0';
 
 	fread(src->src,1,file_size,in);
@@ -194,7 +198,13 @@ struct Program* parse_program(char **base_source_names)
 		{
 			Queue_Push(hold_translation_data->source_files,base_file);
 			lex(base_file,hold_translation_data);
-			Queue_Push(program->translation_units,parse_translation_unit(hold_translation_data,program->externs));
+			if(!has_new_errors(hold_translation_data))
+			{
+				Queue_Push(program->translation_units,parse_translation_unit(hold_translation_data,program->externs));
+			}else
+			{
+				flush_tokens(hold_translation_data->tokens);
+			}
 			assimilate_translation_data(program,hold_translation_data);
 		}
 	}while(*(++base_source_names));
@@ -271,10 +281,7 @@ void assimilate_translation_data(struct Program *program,struct Translation_Data
 	Queue_Append(program->errors,translation_data->errors);
 	Queue_Append(program->source_files,translation_data->source_files);
 	
-	while(translation_data->tokens->size!=0)
-	{
-		free(Queue_Pop(translation_data->tokens));
-	}
+	flush_tokens(translation_data->tokens);
 
 	Queue_Init(translation_data->errors);
 	Queue_Init(translation_data->source_files);

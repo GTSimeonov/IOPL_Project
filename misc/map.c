@@ -45,9 +45,12 @@ void Map_Push(Map *tree,void *str,size_t size,void *id)
 	}
 	for(temp;temp<size;++temp)
 	{
+		tree=tree->delta[((unsigned char*)str)[temp]]=calloc(1,sizeof(Map));
+		/*
 		Map_Init(
 			tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map))
 			);
+			*/
 	}
 
 	tree->ID=id;
@@ -245,4 +248,32 @@ struct Map* Map_Push_And_Get(struct Map* tree,void *str,size_t size,void *id)
 	return tree;
 }
 
+void* Map_Check_And_Push(struct Map *tree,void *str,size_t size,void *id)
+{
+	size_t temp;
+	Map_Scour(tree,str,size,&temp,&tree);	
+
+	if(temp == size)
+	{
+		if(!tree->is_final)
+		{
+			tree->ID=id;
+			tree->is_final=1;
+		}
+		return tree->ID;
+	}
+	for(temp;temp<size;++temp)
+	{
+		tree=tree->delta[((unsigned char*)str)[temp]]=calloc(1,sizeof(Map));
+		/*
+		Map_Init(
+			tree=tree->delta[((unsigned char*)str)[temp]]=malloc(sizeof(Map))
+			);
+			*/
+	}
+
+	tree->ID=id;
+	tree->is_final=1;
+	return NULL;
+}
 #endif //#ifndef GMAP

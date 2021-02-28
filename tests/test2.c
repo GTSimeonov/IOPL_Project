@@ -1,8 +1,15 @@
-int/*kek*/kek;
-struct ke
-{
-	int s;
-};
-typedef int List;
 
-struct ke asdf;
+
+struct A
+{
+	int x;
+	int y;
+	int kak:1;
+};
+
+int main()
+{
+	int a;
+	struct A b;
+	return 0;
+}

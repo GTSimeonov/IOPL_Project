@@ -1,3 +1,4 @@
+#define VERSION 2
 #ifndef VERSION
 #define VERSION 1
 int kak;
@@ -27,8 +28,12 @@ int fib(int n)
 int main()
 {
 	int *a;
-	external_int++;
+	int iff;
+	++external_int;
+	a[10*100];
 	alert(fib(10));
 	+1;
+	a->b&c;
+	do 1; while(1);
 	return 0;
 }

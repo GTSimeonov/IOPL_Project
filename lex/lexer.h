@@ -42,6 +42,21 @@ struct Source_File
 	size_t where_in_src;
 	size_t which_column;
 	size_t which_row;
+
+	size_t token_size;
+
+
+	size_t best_token_size;
+	size_t best_token_line;
+	size_t best_token_column;
+
+	size_t best_token_where_in_src_start;
+	size_t best_token_where_in_src_end;
+	char best_token_beg_line;
+
+
+	char is_in_the_begining_of_line;
+	
 };
 
 
@@ -64,8 +79,13 @@ char get_and_check_unsafe(struct Translation_Data *translation_data,enum KEYWORD
 void chomp(struct Translation_Data *translation_data);
 enum KEYWORDS kw_get(struct Translation_Data *translation_data);
 
-char src_getc(struct Source_File *src,char skip_line_splice);
+char src_getc(struct Source_File *src,char skip_line_splice,char skip_comments,char skip_new_line);
+void src_ungetc(struct Source_File *src);
+struct token* src_extract_token(struct Source_File *src,enum KEYWORDS kw);
+void src_reset_token_data(struct Source_File *src,char use_src_as_base);
+void src_assimilate_into_best_token(struct Source_File *src);
 
 void delete_source_file(struct Source_File *src);
 void delete_source_name(struct Source_Name *name);
+void flush_tokens(struct Queue *tokens);
 #endif

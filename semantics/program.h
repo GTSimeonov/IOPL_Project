@@ -60,6 +60,7 @@ char has_new_errors(struct Translation_Data *translation_data);
 
 void delete_program(struct Program *program);
 void delete_translation_data(struct Translation_Data *translation_data);
+void destroy_translation_data(struct Translation_Data *translation_data);
 void assimilate_translation_data(struct Program *program,struct Translation_Data *translation_data);
 
 #endif

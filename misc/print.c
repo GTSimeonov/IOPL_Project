@@ -39,6 +39,7 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 	do
 	{
 		base_file=get_source_file(*base_source_names,this_directory);
+
 		if(base_file==NULL)
 		{
 			/*TODO error*/
@@ -58,15 +59,13 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 			print_tokens(out,hold_translation_data->tokens);
 			fprintf(out,"\n} END OF TOKENS\n");
 
-			while(hold_translation_data->tokens->size!=0)
-			{
-				free(Queue_Pop(hold_translation_data->tokens));
-			}
+
 		}
 	}while(*(++base_source_names));
 	
+	/*TODO fix memory leak*/
+	free(hold_translation_data);
 	
-	delete_translation_data(hold_translation_data);
 
 	return ret;
 }

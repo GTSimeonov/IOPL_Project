@@ -9,18 +9,19 @@
 	#include <qchar>
 	#define [ id(list) replacement
 	#undef [ id ]
-	#line number [string]
 	#if
 	#ifdef
 	#ifndef
-	#pragma
-	#error
 	#
 
 	#elif
 	#else
 	#endif
 
+
+	#error
+	#pragma
+	#line number [string]
 	
 */
 void parse_preproc_line(struct Source_File *src,struct Translation_Data *translation_data)
@@ -65,9 +66,13 @@ void parse_preproc_line(struct Source_File *src,struct Translation_Data *transla
 			free(hold);
 			push_lexing_error("unmatched elif",src,translation_data);
 			return;
-		default:
+		case PKW_ERROR:
 			free(hold);
+			parse_preproc_error_line(src,translation_data);
+			return;
+		default:
 			/*TODO error*/
+			free(hold);
 			push_lexing_error("expected a preprocessing directive",src,translation_data);
 			return;
 
@@ -518,8 +523,7 @@ void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *tran
 			{
 				//preproc_find_else(src,translation_data,0);
 				parse_preproc_if_line(src,translation_data);
-			}
-			else
+			}else if(hold_token!=NULL)
 			{
 				preproc_lex_first_part(src,translation_data);
 			}
@@ -533,7 +537,14 @@ struct token* preproc_find_else(struct Source_File *src,struct Translation_Data 
 	struct token *hold_token;
 	struct Source_File temp_src;
 	int indentation=1;
+	if(!jump_before)
+	{
+		free(get_next_token(src,&chonky[0],1));
+		free(get_next_token(src,&chonky[0],1));
+		return NULL;
+	}
 
+		temp_src=*src;
 	while(src->src[src->where_in_src]!='\0' && indentation)
 	{
 		/*BEWARE*/
@@ -619,8 +630,7 @@ void parse_preproc_ifdef_line(struct Source_File *src,struct Translation_Data *t
 			if(hold_token!=NULL && hold_token->type==PKW_ELIF)
 			{
 				parse_preproc_if_line(src,translation_data);
-			}
-			else
+			}else if(hold_token!=NULL)
 			{
 				preproc_find_else(src,translation_data,0);
 				preproc_lex_first_part(src,translation_data);
@@ -657,12 +667,11 @@ void parse_preproc_ifndef_line(struct Source_File *src,struct Translation_Data *
 			{
 				parse_preproc_if_line(src,translation_data);
 			}
-			else
+			else if(hold_token!=NULL)
 			{
 				preproc_find_else(src,translation_data,0);
 				preproc_lex_first_part(src,translation_data);
 			}
-
 			free(hold_token);
 		}
 
@@ -690,6 +699,67 @@ void parse_preproc_undef_line(struct Source_File *src,struct Translation_Data *t
 	free(id);
 	chase_new_line(src,translation_data);
 }
+void parse_preproc_error_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	char *error;
+	size_t line,column;
+	error=src->src+src->where_in_src;
+	line=src->which_row+1;
+	column=src->which_column+1;
+	
+
+	goto_new_line(src,translation_data);
+	src->src[src->where_in_src-1]='\0';
+
+	Queue_Push(translation_data->errors,get_translation_error(error,line,column,src->src_name->filename));
+
+}
+void parse_preproc_line_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+	struct Queue *tokens;
+	struct Translation_Data hack;
+	struct token *hold_line;
+	struct token *hold_name;
+
+	tokens=lex_line(src,translation_data);
+	hack=*translation_data;
+	hack.tokens=tokens;
+	if(check(&hack,KW_NUMBER,1))
+	{
+		hold_line=(struct token*)Queue_Pop(tokens);
+		if(check(&hack,KW_STRING,1))
+		{
+			hold_name=(struct token*)Queue_Pop(tokens);
+			hold_name->data[hold_name->data_size]='\0';
+			if(tokens->size>0)
+			{
+				free(hold_line);
+				free(hold_name);
+				flush_tokens(tokens);
+				push_lexing_error("expected a new line in #line preprocessing directive here",src,translation_data);
+				return;
+			}else
+			{
+				delete_source_name(src->src_name);
+				src->src_name=get_source_name(hold_name->data,"");
+				return;
+			}
+
+		}else if(tokens->size>0)
+		{
+			free(hold_line);
+			flush_tokens(tokens);
+			push_lexing_error("expected a string or new line in #line preprocessing directive here",src,translation_data);
+			return;
+		}
+
+	}else
+	{
+		flush_tokens(tokens);
+		push_lexing_error("expected a line number in #line preprocessing directive here",src,translation_data);
+		return;
+	}
+}
 void delete_macro(void *macro)
 {
 #define AS_MACRO(x) ((struct define_directive*)macro)
@@ -701,5 +771,29 @@ void delete_macro(void *macro)
 	free(AS_MACRO(macro)->arguments);
 	free(macro);
 #undef AS_MACRO
+}
+struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translation_data)
+{
+
+	struct Source_File temp_src;
+	struct token *hold_token;
+	struct Queue *tokens;
+	char just_in_case;
+	tokens=malloc(sizeof(struct Queue));
+	Queue_Init(tokens);
+
+
+	temp_src=*src;
+	goto_new_line(src,translation_data);
+	just_in_case=src->src[src->where_in_src];
+	src->src[src->where_in_src]='\0';
+
+	translation_data->tokens=tokens;
+
+	lex(&temp_src,translation_data);
+
+	src->src[src->where_in_src]=just_in_case;
+
+	return tokens;
 }
 #endif
