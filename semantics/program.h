@@ -16,13 +16,14 @@ struct Program
 	struct Queue *translation_units;
 	struct Queue *source_files;
 	struct Queue *errors;
-	struct Scope *externs;
 
 	/*
 	   we the type node structures from 
 	   all the translation units are stored here
 	 */
 	struct Map *types;
+
+	struct Linkage *external_linkage;
 };
 struct Translation_Data
 {
@@ -39,6 +40,9 @@ struct Translation_Data
 
 	/*passed from program struct*/
 	struct Map *types;
+	struct Linkage *external_linkage;
+	struct Linkage *internal_linkage;
+	/*end of passed from program struct*/
 };
 
 struct Program* get_program();
@@ -48,7 +52,7 @@ struct Source_File* extract_source_file(FILE *in,struct Source_Name *name);
 struct Source_File* get_source_file(char *filename,char **where_to_search);
 void normalise_source_name(struct Source_Name *name);
 
-struct Translation_Data* get_translation_data(struct Map *types);
+struct Translation_Data* get_translation_data(struct Map *types,struct Linkage *internal_linkage,struct Linkage *external_linkage);
 
 
 struct Program* parse_program(char **base_source_names);
@@ -57,6 +61,7 @@ void entype_program(struct Program *program);
 
 
 char has_new_errors(struct Translation_Data *translation_data);
+char has_no_tokens(struct Translation_Data *translation_data);
 
 void delete_program(struct Program *program);
 void delete_translation_data(struct Translation_Data *translation_data);

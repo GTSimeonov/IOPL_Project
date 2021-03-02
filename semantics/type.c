@@ -330,4 +330,8 @@ void delete_type(void *type)
 		free(type);
 	}
 }
+char types_are_identical(struct Type *a,struct Type *b)
+{
+	return 1;
+}
 #endif

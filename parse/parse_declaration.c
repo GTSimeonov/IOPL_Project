@@ -10,70 +10,52 @@ void parse_declaration(struct Translation_Data *translation_data,struct Scope *s
 	struct Denoted *hold;
 
 	prototype=parse_declaration_specifiers(translation_data,scope);
-	while(1)
+	while(!get_and_check(translation_data,KW_SEMI_COLUMN))
 	{
-		if(get_and_check(translation_data,KW_SEMI_COLUMN))
-			goto finish;
-
 		hold=parse_declarator(translation_data,scope,prototype);
 
-
-
-		if(hold->denotation==DT_Function && parse_function_definitions==1)
+		if(hold->denotation==DT_Function)
 		{
-			if(get_and_check(translation_data,KW_OPEN_CURLY))
+			/*check if this is a function definition*/
+			if(parse_function_definitions && get_and_check(translation_data,KW_OPEN_CURLY))
 			{
-				((struct Denoted_Function*)hold)->body=(struct AST_Compound_Statement*)parse_finish_compound_statement(translation_data,scope);
-
+				((struct Denoted_Function*)hold) ->body=
+				       	(struct AST_Compound_Statement*)parse_finish_compound_statement(translation_data,scope);
 				Queue_Push(where_to_push,get_function_definition_tree(scope,(struct Denoted_Function*)hold));
 				Scope_Push(scope,hold,translation_data);
-				goto finish;
+				break;
 			}
-
+			/*this is a function declaration*/
 			Queue_Push(where_to_push,get_function_declaration_tree(scope,(struct Denoted_Function*)hold));
 		}else if(hold->denotation==DT_Typedef)
 		{
 			Queue_Push(where_to_push,get_type_definition_tree((struct Denoted_Typedef*)hold));
 		}else if(hold->denotation==DT_Object)
 		{
-			struct AST_Object_Declaration *od;
-			od=get_object_declaration_tree((struct Denoted_Object*)hold,NULL);
-			Queue_Push(where_to_push,od);
+			Queue_Push(where_to_push,get_object_declaration_tree((struct Denoted_Object*)hold));
 			if(get_and_check(translation_data,KW_EQ))
-			{
-				od->initializer=parse_initializer(translation_data,scope,od->object);
-			}
+				((struct Denoted_Object*)hold)->initializer=parse_initializer(translation_data,scope,(struct Denoted_Object*)hold);
 		}else
 		{
 			/*TODO error*/
 			Queue_Push(where_to_push,get_declaration_error_tree(hold));
 			push_translation_error("declaration expected",translation_data);
+
 			/*search for end of erronous declaration*/
-			while(!get_and_check(translation_data,KW_SEMI_COLUMN))
-			{
-				free(Queue_Pop(translation_data->tokens));
-			}
-			goto finish;
+			break;
 		}
 
 		Scope_Push(scope,hold,translation_data);
 		parse_function_definitions=0;
-		if(!get_and_check(translation_data,KW_COMMA))
+		if(!get_and_check(translation_data,KW_COMMA) && !check(translation_data,KW_SEMI_COLUMN,0))
 		{
-			if(get_and_check(translation_data,KW_SEMI_COLUMN))
-			{
-				goto finish;
-			}else
-			{
-				/*TODO error*/
-				Queue_Push(where_to_push,get_declaration_error_tree(NULL));
-				push_translation_error("semi column expected",translation_data);
-				goto finish;
-			}
+			/*TODO error*/
+			Queue_Push(where_to_push,get_declaration_error_tree(NULL));
+			push_translation_error("semi column expected",translation_data);
+			break;
 		}
 	}
 
-finish:
 	free(prototype);
 
 }
@@ -202,16 +184,16 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 				if(!parse_storage_class)
 					goto exit;
 				chomp(translation_data);
-				if(ret->storage_class!=SC_NONE)
+				if(ret->storage_class!=SCS_NONE)
 				{
 					switch(ret->storage_class)
 					{
-						case SC_EXTERN:
+						case SCS_EXTERN:
 						push_translation_error("only one extern allowed >:|",translation_data);
 						break;
 
-						case SC_TYPEDEF:
-						case SC_STATIC:
+						case SCS_TYPEDEF:
+						case SCS_STATIC:
 						push_translation_error("only one storage class allowed >:|",translation_data);
 						break;
 						default:
@@ -220,22 +202,22 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
-				ret->storage_class=SC_EXTERN;
+				ret->storage_class=SCS_EXTERN;
 				break;
 			case KW_STATIC:
 				if(!parse_storage_class)
 					goto exit;
 				chomp(translation_data);
-				if(ret->storage_class!=SC_NONE)
+				if(ret->storage_class!=SCS_NONE)
 				{
 					switch(ret->storage_class)
 					{
-						case SC_STATIC:
+						case SCS_STATIC:
 						push_translation_error("only one static allowed >:|",translation_data);
 						break;
 
-						case SC_EXTERN:
-						case SC_TYPEDEF:
+						case SCS_EXTERN:
+						case SCS_TYPEDEF:
 						push_translation_error("only one storage class allowed >:|",translation_data);
 						break;
 						default:
@@ -243,19 +225,19 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 					}
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
-				ret->storage_class=SC_STATIC;
+				ret->storage_class=SCS_STATIC;
 				break;
 			case KW_TYPEDEF:
 				if(!parse_storage_class)
 					goto exit;
 				chomp(translation_data);
-				if(ret->storage_class!=SC_NONE)
+				if(ret->storage_class!=SCS_NONE)
 				{
 					switch(ret->storage_class)
 					{
-						case SC_STATIC:
-						case SC_EXTERN:
-						case SC_TYPEDEF:
+						case SCS_STATIC:
+						case SCS_EXTERN:
+						case SCS_TYPEDEF:
 						push_translation_error("only one storage class allowed >:|",translation_data);
 						break;
 						default:
@@ -263,7 +245,7 @@ struct Denotation_Prototype* parse_declaration_specifiers_inner(struct Translati
 					}
 					return (struct Denotation_Prototype*)get_denoted_error((struct Denoted*)ret);
 				}
-				ret->storage_class=SC_TYPEDEF;
+				ret->storage_class=SCS_TYPEDEF;
 				break;
 			case KW_STRUCT:
 				ret->specifier=TS_STRUCT;
@@ -545,26 +527,12 @@ void parse_struct_union_specifier_finish(struct Translation_Data *translation_da
 	{
 		base->is_finished=1;
 		while(parse_struct_declaration(translation_data,(struct Scope*)base->inner_namespace,base->members))
-		{
-			
 			if(get_and_check(translation_data,KW_CLOSE_CURLY))
-			{
 				return ;
-			}
-		}
-
 		/*TODO error*/
 		push_translation_error("expected closing curly bracket from struct declaration",translation_data);
-		return ;
-
-		
-	}else
-	{
-		/*if this isnt a struct definition return an incomplete struct-union*/
-		return ;
-		
+		return;
 	}
-
 }
 /*
    struct-declaration:
@@ -575,7 +543,7 @@ char parse_struct_declaration(struct Translation_Data *translation_data,struct S
 	struct Denotation_Prototype *prototype;
 	struct Denoted *hold;
 	prototype=parse_specifier_qualifier_list(translation_data,struct_scope);
-	while(1)
+	while(!get_and_check(translation_data,KW_SEMI_COLUMN))
 	{
 		hold=parse_struct_declarator(translation_data,struct_scope,prototype);
 		if(hold!=NULL && hold->denotation!=DT_Error)
@@ -586,22 +554,15 @@ char parse_struct_declaration(struct Translation_Data *translation_data,struct S
 		}else
 		{
 			free(prototype);
-			/*todo error*/
 			push_translation_error("there is a problem with the declarator",translation_data);
 			return 0;
 		}
-		if(!get_and_check(translation_data,KW_COMMA))
+
+		if(!get_and_check(translation_data,KW_COMMA) && !check(translation_data,KW_SEMI_COLUMN,0))
 		{
-			if(get_and_check(translation_data,KW_SEMI_COLUMN))
-			{
-				break;
-			}else
-			{
-				free(prototype);
-				push_translation_error("semi column expected in struct declaration",translation_data);
-				/*todo error*/
-				return 0;
-			}
+			free(prototype);
+			push_translation_error("semi column expected in struct declaration",translation_data);
+			return 0;
 		}
 	}
 	free(prototype);
@@ -619,14 +580,14 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 	if(get_and_check(translation_data,KW_COLUMN))
 	{
 		/*unnamed bitfields are possible*/
-		hold=get_denoted_object(NULL,SC_NONE,prototype->type);
+		hold=get_denoted_object(NULL,SCS_NONE,prototype->type,NULL);
 
 	}else
 	{
 		hold=parse_declarator(translation_data,scope,prototype);
 		if(get_and_check(translation_data,KW_COLUMN))
 		{
-		/*TODO move error detection in get_type_bitfield*/
+			/*TODO move error detection in get_type_bitfield*/
 			((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
 		}
 	}
@@ -781,6 +742,7 @@ struct Type* parse_abstract_declarator(struct Translation_Data *translation_data
 */
 struct AST* parse_initializer(struct Translation_Data *translation_data,struct Scope *scope,struct Denoted_Object *base)
 {
+	/*TODO add compound initialiser*/
 	return parse_assignment_expression(translation_data,scope);
 }
 

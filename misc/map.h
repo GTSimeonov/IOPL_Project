@@ -29,7 +29,9 @@ struct Map* Map_Check_And_Get(Map *tree, void *str,size_t size);
 void Map_Remove(Map *tree, void *str,size_t size);
 void Map_Map(Map *tree,void (*map)(void*));
 void Map_Map_Extended(Map *tree,void (*map)(void*,void*),void* pass_data);
+
 void Map_Destroy(Map *tree);
+void Map_Delete_Map(struct Map *tree);
 struct Condensed_Map* Map_Condense(Map* tree);
 
 struct Map* Map_Push_And_Get(struct Map* tree,void *str,size_t size,void *id);

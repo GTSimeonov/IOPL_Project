@@ -276,4 +276,10 @@ void* Map_Check_And_Push(struct Map *tree,void *str,size_t size,void *id)
 	tree->is_final=1;
 	return NULL;
 }
+/*requires that the map has no loops. does not free the root node*/
+/*TODO*/
+void Map_Delete_Map(struct Map *tree)
+{
+
+}
 #endif //#ifndef GMAP

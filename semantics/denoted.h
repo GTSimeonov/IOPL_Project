@@ -4,11 +4,12 @@
 #include <type.h>
 #include <scope.h>
 #include <semantics.h>
+#include <linkage.h>
 
 
 enum Denotation_Type;
 enum Function_Specifier;
-enum Storage_Class;
+enum Storage_Class_Specifier;
 
 
 struct Denoted
@@ -31,21 +32,22 @@ struct Denoted_Base
 struct Denoted_Function
 {
 	enum Denotation_Type denotation;
+	enum Linkage_Type linkage;
 	struct token *id;
 	struct Type *type;
 
 
 	enum Function_Specifier function_specifier;
-	enum Storage_Class storage_class;
-
 	struct AST_Compound_Statement *body;
 };
 struct Denoted_Object
 {
 	enum Denotation_Type denotation;
-	struct token *id;
+	enum Linkage_Type linkage;
 
+	struct token *id;
 	struct Object *object;
+	struct AST *initializer;
 };
 struct Denoted_Typedef
 {
@@ -86,7 +88,7 @@ struct Denotation_Prototype
 	struct Map *node;
 
 
-	enum Storage_Class storage_class;
+	enum Storage_Class_Specifier storage_class;
 	enum Type_Specifier specifier;
 	enum Type_Constraint constraint;
 	enum Type_Signedness sign;
@@ -103,16 +105,17 @@ struct Object
 {
 	struct Type *type;
 	struct Location *location;
-	enum Storage_Class storage_class;
+	enum Storage_Class_Specifier storage_class;
 };
 
-
+struct Static_Object;
+struct Automatic_Object;
 
 
 struct Denoted_Base* get_denoted_base(struct Denotation_Prototype *prototype);
 struct Denoted* get_denoted_error(struct Denoted *error);
 struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs);
-struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Type *type);
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class_Specifier sc,struct Type *type,struct AST *initializer);
 struct Denoted* get_denoted_typedef(struct Denoted_Base *base);
 struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression);
 struct Denoted* get_denoted_enum_const_num(struct token *id,struct Enum *parent,int value);
@@ -124,6 +127,7 @@ struct Denoted* get_denotation_prototype(struct Map *types);
 
 
 void delete_denoted_wrapper(void *denoted);
+void delete_denoted_with_no_linkage_wrapper(void *denoted);
 void delete_denoted(struct Denoted *denoted);
 void delete_denoted_error(struct Denoted_Error *error);
 void delete_denoted_function(struct Denoted_Function *function);
@@ -137,5 +141,5 @@ void delete_denoted_prototype(struct Denotation_Prototype *prototype);
 void delete_denoted_base(struct Denoted_Base *base);
 
 
-enum Storage_Class get_denoted_function_storage_class(struct Denoted_Function *function);
+enum Storage_Class_Specifier get_denoted_function_storage_class(struct Denoted_Function *function);
 #endif

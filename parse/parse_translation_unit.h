@@ -4,6 +4,6 @@
 #include <parse_statement.h>
 #include <error.h>
 
-struct AST* parse_translation_unit(struct Translation_Data *translation_data,struct Scope *externs);
+struct AST* parse_translation_unit(struct Translation_Data *translation_data);
 
 #endif

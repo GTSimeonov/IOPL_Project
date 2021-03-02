@@ -1,9 +1,8 @@
-
-#include <limits.h>
-
-
+extern int a=10;
+extern int a;
 int main()
 {
-	printf("asdf\n");
-	return 0;
+	{
+		extern int a;
+	}
 }

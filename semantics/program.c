@@ -11,13 +11,13 @@ struct Program* get_program()
 	ret->source_files=malloc(sizeof(struct Queue));
 	ret->errors=malloc(sizeof(struct Queue));
 	ret->types=malloc(sizeof(struct Map));
+	ret->external_linkage=malloc(sizeof(struct Linkage));
 
 	Queue_Init(ret->translation_units);
 	Queue_Init(ret->source_files);
 	Queue_Init(ret->errors);
-	/*this isn't really a scope,
-	 TODO rework*/
-	ret->externs=get_normal_scope(NULL,EXTERN_SCOPE);
+
+
 
 	Map_Init(ret->types);
 
@@ -55,7 +55,7 @@ struct Source_File* extract_source_file(FILE *in,struct Source_Name *name)
 	fclose(in);
 	return src;	
 }
-struct Translation_Data* get_translation_data(struct Map *types)
+struct Translation_Data* get_translation_data(struct Map *types,struct Linkage *internal_linkage,struct Linkage *external_linkage)
 {
 	struct Translation_Data *ret;
 	ret=malloc(sizeof(struct Translation_Data));
@@ -72,6 +72,9 @@ struct Translation_Data* get_translation_data(struct Map *types)
 	ret->types=types;
 
 	ret->number_of_errors_when_last_checked=0;
+
+	ret->external_linkage=external_linkage;
+	ret->internal_linkage=internal_linkage;
 
 	return ret;
 }
@@ -185,7 +188,7 @@ struct Program* parse_program(char **base_source_names)
 	}
 
 	program=get_program();
-	hold_translation_data=get_translation_data(program->types);	
+	hold_translation_data=get_translation_data(program->types,get_linkage(),program->external_linkage);	
 	do
 	{
 		base_file=get_source_file(*base_source_names,this_directory);
@@ -200,7 +203,7 @@ struct Program* parse_program(char **base_source_names)
 			lex(base_file,hold_translation_data);
 			if(!has_new_errors(hold_translation_data))
 			{
-				Queue_Push(program->translation_units,parse_translation_unit(hold_translation_data,program->externs));
+				Queue_Push(program->translation_units,parse_translation_unit(hold_translation_data));
 			}else
 			{
 				flush_tokens(hold_translation_data->tokens);
@@ -250,7 +253,7 @@ void delete_program(struct Program *program)
 	free(program->errors);
 
 
-	delete_scope(program->externs);
+	delete_linkage(program->external_linkage);
 
 	/*BEWARE*/
 	Map_Map(program->types,delete_type);
@@ -289,5 +292,9 @@ void assimilate_translation_data(struct Program *program,struct Translation_Data
 	translation_data->number_of_errors_when_last_checked=0;
 
 
+}
+char has_no_tokens(struct Translation_Data *translation_data)
+{
+	return (translation_data->tokens->size)==0;
 }
 #endif

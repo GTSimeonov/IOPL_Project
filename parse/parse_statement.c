@@ -75,7 +75,7 @@ struct AST* parse_finish_compound_statement(struct Translation_Data* translation
 {
 	struct AST_Compound_Statement *hold;
 	hold=get_compound_statement_tree(scope);
-	while(!get_and_check(translation_data,KW_CLOSE_CURLY))
+	while(!get_and_check(translation_data,KW_CLOSE_CURLY) && !has_no_tokens(translation_data))
 	{
 		if(is_type(translation_data,hold->scope))
 		{
@@ -388,7 +388,7 @@ struct AST* parse_expression_statement(struct Translation_Data* translation_data
 void chase_next_semicolumn(struct Translation_Data *translation_data)
 {
 /*chase ; and start parsing next declaration*/
-	while(!get_and_check(translation_data,KW_SEMI_COLUMN) &&
+	while(!get_and_check(translation_data,KW_SEMI_COLUMN) && !check(translation_data,KW_CLOSE_CURLY,0) &&
 		       	translation_data->tokens->size>0)
 	{
 		chomp(translation_data);

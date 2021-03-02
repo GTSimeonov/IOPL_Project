@@ -26,25 +26,28 @@ struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,e
 	struct Denoted_Function *ret;
 	ret=malloc(sizeof(struct Denoted_Function));
 	ret->denotation=DT_Function;
+	ret->linkage=LINKAGE_NONE;
 	ret->id=id;
 	ret->type=return_type;
 	ret->function_specifier=fs;
 	ret->body=NULL;
-	ret->storage_class=SC_NONE;
 
 	return (struct Denoted*)ret;
 }
-struct Denoted* get_denoted_object(struct token *id, enum Storage_Class sc,struct Type *type)
+struct Denoted* get_denoted_object(struct token *id, enum Storage_Class_Specifier sc,struct Type *type,struct AST *initializer)
 {
 	struct Denoted_Object *ret;
 	ret=malloc(sizeof(struct Denoted_Object));
 	ret->denotation=DT_Object;
+	ret->linkage=LINKAGE_NONE;
 	ret->id=id;
 
 	ret->object=malloc(sizeof(struct Object));
 	ret->object->type=type;
 	ret->object->location=NULL;
 	ret->object->storage_class=sc;
+
+	ret->initializer=initializer;
 
 	return (struct Denoted*)ret;
 }
@@ -112,7 +115,7 @@ struct Denoted* get_denotation_prototype(struct Map *types)
 	ret->denotation=DT_Prototype;
 	ret->type=NULL;
 	ret->node=types;
-	ret->storage_class=SC_NONE;
+	ret->storage_class=SCS_NONE;
 	ret->specifier=TS_NONE;
 	ret->constraint=TC_NONE;
 	ret->sign=TSIGN_NONE;
@@ -129,13 +132,29 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 	if(base->type->specifier==TS_FUNC)
 	{
 		if(base->id==NULL && !allow_abstract)
-			{
+		{
 			return get_denoted_error(get_denoted_function(NULL,((struct Type_Function*)base->type)->return_type,prototype->function_specifier));
 		}else
 		{
-			return get_denoted_function(base->id,base->type,prototype->function_specifier);
+			struct Denoted_Function *hold_denoted_function;
+			hold_denoted_function=(struct Denoted_Function*)get_denoted_function(base->id,base->type,prototype->function_specifier);
+			/*hack*/
+			switch(prototype->storage_class)
+			{
+				case SCS_NONE:
+					hold_denoted_function->linkage=LINKAGE_NONE;
+					break;
+				case SCS_EXTERN:
+					hold_denoted_function->linkage=LINKAGE_EXTERNAL;
+					break;
+				case SCS_STATIC:
+					hold_denoted_function->linkage=LINKAGE_INTERNAL;
+					break;
+
+			}
+			return (struct Denoted*)hold_denoted_function;
 		}
-	}else if(prototype->storage_class==SC_TYPEDEF)
+	}else if(prototype->storage_class==SCS_TYPEDEF)
 	{
 		if(base->id==NULL && !allow_abstract)
 		{
@@ -148,10 +167,10 @@ struct Denoted* extract_denoted(struct Denoted_Base *base,struct Denotation_Prot
 	{
 		if(base->id==NULL && !allow_abstract)
 		{
-			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->type));
+			return get_denoted_error(get_denoted_object(base->id,prototype->storage_class,base->type,NULL));
 		}else
 		{
-			return get_denoted_object(base->id,prototype->storage_class,base->type);
+			return get_denoted_object(base->id,prototype->storage_class,base->type,NULL);
 		}
 	}
 }
@@ -209,6 +228,8 @@ void delete_denoted_object(struct Denoted_Object *object)
 		free(object->id);
 	if(object->object!=NULL)
 		delete_object(object->object);
+	if(object->initializer!=NULL)
+		delete_ast(object->initializer);
 	free(object);
 }
 void delete_denoted_typedef(struct Denoted_Typedef *typedefed)
@@ -259,7 +280,15 @@ void delete_denoted_wrapper(void *denoted)
 {
 	delete_denoted(denoted);
 }
-
+void delete_denoted_with_no_linkage_wrapper(void *denoted)
+{
+	if( ((struct Denoted*)denoted)->denotation == DT_Object )
+	{
+		if( AS_DENOTED_OBJECT_PTR(denoted)->linkage!=LINKAGE_NONE )
+			return;
+	}
+	delete_denoted(denoted);
+}
 
 
 

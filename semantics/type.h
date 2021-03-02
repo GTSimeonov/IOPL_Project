@@ -135,6 +135,7 @@ void delete_type(void *type);
 char is_type(struct Translation_Data *translation_data,struct Scope *scope);
 size_t get_type_size(struct Type *type);
 
+char types_are_identical(struct Type *a,struct Type *b);
 
 
 

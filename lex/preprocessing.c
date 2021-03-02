@@ -476,7 +476,7 @@ void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *tran
 	struct token *hold_token;
 	int result;
 
-	null_scope=get_normal_scope(NULL,EXTERN_SCOPE);
+	null_scope=get_normal_scope(NULL,FILE_SCOPE);
 
 	tokens=lex_line(src,translation_data,1);
 

@@ -2,11 +2,11 @@
 #define GCC_DENOTED_HH GCC_DENOTED_HH
 
 #define AS_DENOTED_OBJECT_PTR(x) ((struct Denoted_Object*)x)
-#define AS_DENOTED_FUNCTION(x) ((struct Denoted_Object*)x)
-#define AS_DENOTED_TYPEDEF(x) ((struct Denoted_Object*)x)
-#define AS_DENOTED_ENUM(x) ((struct Denoted_Object*)x)
-#define AS_DENOTED_ENUM_CONST(x) ((struct Denoted_Object*)x)
-#define AS_DENOTED_STRUCT_UNION(x) ((struct denoted_object*)x)
+#define AS_DENOTED_FUNCTION(x) ((struct Denoted_Function*)x)
+#define AS_DENOTED_TYPEDEF(x) ((struct Denoted_Typedef*)x)
+#define AS_DENOTED_ENUM(x) ((struct Denoted_Enum*)x)
+#define AS_DENOTED_ENUM_CONST(x) ((struct Denoted_Enum_Const*)x)
+#define AS_DENOTED_STRUCT_UNION(x) ((struct Denoted_Struct_Union*)x)
 
 enum Denotation_Type
 {
@@ -29,12 +29,14 @@ enum Function_Specifier
 	FS_Inline,
 	FS_None
 };
-enum Storage_Class
+enum Storage_Class_Specifier
 {
-	SC_EXTERN,
-	SC_STATIC,
-	SC_TYPEDEF,
-	SC_NONE
+	SCS_EXTERN,
+	SCS_STATIC,
+	SCS_TYPEDEF,
+	SCS_REGISTER,
+	SCS_NONE
+
 };
 
 struct Denoted;

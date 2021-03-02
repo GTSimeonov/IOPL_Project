@@ -35,7 +35,7 @@ char print_tokens_of_program(FILE *out,char **base_source_names)
 	}
 	ret=0;
 
-	hold_translation_data=get_translation_data(NULL);	
+	hold_translation_data=get_translation_data(NULL,get_linkage(),get_linkage());	
 	do
 	{
 		base_file=get_source_file(*base_source_names,this_directory);
@@ -445,17 +445,31 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 		case DT_Label:
 			fprintf(out,"label ");return;
 		case DT_Object:
-			switch(((struct Denoted_Object*)denoted)->object->storage_class)
+			switch(((struct Denoted_Object*)denoted)->linkage)
 			{
-				case SC_EXTERN:
-					fprintf(out,"extern ");
+				case LINKAGE_INTERNAL:
+					fprintf(out,"internally linked ");
 					break;
-				case SC_STATIC:
-					fprintf(out,"static ");
+				case LINKAGE_EXTERNAL:
+					fprintf(out,"externally linked ");
 					break;
+				case LINKAGE_NONE:
+					break;
+				default:
+					assert(0);
 			}
 			fprintf(out,"denoted object ");
 			print_token(out,((struct Denoted_Object*)denoted)->id);
+			switch(((struct Denoted_Object*)denoted)->object->storage_class)
+			{
+				case SCS_NONE:
+					fprintf(out," with automatic storage duration");
+					break;
+				case SCS_STATIC:
+					fprintf(out," static storage duration");
+					break;
+				assert(0);
+			}
 			fprintf(out," is a ");
 			print_type(out,((struct Denoted_Object*)denoted)->object->type,1);
 
@@ -467,17 +481,19 @@ void print_denoted(FILE *out,struct Denoted *denoted)
 			print_type(out,((struct Denoted_Typedef*)denoted)->type,0);	
 			return;
 		case DT_Function:
-			switch(((struct Denoted_Function*)denoted)->storage_class)
-			{
-				case SC_EXTERN:
-					fprintf(out,"extern ");
-					break;
-				case SC_STATIC:
-					fprintf(out,"static ");
-					break;
-			}
 			print_token(out,((struct Denoted_Function*)denoted)->id);
 			fprintf(out," is ");
+			switch(((struct Denoted_Function*)denoted)->linkage)
+			{
+				case LINKAGE_EXTERNAL:
+					fprintf(out," an externally linked ");
+					break;
+				case LINKAGE_INTERNAL:
+					fprintf(out," an internally linked ");
+					break;
+				default:
+					assert(0);
+			}
 			print_type(out,((struct Denoted_Function*)denoted)->type,1);
 			return;
 		case DT_Enum:
@@ -660,7 +676,7 @@ void print_ast(FILE *out,struct AST* tree)
 		case ST_OBJECT_DECLARATION:
 			print_denoted(out,(struct Denoted*)((struct AST_Object_Declaration*)tree)->object);
 			fprintf(out,"=");
-			print_ast(out,((struct AST_Object_Declaration*)tree)->initializer);
+			print_ast(out,((struct AST_Object_Declaration*)tree)->object->initializer);
 			break;
 		case ST_TYPE_DEFINITION:
 			print_denoted(out,(struct Denoted*)((struct AST_Type_Definition*)tree)->definition);
@@ -686,7 +702,18 @@ void print_ast(FILE *out,struct AST* tree)
 void print_function_definition(FILE *out,struct Denoted_Function *function)
 {
 	print_token(out,function->id);
-	fprintf(out," is a ");
+	fprintf(out," is");
+	switch(function->linkage)
+	{
+		case LINKAGE_EXTERNAL:
+			fprintf(out," an externally linked ");
+			break;
+		case LINKAGE_INTERNAL:
+			fprintf(out," an internally linked ");
+			break;
+		default:
+			assert(0);
+	}
 	print_type(out,function->type,1);
 	print_ast(out,(struct AST*)function->body);
 }

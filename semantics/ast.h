@@ -4,6 +4,7 @@
 #include <scope.h>
 #include <parse_declaration.h>
 #include <denoted.h>
+#include <linkage.h>
 
 
 
@@ -158,7 +159,6 @@ struct AST_Object_Declaration
 {
 	enum AST_Type type;
 	struct Denoted_Object *object;
-	struct AST *initializer;
 };
 struct AST_Function_Definition
 {
@@ -174,7 +174,10 @@ struct AST_Translation_Unit
 {
 	enum AST_Type type;
 	struct Queue components;
-	struct Scope *scope;
+
+	struct Scope *file_scope;
+	struct Linkage *internal_linkage;
+	struct Queue static_objects;
 };
 
 
@@ -199,10 +202,10 @@ struct AST_Return_Statement* get_return_statement_tree(struct AST* return_expres
 struct AST_Goto_Statement* get_goto_statement_tree(struct token *label,struct Scope *scope);
 struct AST* get_nop_tree();
 struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *definition);
-struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object,struct AST *initializer);
+struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object);
 struct AST_Function_Declaration* get_function_declaration_tree(struct Scope *scope,struct Denoted_Function *function);
 struct AST_Function_Definition* get_function_definition_tree(struct Scope *scope,struct Denoted_Function *function);
-struct AST_Translation_Unit* get_translation_unit_tree(struct Scope* parent_scope);
+struct AST_Translation_Unit* get_translation_unit_tree();
 
 
 

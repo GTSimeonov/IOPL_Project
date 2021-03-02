@@ -91,7 +91,7 @@ void to_js_print_externs(FILE* out,struct Program *program,struct Command_Argume
 {
 	fprintf(out,"\n/*EXTERNS START*/\n");
 	Map_Map_Extended(
-			&((struct Normal_Scope*)program->externs)->ordinary
+			&program->external_linkage->ids
 			,_to_js_print_externs
 			,command_arguments);
 	fprintf(out,"\n/*EXTERNS END*/\n");
@@ -101,7 +101,7 @@ void to_js_print_statics(FILE* out,struct AST_Translation_Unit *translation_unit
 {
 
 	Map_Map_Extended(
-			&((struct Normal_Scope*)translation_unit->scope)->ordinary
+			&((struct Normal_Scope*)translation_unit->file_scope)->ordinary
 			,_to_js_print_statics
 			,command_arguments);
 }
@@ -215,10 +215,10 @@ void to_js_print_ast(FILE* out,struct AST *tree,struct Program *program)
 			break;
 		case ST_OBJECT_DECLARATION:
 			to_js_print_object_declaration_tree(out,((struct AST_Object_Declaration*)tree),program);
-			if(((struct AST_Object_Declaration*)tree)->initializer!=NULL)
+			if(((struct AST_Object_Declaration*)tree)->object->initializer!=NULL)
 			{
 			fprintf(out,"=");
-			to_js_print_ast(out,((struct AST_Object_Declaration*)tree)->initializer,program);
+			to_js_print_ast(out,((struct AST_Object_Declaration*)tree)->object->initializer,program);
 			}
 			break;
 		case ST_FUNCTION_DECLARATION:
@@ -394,7 +394,7 @@ void to_js_print_return_statement_tree(FILE* out,struct AST_Return_Statement *re
 }
 void to_js_print_object_declaration_tree(FILE* out,struct AST_Object_Declaration *object_declaration,struct Program *program)
 {
-	if(object_declaration->object->object->storage_class!=SC_EXTERN)
+	if(object_declaration->object->object->storage_class!=SCS_EXTERN)
 	{
 		fprintf(out,"let ");
 		print_token(out,object_declaration->object->id);
@@ -408,7 +408,7 @@ void to_js_print_function_definition(FILE* out,struct AST_Function_Definition *f
 
 	cache_type=(struct Type_Function*)function_definition->function->type;
 
-	if((struct Type_Function*)function_definition->function->storage_class==SC_EXTERN)
+	if((struct Type_Function*)function_definition->function->linkage==LINKAGE_EXTERNAL)
 	{
 	//	fprintf(out,"var ");
 		print_token(out,function_definition->function->id);

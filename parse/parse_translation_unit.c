@@ -7,15 +7,20 @@
 		declaration [ translation-unit ]
 		function-definition [ translation-unit ]
 */
-struct AST* parse_translation_unit(struct Translation_Data *translation_data,struct Scope *externs)
+struct AST* parse_translation_unit(struct Translation_Data *translation_data)
 {
+	size_t loop_preventer;
 	struct AST_Translation_Unit *hold;
-	hold=get_translation_unit_tree(externs);
-	while(translation_data->tokens->size>0)
+	hold=get_translation_unit_tree();
+
+	loop_preventer=0;
+	while(translation_data->tokens->size>0 && loop_preventer!=translation_data->tokens->size)
 	{
-		if(is_type(translation_data,hold->scope) || kw_get(translation_data)==KW_ID)
+		loop_preventer=translation_data->tokens->size;
+
+		if(is_type(translation_data,hold->file_scope) || kw_get(translation_data)==KW_ID)
 		{
-			parse_declaration(translation_data,hold->scope,&hold->components,1);
+			parse_declaration(translation_data,hold->file_scope,&hold->components,1);
 			if(has_new_errors(translation_data))
 			{
 				chase_next_semicolumn(translation_data);

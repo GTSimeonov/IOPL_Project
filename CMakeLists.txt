@@ -31,6 +31,7 @@ set(SOURCES main.c
 	semantics/scope.c
 	semantics/semantics.c
 	semantics/gcc_error.c
+	semantics/linkage.c
 	code_generation/js/transpile_to_js.c
    )
 

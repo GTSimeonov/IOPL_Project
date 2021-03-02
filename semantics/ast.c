@@ -181,14 +181,12 @@ struct AST_Type_Definition* get_type_definition_tree(struct Denoted_Typedef *def
 	return ret;
 
 }
-struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object,struct AST *initializer)
+struct AST_Object_Declaration* get_object_declaration_tree(struct Denoted_Object *object)
 {
 	struct AST_Object_Declaration *ret;
 	ret=malloc(sizeof(struct AST_Object_Declaration));
 	ret->type=ST_OBJECT_DECLARATION;
 	ret->object=object;
-	ret->initializer=initializer;
-	
 	return ret;
 }
 
@@ -209,13 +207,20 @@ struct AST_Function_Declaration* get_function_declaration_tree(struct Scope *sco
 	ret->function=function;
 	return ret;
 }
-struct AST_Translation_Unit* get_translation_unit_tree(struct Scope* parent_scope)
+struct AST_Translation_Unit* get_translation_unit_tree()
 {
 	struct AST_Translation_Unit *ret;
 	ret=malloc(sizeof(struct AST_Translation_Unit));
-	ret->type=TRANSLATION_UNIT;
+
+	ret->internal_linkage=get_linkage();
+	ret->file_scope=get_normal_scope(NULL,FILE_SCOPE);
+
+
+
 	Queue_Init(&ret->components);
-	ret->scope=get_normal_scope(parent_scope,FILE_SCOPE);
+	Queue_Init(&ret->static_objects);
+	ret->type=TRANSLATION_UNIT;
+
 	return ret;
 }
 
@@ -489,8 +494,6 @@ void delete_ast_type_definition(struct AST_Type_Definition *type_definition)
 }
 void delete_ast_object_declaration(struct AST_Object_Declaration *object_declaration)
 {
-	if(object_declaration->initializer!=NULL)
-		delete_ast(object_declaration->initializer);
 	free(object_declaration);
 
 }
@@ -506,8 +509,9 @@ void delete_ast_translation_unit(struct AST_Translation_Unit *translation_unit)
 {
 	while(translation_unit->components.size>0)
 		delete_ast((struct AST*)Queue_Pop(&translation_unit->components));
-	if(translation_unit->scope!=NULL)
-		delete_scope(translation_unit->scope);
+	if(translation_unit->file_scope!=NULL)
+		delete_scope(translation_unit->file_scope);
+	delete_linkage(translation_unit->internal_linkage);
 	free(translation_unit);
 }
 
