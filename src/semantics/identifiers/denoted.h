@@ -3,13 +3,13 @@
 #include <denoted.hh>
 #include <type.h>
 #include <scope.h>
-#include <semantics.h>
+#include <evaluation.h>
 #include <linkage.h>
+#include <object.h>
 
 
 enum Denotation_Type;
 enum Function_Specifier;
-enum Storage_Class_Specifier;
 
 
 struct Denoted
@@ -101,15 +101,6 @@ struct Denotation_Prototype
 	char is_const:1;
 	char is_volatile:1;
 };
-struct Object
-{
-	struct Type *type;
-	struct Location *location;
-	enum Storage_Class_Specifier storage_class;
-};
-
-struct Static_Object;
-struct Automatic_Object;
 
 
 struct Denoted_Base* get_denoted_base(struct Denotation_Prototype *prototype);
@@ -136,7 +127,6 @@ void delete_denoted_typedef(struct Denoted_Typedef *typedefed);
 void delete_denoted_enum(struct Denoted_Enum *enumeration);
 void delete_denoted_enum_constant(struct Denoted_Enum_Const *enum_const);
 void delete_denoted_struct_union(struct Denoted_Struct_Union *su);
-void delete_object(struct Object *object);
 void delete_denoted_prototype(struct Denotation_Prototype *prototype);
 void delete_denoted_base(struct Denoted_Base *base);
 

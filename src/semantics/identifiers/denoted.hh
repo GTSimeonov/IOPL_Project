@@ -29,15 +29,6 @@ enum Function_Specifier
 	FS_Inline,
 	FS_None
 };
-enum Storage_Class_Specifier
-{
-	SCS_EXTERN,
-	SCS_STATIC,
-	SCS_TYPEDEF,
-	SCS_REGISTER,
-	SCS_NONE
-
-};
 
 struct Denoted;
 struct Denoted_Error;
@@ -49,7 +40,6 @@ struct Denoted_Enum;
 struct Denoted_Enum_Const;
 struct Denoted_Struct_Union;
 struct Denotation_Prototype;
-struct Object;
 
 
 #endif

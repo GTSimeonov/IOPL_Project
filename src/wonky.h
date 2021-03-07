@@ -15,7 +15,7 @@
 #include <preprocessing.h>
 #include <program.h>
 #include <scope.h>
-#include <semantics.h>
+#include <evaluation.h>
 #include <type.h>
 #include <transpile_to_js.h>
 

@@ -262,12 +262,6 @@ void delete_denoted_struct_union(struct Denoted_Struct_Union *su)
 		delete_struct_union(su->struct_union);
 	free(su);
 }
-void delete_object(struct Object *object)
-{
-	if(object->location!=NULL)
-		delete_location(object->location);
-	free(object);
-}
 void delete_denoted_prototype(struct Denotation_Prototype *prototype)
 {
 	free(prototype);
