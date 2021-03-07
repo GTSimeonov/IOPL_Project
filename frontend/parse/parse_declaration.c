@@ -492,7 +492,7 @@ void parse_direct_declarator_finish(struct Translation_Data *translation_data,st
 			}
 
 			parse_direct_declarator_finish(translation_data,scope,base);
-			base->type=get_array_type(base->type,hold_expression);
+			base->type=get_array_type(base->type,hold_expression,translation_data);
 
 		}else if(get_and_check(translation_data,KW_OPEN_NORMAL))
 		{
@@ -588,7 +588,7 @@ struct Denoted* parse_struct_declarator(struct Translation_Data *translation_dat
 		if(get_and_check(translation_data,KW_COLUMN))
 		{
 			/*TODO move error detection in get_type_bitfield*/
-			((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope));
+			((struct Denoted_Object*)hold)->object->type=(struct Type*)get_type_bitfield(prototype->type,parse_expression(translation_data,scope),translation_data);
 		}
 	}
 	
@@ -613,7 +613,7 @@ void parse_enum_specifier_finish(struct Translation_Data *translation_data,struc
 				id=Queue_Pop(translation_data->tokens);
 				if(get_and_check(translation_data,KW_EQ))
 				{
-					hold=(struct Denoted_Enum_Const*)get_denoted_enum_const_expr(id,enumeration,parse_expression(translation_data,scope));
+					hold=(struct Denoted_Enum_Const*)get_denoted_enum_const_expr(id,enumeration,parse_expression(translation_data,scope),translation_data);
 					Queue_Push(enumeration->consts,hold);
 					where_in_enumeration=hold->value+1;
 				}else

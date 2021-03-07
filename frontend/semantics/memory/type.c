@@ -150,7 +150,7 @@ struct Type* get_pointer_type(struct Type *points_to,char is_const,char is_volat
 	return (struct Type*)ret;
 
 }
-struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements)
+struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements,struct Translation_Data *translation_data)
 {
 	struct Type_Array *ret;
 	ret=calloc(1,sizeof(struct Type_Array));
@@ -158,7 +158,7 @@ struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements
 	ret->size=0;
 	if(number_of_elements!=NULL)
 	{
-		ret->number_of_elements=evaluate_const_expression_integer(number_of_elements);
+		ret->number_of_elements=evaluate_const_expression_integer(number_of_elements,translation_data);
 		delete_ast(number_of_elements);
 	}else
 	{
@@ -190,14 +190,14 @@ struct Type* get_enum_type(struct Denotation_Prototype *prototype)
 	}
 	return (struct Type*)ret;
 }
-struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits)
+struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits,struct Translation_Data *translation_data)
 {
 	struct Type_Bit_Field *ret;
 	ret=calloc(1,sizeof(struct Type_Bit_Field));
 	ret->specifier=TS_BITFIELD;
 
 	assert(number_of_bits!=NULL);
-	ret->number_of_bits=evaluate_const_expression_integer(number_of_bits);
+	ret->number_of_bits=evaluate_const_expression_integer(number_of_bits,translation_data);
 	delete_ast(number_of_bits);
 
 	ret->base=base;

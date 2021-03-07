@@ -171,9 +171,6 @@ void to_js_print_ast(FILE* out,struct AST *tree,struct Program *program)
 		case OP_LVALUE:
 			to_js_print_lvalue_expression_tree(out,(struct AST_Lvalue_Expression*)tree,program);
 			break;
-		case OP_RVALUE:
-			to_js_print_rvalue_expression_tree(out,(struct AST_Rvalue_Expression*)tree,program);
-			break;
 		case OP_NOP:
 			fprintf(out,"NOP");
 			break;
@@ -297,13 +294,9 @@ void to_js_print_function_expression_tree(FILE* out,struct AST_Function_Expressi
 	}
 	fprintf(out,")");
 }
-void to_js_print_rvalue_expression_tree(FILE* out,struct AST_Rvalue_Expression *rval,struct Program *program)
-{
-	print_token(out,rval->id);
-}
 void to_js_print_lvalue_expression_tree(FILE* out,struct AST_Lvalue_Expression *lval,struct Program *program)
 {
-	print_token(out,lval->id);
+	print_denoted(out,lval->lvalue);
 }
 void to_js_print_unary_expression_tree(FILE* out,struct AST_Unary_Expression *unary,struct Program *program)
 {

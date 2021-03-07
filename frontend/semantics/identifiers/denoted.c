@@ -63,7 +63,7 @@ struct Denoted* get_denoted_typedef(struct Denoted_Base *base)
 	return (struct Denoted*)ret;
 
 }
-struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression)
+struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression,struct Translation_Data *translation_data)
 {
 	struct Denoted_Enum_Const *ret;
 	ret=malloc(sizeof(struct Denoted_Enum_Const));
@@ -71,7 +71,7 @@ struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent
 	ret->id=id;
 	ret->parent=parent;
 	ret->expression=expression;
-	ret->value=evaluate_const_expression_integer(expression);
+	ret->value=evaluate_const_expression_integer(expression,translation_data);
 
 	return (struct Denoted*)ret;
 	

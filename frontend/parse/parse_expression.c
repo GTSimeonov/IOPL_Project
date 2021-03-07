@@ -36,9 +36,37 @@ struct AST* parse_primary_expression(struct Translation_Data *translation_data,s
 	hold_token=Queue_Pop(translation_data->tokens);
 	switch(hold_token->type)
 	{
-		case KW_NUMBER:
 		case KW_STRING:
-			return (struct AST*)get_rvalue_expression_tree(hold_token);
+		case KW_WIDE_STRING:
+			return (struct AST*)get_string_literal_tree(hold_token);
+		case KW_CHAR_CONSTANT:
+		case KW_WIDE_CHAR_CONSTANT:
+		case KW_HEXADECIMAL_CONSTANT:
+		case KW_DECIMAL_CONSTANT:
+		case KW_OCTAL_CONSTANT:
+		case KW_UNSIGNED_DECIMAL_CONSTANT:
+		case KW_UNSIGNED_OCTAL_CONSTANT:
+		case KW_UNSIGNED_HEXADECIMAL_CONSTANT:
+		case KW_UNSIGNED_LONG_HEXADECIMAL_CONSTANT:
+		case KW_UNSIGNED_LONG_OCTAL_CONSTANT:
+		case KW_UNSIGNED_LONG_DECIMAL_CONSTANT:
+		case KW_UNSIGNED_LONG_LONG_DECIMAL_CONSTANT:
+		case KW_UNSIGNED_LONG_LONG_HEXADECIMAL_CONSTANT:
+		case KW_UNSIGNED_LONG_LONG_OCTAL_CONSTANT:
+		case KW_LONG_HEXADECIMAL_CONSTANT:
+		case KW_LONG_OCTAL_CONSTANT:
+		case KW_LONG_DECIMAL_CONSTANT:
+		case KW_LONG_LONG_HEXADECIMAL_CONSTANT:
+		case KW_LONG_LONG_OCTAL_CONSTANT:
+		case KW_LONG_LONG_DECIMAL_CONSTANT:
+		case KW_DOUBLE_DECIMAL_CONSTANT:
+		case KW_LONG_DOUBLE_DECIMAL_CONSTANT:
+		case KW_FLOAT_DECIMAL_CONSTANT:
+		case KW_DOUBLE_HEXADECIMAL_CONSTANT:
+		case KW_LONG_DOUBLE_HEXADECIMAL_CONSTANT:
+		case KW_FLOAT_HEXADECIMAL_CONSTANT:
+			return (struct AST*)get_constant_tree(hold_token);
+
 		case KW_ID:
 			return (struct AST*)get_lvalue_expression_tree(hold_token,scope);
 		case KW_OPEN_NORMAL:

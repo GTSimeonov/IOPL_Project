@@ -19,7 +19,6 @@ void to_js_print_translation_unit_tree(FILE* out,struct AST_Translation_Unit *tr
 void to_js_print_binary_expression_tree(FILE* out,struct AST_Binary_Expression *bin,struct Program *program);
 void to_js_print_conditional_expression_tree(FILE* out,struct AST_Conditional_Expression *cond,struct Program *program);
 void to_js_print_function_expression_tree(FILE* out,struct AST_Function_Expression *function_call,struct Program *program);
-void to_js_print_rvalue_expression_tree(FILE* out,struct AST_Rvalue_Expression *rval,struct Program *program);
 void to_js_print_lvalue_expression_tree(FILE* out,struct AST_Lvalue_Expression *lval,struct Program *program);
 void to_js_print_unary_expression_tree(FILE* out,struct AST_Unary_Expression *unary,struct Program *program);
 void to_js_print_labeled_statement_tree(FILE* out,struct AST_Labeled_Statement *label,struct Program *program);

@@ -117,7 +117,7 @@ struct Denoted* get_denoted_error(struct Denoted *error);
 struct Denoted* get_denoted_function(struct token *id,struct Type *return_type,enum Function_Specifier fs);
 struct Denoted* get_denoted_object(struct token *id, enum Storage_Class_Specifier sc,struct Type *type,struct AST *initializer);
 struct Denoted* get_denoted_typedef(struct Denoted_Base *base);
-struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression);
+struct Denoted* get_denoted_enum_const_expr(struct token *id,struct Enum *parent,struct AST* expression,struct Translation_Data *translation_data);
 struct Denoted* get_denoted_enum_const_num(struct token *id,struct Enum *parent,int value);
 struct Denoted* get_denoted_enum(struct token *id,struct Enum *enumerator);
 struct Denoted* get_denoted_struct_union(struct token *id,struct Struct_Union *struct_union);

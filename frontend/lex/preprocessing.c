@@ -484,7 +484,7 @@ void parse_preproc_if_line(struct Source_File *src,struct Translation_Data *tran
 	translation_data->tokens=tokens;
 
 	condition=parse_expression(translation_data,null_scope);
-	result=evaluate_const_expression_integer(condition);
+	result=evaluate_const_expression_integer(condition,translation_data);
 	delete_normal_scope((struct Normal_Scope*)null_scope);
 	delete_ast(condition);
 
@@ -692,10 +692,11 @@ void parse_preproc_line_line(struct Source_File *src,struct Translation_Data *tr
 	tokens=lex_line(src,translation_data,0);
 	hack=*translation_data;
 	hack.tokens=tokens;
-	if(check(&hack,KW_NUMBER,0))
+	/*TODO account for other types of integer constants*/
+	if(check(&hack,KW_DECIMAL_CONSTANT,0))
 	{
 		hold_line=(struct token*)Queue_Pop(tokens);
-		src->which_row=evaluate_number_literal(hold_line);
+		src->which_row=evaluate_integer_constant(hold_line,translation_data);
 		if(check(&hack,KW_STRING,0))
 		{
 			hold_name=(struct token*)Queue_Pop(tokens);
@@ -783,12 +784,12 @@ struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translat
 					{
 						if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
 						{
-							hold_token->type=KW_NUMBER;
+							hold_token->type=KW_DECIMAL_CONSTANT;
 							hold_token->data="0";
 							hold_token->data_size=1;
 						}else
 						{
-							hold_token->type=KW_NUMBER;
+							hold_token->type=KW_DECIMAL_CONSTANT;
 							hold_token->data="1";
 							hold_token->data_size=1;
 						}
@@ -802,12 +803,12 @@ struct Queue* lex_line(struct Source_File *src,struct Translation_Data *translat
 			{
 				if(!Map_Check(translation_data->macros,hold_token->data,hold_token->data_size))
 				{
-					hold_token->type=KW_NUMBER;
+					hold_token->type=KW_DECIMAL_CONSTANT;
 					hold_token->data="0";
 					hold_token->data_size=1;
 				}else
 				{
-					hold_token->type=KW_NUMBER;
+					hold_token->type=KW_DECIMAL_CONSTANT;
 					hold_token->data="1";
 					hold_token->data_size=1;
 				}

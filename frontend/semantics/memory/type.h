@@ -123,9 +123,9 @@ struct Struct_Union* get_struct_union_base(struct Scope *scope ,enum Type_Specif
 struct Enum *get_enum_base();
 struct Type* get_basic_type(struct Denotation_Prototype *prototype);
 struct Type* get_pointer_type(struct Type *points_to,char is_const,char is_volatile);
-struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements);
+struct Type* get_array_type(struct Type *array_of,struct AST* number_of_elements,struct Translation_Data *translation_data);
 struct Type* get_enum_type(struct Denotation_Prototype *prototype);
-struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits);
+struct Type* get_type_bitfield(struct Type *base,struct AST* number_of_bits,struct Translation_Data *translation_data);
 struct Type* get_function_type(struct Type *return_type,struct Queue *parameters,struct Normal_Scope* function_prototype_scope);
 
 void delete_enum(struct Enum *enumeration);

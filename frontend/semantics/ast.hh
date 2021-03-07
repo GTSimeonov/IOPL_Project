@@ -4,7 +4,6 @@
 #define BIN_EXPR_PTR(x) ((struct AST_Binary_Expression*)(x))
 #define UN_EXPR_PTR(x) ((struct AST_Unary_Expression*)(x))
 #define LVAL_EXPR_PTR(x) ((struct AST_Lvalue_Expression*)(x))
-#define RVAL_EXPR_PTR(x) ((struct AST_Rvalue_Expression*)(x))
 #define DECLR_PTR(x) ((struct AST_Declaration*)(x))
 #define IF_ST_PTR(s) ((struct AST_If_Statement*)(x))
 
@@ -27,7 +26,7 @@ enum AST_Type{
 	,OP_LESS_EQ,OP_GREATER_EQ
 	,OP_LESS,OP_GREATER
 	,OP_EQUAL,OP_NOT_EQUAL
-	,OP_LVALUE,OP_RVALUE
+	,OP_LVALUE,OP_CONSTANT,OP_STRING_LITERAL
 	,ST_COMPOUND,ST_EXPRESSION,ST_SWITCH,ST_IF,ST_WHILE,ST_DO_WHILE,ST_GOTO,ST_LABEL,ST_CASE,ST_DEFAULT
 	,ST_CONTINUE,ST_BREAK,ST_RETURN,ST_FOR
 	,ST_OBJECT_DECLARATION,ST_TYPE_DEFINITION,ST_FUNCTION_DEFINITION
@@ -41,7 +40,8 @@ struct AST_Declaration_Error;
 struct AST_Binary_Expression;
 struct AST_Conditional_Expression;
 struct AST_Function_Expression;
-struct AST_Rvalue_Expression;
+struct AST_Constant;
+struct AST_String_Literal;
 struct AST_Lvalue_Expression;
 struct AST_Unary_Expression;
 struct AST_Labeled_Statement;

@@ -1,6 +1,6 @@
 #ifndef GCC_AST_C
 #define GCC_AST_C GCC_AST_C
-#include "ast.h"
+#include <ast.h>
 
 struct AST_Error* get_error_tree(struct AST *error)
 {
@@ -60,12 +60,26 @@ struct AST_Unary_Expression* get_unary_expression_tree(struct AST *operand,enum 
 
 	return ret;
 }
-struct AST_Rvalue_Expression* get_rvalue_expression_tree(struct token *id)
+struct AST_Constant* get_constant_tree(struct token *constant)
 {
-	struct AST_Rvalue_Expression *ret;
-	ret=malloc(sizeof(struct AST_Rvalue_Expression));
-	ret->type=OP_RVALUE;
-	ret->id=id;
+	struct AST_Constant *ret;
+	ret=malloc(sizeof(struct AST_Constant));
+	ret->type=OP_CONSTANT;
+	ret->value=NULL;
+	ret->value_type=NULL;
+	/*TODO*/
+
+	free(constant);
+	return ret;
+
+}
+struct AST_String_Literal* get_string_literal_tree(struct token *string)
+{
+	struct AST_String_Literal *ret;
+	ret=malloc(sizeof(struct AST_Constant));
+	ret->type=OP_STRING_LITERAL;
+	ret->string=string;
+
 	return ret;
 }
 struct AST_Lvalue_Expression* get_lvalue_expression_tree(struct token *id,struct Scope* scope)
@@ -73,12 +87,7 @@ struct AST_Lvalue_Expression* get_lvalue_expression_tree(struct token *id,struct
 	struct AST_Lvalue_Expression *ret;
 	ret=malloc(sizeof(struct AST_Lvalue_Expression));
 	ret->type=OP_LVALUE;
-	ret->id=id;
-	ret->value_type=check_ordinary(scope,id);
-	if(ret->value_type==NULL)
-	{
-		/*TODO error*/
-	}
+	ret->lvalue=NULL;
 	return ret;
 }
 
@@ -291,8 +300,11 @@ void delete_ast(struct AST* ast)
 		case OP_LVALUE:
 			delete_ast_lvalue_expression((struct AST_Lvalue_Expression*)ast);
 			break;
-		case OP_RVALUE:
-			delete_ast_rvalue_expression((struct AST_Rvalue_Expression*)ast);
+		case OP_CONSTANT:
+			delete_ast_constant((struct AST_Constant*)ast);
+			break;
+		case OP_STRING_LITERAL:
+			delete_ast_string_literal((struct AST_String_Literal*)ast);
 			break;
 		case ST_COMPOUND:
 			delete_ast_compound_statement((struct AST_Compound_Statement*)ast);
@@ -397,14 +409,8 @@ void delete_ast_function_expression(struct AST_Function_Expression *function_exp
 	free(function_expression);
 	
 }
-void delete_ast_rvalue_expression(struct AST_Rvalue_Expression *rval_expression)
-{
-	free(rval_expression->id);
-	free(rval_expression);
-}
 void delete_ast_lvalue_expression(struct AST_Lvalue_Expression *lval_expression)
 {
-	free(lval_expression->id);
 	free(lval_expression);
 }
 void delete_ast_unary_expression(struct AST_Unary_Expression *unary_expression)
@@ -514,7 +520,17 @@ void delete_ast_translation_unit(struct AST_Translation_Unit *translation_unit)
 	delete_linkage(translation_unit->internal_linkage);
 	free(translation_unit);
 }
-
+void delete_ast_constant(struct AST_Constant *constant)
+{
+	if(constant->value!=NULL)
+		free(constant->value);
+	free(constant);
+}
+void delete_ast_string_literal(struct AST_String_Literal *string)
+{
+	free(string->string);
+	free(string);
+}
 
 
 

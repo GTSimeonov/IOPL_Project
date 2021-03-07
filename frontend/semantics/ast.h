@@ -11,19 +11,6 @@
 enum AST_Type;
 
 
-
-/*
-struct AST
-{
-	enum AST_Type type;
-
-	unsigned long value_type;
-	void *data;
-
-	struct Queue arguments;
-
-};
-*/
 struct AST
 {
 	enum AST_Type type;
@@ -67,20 +54,24 @@ struct AST_Function_Expression
 	/*queue of astrees*/
 	struct Queue arguments;
 };
-/*TODO propperly name these*/
-struct AST_Rvalue_Expression
+
+struct AST_Constant
 {
 	enum AST_Type type;
+
 	struct Type *value_type;
-	struct token *id;
+	void *value;
+};
+/*TODO correct this*/
+struct AST_String_Literal
+{
+	enum AST_Type type;
+	struct token *string;
 };
 struct AST_Lvalue_Expression
 {
 	enum AST_Type type;
-	struct Type *value_type;
-	struct token *id;
-	/*TODO*/
-	struct Object *object;
+	struct Denoted *lvalue;
 };
 struct AST_Unary_Expression
 {
@@ -189,7 +180,8 @@ struct AST_Binary_Expression* get_binary_expression_tree(struct AST *left,struct
 struct AST_Conditional_Expression* get_conditional_expression_tree(struct AST *left,struct AST *center,struct AST *right);
 struct AST_Function_Expression* get_function_expression_tree(struct AST* id,struct Scope *scope);
 struct AST_Unary_Expression* get_unary_expression_tree(struct AST *operand,enum AST_Type type);
-struct AST_Rvalue_Expression* get_rvalue_expression_tree(struct token *id);
+struct AST_Constant* get_constant_tree(struct token *constant);
+struct AST_String_Literal* get_string_literal_tree(struct token *string);
 struct AST_Lvalue_Expression* get_lvalue_expression_tree(struct token *id,struct Scope* scope);
 struct AST_Labeled_Statement* get_labeled_statement_tree(struct token *label,struct AST* statement,enum AST_Type type);
 struct AST_Compound_Statement* get_compound_statement_tree(struct Scope *parent_scope);
@@ -215,7 +207,8 @@ void delete_ast_declaration_error(struct AST_Declaration_Error *error);
 void delete_ast_binary_expression(struct AST_Binary_Expression *binary_expression);
 void delete_ast_conditional_expression(struct AST_Conditional_Expression *cond_expression);
 void delete_ast_function_expression(struct AST_Function_Expression *function_expression);
-void delete_ast_rvalue_expression(struct AST_Rvalue_Expression *rval_expression);
+void delete_ast_constant(struct AST_Constant *constant);
+void delete_ast_string_literal(struct AST_String_Literal *string);
 void delete_ast_lvalue_expression(struct AST_Lvalue_Expression *lval_expression);
 void delete_ast_unary_expression(struct AST_Unary_Expression *unary_expression);
 void delete_ast_labeled_statement(struct AST_Labeled_Statement *labeled_statement);

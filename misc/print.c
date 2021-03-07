@@ -183,8 +183,10 @@ void print_ast_enum(FILE *out,enum AST_Type op)
 		fprintf(out,"!=");break;
 	case OP_LVALUE:
 		fprintf(out,"LVALUE");break;
-	case OP_RVALUE:
-		fprintf(out,"RVALUE");break;
+	case OP_CONSTANT:
+		fprintf(out,"CONSTANT");break;
+	case OP_STRING_LITERAL:
+		fprintf(out,"STRING_LITERAL");break;
 	case ST_COMPOUND:
 		fprintf(out,"COMPOUND");break;
 	case ST_EXPRESSION:
@@ -293,13 +295,10 @@ void print_unary_expression_tree(FILE *out,struct AST_Unary_Expression *unary_ex
 	}
 	print_ast(out,unary_expression->operand);
 }
-void print_rvalue_expression_tree(FILE *out,struct AST_Rvalue_Expression *rval)
-{
-	print_token(out,rval->id);
-}
 void print_lvalue_expression_tree(FILE *out,struct AST_Lvalue_Expression *lval)
 {
-	print_token(out,lval->id);
+	fprintf(out,"LVALUE ");
+	print_denoted(out,lval->lvalue);
 }
 void print_labeled_statement_tree(FILE *out,struct AST_Labeled_Statement *lab)
 {
@@ -631,13 +630,15 @@ void print_ast(FILE *out,struct AST* tree)
 		case OP_LVALUE:
 			print_lvalue_expression_tree(out,(struct AST_Lvalue_Expression*)tree);
 			break;
-		case OP_RVALUE:
-			print_rvalue_expression_tree(out,(struct AST_Rvalue_Expression*)tree);
+		case OP_STRING_LITERAL:
+			print_string_literal(out,(struct AST_String_Literal*)tree);
+			break;
+		case OP_CONSTANT:
+			print_constant_tree(out,(struct AST_Constant*)tree);
 			break;
 		case OP_NOP:
 			fprintf(out,"NOP");
 			break;
-
 		case ST_SWITCH:
 			print_switch_statement_tree(out,(struct AST_Switch_Statement*)tree);
 			break;
@@ -732,178 +733,262 @@ void print_keyword_enum(FILE *out,enum KEYWORDS kw)
 {
 	switch(kw)
 	{
-	case  KW_AUTO :
-		fprintf(out," KW_AUTO ");break;
-	case  KW_DO :
-		fprintf(out," KW_DO ");break;
-	case  KW_DOUBLE :
-		fprintf(out," KW_DOUBLE ");break;
-	case  KW_INT :
-		fprintf(out," KW_INT ");break;
-	case  KW_STRUCT :
-		fprintf(out," KW_STRUCT ");break;
-	case  KW_BREAK :
-		fprintf(out," KW_BREAK ");break;
-	case  KW_ELSE :
-		fprintf(out," KW_ELSE ");break;
-	case  KW_LONG :
-		fprintf(out," KW_LONG ");break;
-	case  KW_SWITCH :
-		fprintf(out," KW_SWITCH ");break;
-	case  KW_CASE :
-		fprintf(out," KW_CASE ");break;
-	case  KW_ENUM :
-		fprintf(out," KW_ENUM ");break;
-	case  KW_REGISTER :
-		fprintf(out," KW_REGISTER ");break;
-	case  KW_TYPEDEF :
-		fprintf(out," KW_TYPEDEF ");break;
-	case  KW_CHAR :
-		fprintf(out," KW_CHAR ");break;
-	case  KW_EXTERN :
-		fprintf(out," KW_EXTERN ");break;
-	case  KW_RETURN :
-		fprintf(out," KW_RETURN ");break;
-	case  KW_UNION :
-		fprintf(out," KW_UNION ");break;
-	case  KW_CONST :
-		fprintf(out," KW_CONST ");break;
-	case  KW_FLOAT :
-		fprintf(out," KW_FLOAT ");break;
-	case  KW_SHORT :
-		fprintf(out," KW_SHORT ");break;
-	case  KW_UNSIGNED :
-		fprintf(out," KW_UNSIGNED ");break;
-	case  KW_CONTINUE :
-		fprintf(out," KW_CONTINUE ");break;
-	case  KW_FOR :
-		fprintf(out," KW_FOR ");break;
-	case  KW_SIGNED :
-		fprintf(out," KW_SIGNED ");break;
-	case  KW_VOID :
-		fprintf(out," KW_VOID ");break;
-	case  KW_DEFAULT :
-		fprintf(out," KW_DEFAULT ");break;
-	case  KW_GOTO :
-		fprintf(out," KW_GOTO ");break;
-	case  KW_SIZEOF :
-		fprintf(out," KW_SIZEOF ");break;
-	case  KW_VOLATILE :
-		fprintf(out," KW_VOLATILE ");break;
-	case  KW_IF :
-		fprintf(out," KW_IF ");break;
-	case  KW_STATIC :
-		fprintf(out," KW_STATIC ");break;
-	case  KW_WHILE :
-		fprintf(out," KW_WHILE ");break;
-	case  KW_EXCLAMATION :
-		fprintf(out," KW_EXCLAMATION ");break;
-	case  KW_BACK_SLASH :
-		fprintf(out," KW_BACK_SLASH ");break;
-	case  KW_PERCENT :
-		fprintf(out," KW_PERCENT ");break;
-	case  KW_AND :
-		fprintf(out," KW_AND ");break;
-	case  KW_AND_AND :
-		fprintf(out," KW_AND_AND ");break;
-	case  KW_QUOTE :
-		fprintf(out," KW_QUOTE ");break;
-	case  KW_OPEN_NORMAL :
-		fprintf(out," KW_OPEN_NORMAL ");break;
-	case  KW_CLOSE_NORMAL :
-		fprintf(out," KW_CLOSE_NORMAL ");break;
-	case  KW_STAR :
-		fprintf(out," KW_STAR ");break;
-	case  KW_PLUS :
-		fprintf(out," KW_PLUS ");break;
-	case  KW_COMMA :
-		fprintf(out," KW_COMMA ");break;
-	case  KW_MINUS :
-		fprintf(out," KW_MINUS ");break;
-	case  KW_DOT :
-		fprintf(out," KW_DOT ");break;
-	case  KW_ARROW :
-		fprintf(out," KW_ARROW ");break;
-	case  KW_COLUMN :
-		fprintf(out," KW_COLUMN ");break;
-	case  KW_SEMI_COLUMN :
-		fprintf(out," KW_SEMI_COLUMN ");break;
-	case  KW_LESS :
-		fprintf(out," KW_LESS ");break;
-	case  KW_EQ :
-		fprintf(out," KW_EQ ");break;
-	case  KW_EQEQ :
-		fprintf(out," KW_EQEQ ");break;
-	case  KW_MORE :
-		fprintf(out," KW_MORE ");break;
-	case  KW_QUESTION :
-		fprintf(out," KW_QUESTION ");break;
-	case  KW_OPEN_SQUARE :
-		fprintf(out," KW_OPEN_SQUARE ");break;
-	case  KW_CLOSE_SQUARE :
-		fprintf(out," KW_CLOSE_SQUARE ");break;
-	case  KW_HAT :
-		fprintf(out," KW_HAT ");break;
-	case  KW_FLOOR :
-		fprintf(out," KW_FLOOR ");break;
-	case  KW_OPEN_CURLY :
-		fprintf(out," KW_OPEN_CURLY ");break;
-	case  KW_CLOSE_CURLY :
-		fprintf(out," KW_CLOSE_CURLY ");break;
-	case  KW_PIPE :
-		fprintf(out," KW_PIPE ");break;
-	case  KW_PIPE_PIPE :
-		fprintf(out," KW_PIPE_PIPE ");break;
-	case  KW_TILDE :
-		fprintf(out," KW_TILDE ");break;
-	case  KW_PLUSPLUS :
-		fprintf(out," KW_PLUSPLUS ");break;
-	case  KW_MINUSMINUS :
-		fprintf(out," KW_MINUSMINUS ");break;
-	case  KW_SHIFT_RIGHT :
-		fprintf(out," KW_SHIFT_RIGHT ");break;
-	case  KW_SHIFT_LEFT :
-		fprintf(out," KW_SHIFT_LEFT ");break;
-	case  KW_LESS_EQ :
-		fprintf(out," KW_LESS_EQ ");break;
-	case  KW_MORE_EQ :
-		fprintf(out," KW_MORE_EQ ");break;
-	case  KW_NOT_EQ :
-		fprintf(out," KW_NOT_EQ ");break;
-	case  KW_PLUS_EQ :
-		fprintf(out," KW_PLUS_EQ ");break;
-	case  KW_MINUS_EQ :
-		fprintf(out," KW_MINUS_EQ ");break;
-	case  KW_STAR_EQ :
-		fprintf(out," KW_STAR_EQ ");break;
-	case  KW_PERCENT_EQ :
-		fprintf(out," KW_PERCENT_EQ ");break;
-	case  KW_SHIFT_LEFT_EQ :
-		fprintf(out," KW_SHIFT_LEFT_EQ ");break;
-	case  KW_SHIFT_RIGHT_EQ :
-		fprintf(out," KW_SHIFT_RIGHT_EQ ");break;
-	case  KW_AND_EQ :
-		fprintf(out," KW_AND_EQ ");break;
-	case  KW_HAT_EQ :
-		fprintf(out," KW_HAT_EQ ");break;
-	case  KW_PIPE_EQ :
-		fprintf(out," KW_PIPE_EQ ");break;
-	case  KW_DIV_EQ :
-		fprintf(out," KW_DIV_EQ ");break;
-	case  KW_FORWARD_SLASH :
-		fprintf(out," KW_FORWARD_SLASH ");break;
-	case  KW_NOTYPE :
-		fprintf(out," KW_NOTYPE ");break;
-	case  KW_NUMBER :
-		fprintf(out," KW_NUMBER ");break;
-	case  KW_COMMENT :
-		fprintf(out," KW_COMMENT ");break;
-	case  KW_ID :
-		fprintf(out," KW_ID ");break;
-	case  KW_STRING :
-		fprintf(out," KW_STRING ");break;
-	default:
-		fprintf(out," KW_ERROR ");break;
+		case KW_AUTO:
+			fprintf(out,"KW_AUTO");break;
+		case KW_DO:
+			fprintf(out,"KW_DO");break;
+		case KW_DOUBLE:
+			fprintf(out,"KW_DOUBLE");break;
+		case KW_INT:
+			fprintf(out,"KW_INT");break;
+		case KW_STRUCT:
+			fprintf(out,"KW_STRUCT");break;
+		case KW_BREAK:
+			fprintf(out,"KW_BREAK");break;
+		case KW_ELSE:
+			fprintf(out,"KW_ELSE");break;
+		case KW_LONG:
+			fprintf(out,"KW_LONG");break;
+		case KW_SWITCH:
+			fprintf(out,"KW_SWITCH");break;
+		case KW_CASE:
+			fprintf(out,"KW_CASE");break;
+		case KW_ENUM:
+			fprintf(out,"KW_ENUM");break;
+		case KW_REGISTER:
+			fprintf(out,"KW_REGISTER");break;
+		case KW_TYPEDEF:
+			fprintf(out,"KW_TYPEDEF");break;
+		case KW_CHAR:
+			fprintf(out,"KW_CHAR");break;
+		case KW_EXTERN:
+			fprintf(out,"KW_EXTERN");break;
+		case KW_RETURN:
+			fprintf(out,"KW_RETURN");break;
+		case KW_UNION:
+			fprintf(out,"KW_UNION");break;
+		case KW_CONST:
+			fprintf(out,"KW_CONST");break;
+		case KW_FLOAT:
+			fprintf(out,"KW_FLOAT");break;
+		case KW_SHORT:
+			fprintf(out,"KW_SHORT");break;
+		case KW_UNSIGNED:
+			fprintf(out,"KW_UNSIGNED");break;
+		case KW_CONTINUE:
+			fprintf(out,"KW_CONTINUE");break;
+		case KW_FOR:
+			fprintf(out,"KW_FOR");break;
+		case KW_SIGNED:
+			fprintf(out,"KW_SIGNED");break;
+		case KW_VOID:
+			fprintf(out,"KW_VOID");break;
+		case KW_DEFAULT:
+			fprintf(out,"KW_DEFAULT");break;
+		case KW_GOTO:
+			fprintf(out,"KW_GOTO");break;
+		case KW_SIZEOF:
+			fprintf(out,"KW_SIZEOF");break;
+		case KW_VOLATILE:
+			fprintf(out,"KW_VOLATILE");break;
+		case KW_IF:
+			fprintf(out,"KW_IF");break;
+		case KW_STATIC:
+			fprintf(out,"KW_STATIC");break;
+		case KW_WHILE:
+			fprintf(out,"KW_WHILE");break;
+		case KW_DEFINED:
+			fprintf(out,"KW_DEFINED");break;
+		case KW_EXCLAMATION:
+			fprintf(out,"KW_EXCLAMATION");break;
+		case KW_BACK_SLASH:
+			fprintf(out,"KW_BACK_SLASH");break;
+		case KW_PERCENT:
+			fprintf(out,"KW_PERCENT");break;
+		case KW_AND:
+			fprintf(out,"KW_AND");break;
+		case KW_AND_AND:
+			fprintf(out,"KW_AND_AND");break;
+		case KW_OPEN_NORMAL:
+			fprintf(out,"KW_OPEN_NORMAL");break;
+		case KW_CLOSE_NORMAL:
+			fprintf(out,"KW_CLOSE_NORMAL");break;
+		case KW_STAR:
+			fprintf(out,"KW_STAR");break;
+		case KW_PLUS:
+			fprintf(out,"KW_PLUS");break;
+		case KW_COMMA:
+			fprintf(out,"KW_COMMA");break;
+		case KW_MINUS:
+			fprintf(out,"KW_MINUS");break;
+		case KW_ARROW:
+			fprintf(out,"KW_ARROW");break;
+		case KW_COLUMN:
+			fprintf(out,"KW_COLUMN");break;
+		case KW_SEMI_COLUMN:
+			fprintf(out,"KW_SEMI_COLUMN");break;
+		case KW_LESS:
+			fprintf(out,"KW_LESS");break;
+		case KW_EQ:
+			fprintf(out,"KW_EQ");break;
+		case KW_EQEQ:
+			fprintf(out,"KW_EQEQ");break;
+		case KW_MORE:
+			fprintf(out,"KW_MORE");break;
+		case KW_QUESTION:
+			fprintf(out,"KW_QUESTION");break;
+		case KW_OPEN_SQUARE:
+			fprintf(out,"KW_OPEN_SQUARE");break;
+		case KW_CLOSE_SQUARE:
+			fprintf(out,"KW_CLOSE_SQUARE");break;
+		case KW_HAT:
+			fprintf(out,"KW_HAT");break;
+		case KW_FLOOR:
+			fprintf(out,"KW_FLOOR");break;
+		case KW_OPEN_CURLY:
+			fprintf(out,"KW_OPEN_CURLY");break;
+		case KW_CLOSE_CURLY:
+			fprintf(out,"KW_CLOSE_CURLY");break;
+		case KW_PIPE:
+			fprintf(out,"KW_PIPE");break;
+		case KW_PIPE_PIPE:
+			fprintf(out,"KW_PIPE_PIPE");break;
+		case KW_TILDE:
+			fprintf(out,"KW_TILDE");break;
+		case KW_PLUSPLUS:
+			fprintf(out,"KW_PLUSPLUS");break;
+		case KW_MINUSMINUS:
+			fprintf(out,"KW_MINUSMINUS");break;
+		case KW_SHIFT_RIGHT:
+			fprintf(out,"KW_SHIFT_RIGHT");break;
+		case KW_SHIFT_LEFT:
+			fprintf(out,"KW_SHIFT_LEFT");break;
+		case KW_LESS_EQ:
+			fprintf(out,"KW_LESS_EQ");break;
+		case KW_MORE_EQ:
+			fprintf(out,"KW_MORE_EQ");break;
+		case KW_NOT_EQ:
+			fprintf(out,"KW_NOT_EQ");break;
+		case KW_PLUS_EQ:
+			fprintf(out,"KW_PLUS_EQ");break;
+		case KW_MINUS_EQ:
+			fprintf(out,"KW_MINUS_EQ");break;
+		case KW_STAR_EQ:
+			fprintf(out,"KW_STAR_EQ");break;
+		case KW_PERCENT_EQ:
+			fprintf(out,"KW_PERCENT_EQ");break;
+		case KW_SHIFT_LEFT_EQ:
+			fprintf(out,"KW_SHIFT_LEFT_EQ");break;
+		case KW_SHIFT_RIGHT_EQ:
+			fprintf(out,"KW_SHIFT_RIGHT_EQ");break;
+		case KW_AND_EQ:
+			fprintf(out,"KW_AND_EQ");break;
+		case KW_HAT_EQ:
+			fprintf(out,"KW_HAT_EQ");break;
+		case KW_PIPE_EQ:
+			fprintf(out,"KW_PIPE_EQ");break;
+		case KW_DOT:
+			fprintf(out,"KW_DOT");break;
+		case KW_DIV_EQ:
+			fprintf(out,"KW_DIV_EQ");break;
+		case KW_FORWARD_SLASH:
+			fprintf(out,"KW_FORWARD_SLASH");break;
+		case KW_NOTYPE:
+			fprintf(out,"KW_NOTYPE");break;
+		case KW_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_HEXADECIMAL_CONSTANT");break;
+		case KW_DECIMAL_CONSTANT:
+			fprintf(out,"KW_DECIMAL_CONSTANT");break;
+		case KW_OCTAL_CONSTANT:
+			fprintf(out,"KW_OCTAL_CONSTANT");break;
+		case KW_UNSIGNED_DECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_DECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_OCTAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_OCTAL_CONSTANT");break;
+		case KW_UNSIGNED_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_HEXADECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_HEXADECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_OCTAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_OCTAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_DECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_DECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_LONG_DECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_LONG_DECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_LONG_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_LONG_HEXADECIMAL_CONSTANT");break;
+		case KW_UNSIGNED_LONG_LONG_OCTAL_CONSTANT:
+			fprintf(out,"KW_UNSIGNED_LONG_LONG_OCTAL_CONSTANT");break;
+		case KW_LONG_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_HEXADECIMAL_CONSTANT");break;
+		case KW_LONG_OCTAL_CONSTANT:
+			fprintf(out,"KW_LONG_OCTAL_CONSTANT");break;
+		case KW_LONG_DECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_DECIMAL_CONSTANT");break;
+		case KW_LONG_LONG_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_LONG_HEXADECIMAL_CONSTANT");break;
+		case KW_LONG_LONG_OCTAL_CONSTANT:
+			fprintf(out,"KW_LONG_LONG_OCTAL_CONSTANT");break;
+		case KW_LONG_LONG_DECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_LONG_DECIMAL_CONSTANT");break;
+		case KW_DOUBLE_DECIMAL_CONSTANT:
+			fprintf(out,"KW_DOUBLE_DECIMAL_CONSTANT");break;
+		case KW_LONG_DOUBLE_DECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_DOUBLE_DECIMAL_CONSTANT");break;
+		case KW_FLOAT_DECIMAL_CONSTANT:
+			fprintf(out,"KW_FLOAT_DECIMAL_CONSTANT");break;
+		case KW_DOUBLE_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_DOUBLE_HEXADECIMAL_CONSTANT");break;
+		case KW_LONG_DOUBLE_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_LONG_DOUBLE_HEXADECIMAL_CONSTANT");break;
+		case KW_FLOAT_HEXADECIMAL_CONSTANT:
+			fprintf(out,"KW_FLOAT_HEXADECIMAL_CONSTANT");break;
+		case KW_COMMENT:
+			fprintf(out,"KW_COMMENT");break;
+		case KW_ID:
+			fprintf(out,"KW_ID");break;
+		case KW_CHAR_CONSTANT:
+			fprintf(out,"KW_CHAR_CONSTANT");break;
+		case KW_WIDE_CHAR_CONSTANT:
+			fprintf(out,"KW_WIDE_CHAR_CONSTANT");break;
+		case KW_STRING:
+			fprintf(out,"KW_STRING");break;
+		case KW_WIDE_STRING:
+			fprintf(out,"KW_WIDE_STRING");break;
+		case PKW_IF:
+			fprintf(out,"PKW_IF");break;
+		case PKW_IFDEF:
+			fprintf(out,"PKW_IFDEF");break;
+		case PKW_IFNDEF:
+			fprintf(out,"PKW_IFNDEF");break;
+		case PKW_ELIF:
+			fprintf(out,"PKW_ELIF");break;
+		case PKW_ELSE:
+			fprintf(out,"PKW_ELSE");break;
+		case PKW_ENDIF:
+			fprintf(out,"PKW_ENDIF");break;
+		case PKW_INCLUDE:
+			fprintf(out,"PKW_INCLUDE");break;
+		case PKW_DEFINE:
+			fprintf(out,"PKW_DEFINE");break;
+		case PKW_UNDEF:
+			fprintf(out,"PKW_UNDEF");break;
+		case PKW_LINE:
+			fprintf(out,"PKW_LINE");break;
+		case PKW_ERROR:
+			fprintf(out,"PKW_ERROR");break;
+		case PKW_PRAGMA:
+			fprintf(out,"PKW_PRAGMA");break;
+		case PKW_COMMENT:
+			fprintf(out,"PKW_COMMENT");break;
+		case PKW_NOTYPE:
+			fprintf(out,"PKW_NOTYPE");break;
+		case KW_HASHTAG:
+			fprintf(out,"KW_HASHTAG");break;
+		case KW_HASHTAG_HASHTAG:
+			fprintf(out,"KW_HASHTAG_HASHTAG");break;
+		default:
+			fprintf(out,"KW_ERROR");
 	}
 }
 void print_errors(FILE *out,struct Queue *errors)
@@ -971,6 +1056,19 @@ void print_type_qualifier(FILE *out,struct Type *type)
 			fprintf(out,"error");
 	}
 }
+
+
+void print_constant_tree(FILE *out,struct AST_Constant *constant)
+{
+	fprintf(out,"CONSTANT of type ");
+	print_type(out,constant->value_type,1);
+}
+void print_string_literal(FILE *out,struct AST_String_Literal *string)
+{
+	fprintf(out,"STRING LITERAL of type");
+	print_token(out,string->string);
+}
+
 #undef TOK
 #undef INDENT
 
