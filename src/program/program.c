@@ -1,5 +1,5 @@
-#ifndef GCC_PROGRAM_C
-#define GCC_PROGRAM_C GCC_PROGRAM_C
+#ifndef WONKY_PROGRAM_C
+#define WONKY_PROGRAM_C WONKY_PROGRAM_C
 #/*Don't mind me*/include/*When I grow up I want to be a new line*/ <program.h>
 
 

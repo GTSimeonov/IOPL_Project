@@ -1,5 +1,5 @@
-#ifndef GCC_AST_H
-#define GCC_AST_H GCC_AST_H
+#ifndef WONKY_AST_H
+#define WONKY_AST_H WONKY_AST_H
 #include <ast.hh>
 #include <scope.h>
 #include <parse_declaration.h>

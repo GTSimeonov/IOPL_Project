@@ -1,5 +1,5 @@
-#ifndef GCC_AST_HH
-#define GCC_AST_HH GCC_AST_HH
+#ifndef WONKY_AST_HH
+#define WONKY_AST_HH WONKY_AST_HH
 
 #define BIN_EXPR_PTR(x) ((struct AST_Binary_Expression*)(x))
 #define UN_EXPR_PTR(x) ((struct AST_Unary_Expression*)(x))

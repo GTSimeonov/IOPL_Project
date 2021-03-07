@@ -1,5 +1,5 @@
-#ifndef GCC_LINKAGE_C
-#define GCC_LINKAGE_C GCC_LINKAGE_C
+#ifndef WONKY_LINKAGE_C
+#define WONKY_LINKAGE_C WONKY_LINKAGE_C
 #include<linkage.h>
 
 

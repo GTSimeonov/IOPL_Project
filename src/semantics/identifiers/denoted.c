@@ -1,5 +1,5 @@
-#ifndef GCC_DENOTED_C
-#define GCC_DENOTED_C GCC_DENOTED_C
+#ifndef WONKY_DENOTED_C
+#define WONKY_DENOTED_C WONKY_DENOTED_C
 #include <denoted.h>
 
 struct Denoted* get_denoted_error(struct Denoted *error)

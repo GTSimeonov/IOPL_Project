@@ -1,5 +1,5 @@
-#ifndef GCC_SCOPE_C
-#define GCC_SCOPE_C GCC_SCOPE_C
+#ifndef WONKY_SCOPE_C
+#define WONKY_SCOPE_C WONKY_SCOPE_C
 #include "scope.h"
 
 

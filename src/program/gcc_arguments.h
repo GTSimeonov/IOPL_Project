@@ -1,5 +1,5 @@
-#ifndef GCC_ARGUMENTS_H
-#define GCC_ARGUMENTS_H GCC_ARGUMENTS_H
+#ifndef WONKY_ARGUMENTS_H
+#define WONKY_ARGUMENTS_H WONKY_ARGUMENTS_H
 #include <gcc_arguments.hh>
 #include <queue.h>
 #include <gcc_string.h>

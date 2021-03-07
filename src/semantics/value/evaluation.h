@@ -1,5 +1,5 @@
-#ifndef GCC_SEMANTICS_H
-#define GCC_SEMANTICS_H GCC_SEMANTICS_H
+#ifndef WONKY_SEMANTICS_H
+#define WONKY_SEMANTICS_H WONKY_SEMANTICS_H
 #include <ast.h>
 #include <lexer.h>
 #include <program.h>

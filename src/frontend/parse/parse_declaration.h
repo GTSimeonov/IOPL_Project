@@ -1,5 +1,5 @@
-#ifndef GCC_PARSE_DECLARATION_H
-#define GCC_PARSE_DECLARATION_H GCC_PARSE_DECLARATION_H
+#ifndef WONKY_PARSE_DECLARATION_H
+#define WONKY_PARSE_DECLARATION_H WONKY_PARSE_DECLARATION_H
 #include <ast.h>
 #include <parse_expression.h>
 #include <parse_statement.h>

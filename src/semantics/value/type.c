@@ -1,5 +1,5 @@
-#ifndef GCC_TYPE_C 
-#define GCC_TYPE_C GCC_TYPE_C
+#ifndef WONKY_TYPE_C 
+#define WONKY_TYPE_C WONKY_TYPE_C
 #include "type.h"
 
 

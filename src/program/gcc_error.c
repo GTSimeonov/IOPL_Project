@@ -1,5 +1,5 @@
-#ifndef GCC_ERROR_C
-#define GCC_ERROR_C GCC_ERROR_C
+#ifndef WONKY_ERROR_C
+#define WONKY_ERROR_C WONKY_ERROR_C
 #include <gcc_error.h>
 
 

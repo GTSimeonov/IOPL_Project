@@ -1,5 +1,5 @@
-#ifndef GCC_SEMANTICS_C
-#define GCC_SEMANTICS_C GCC_SEMANTICS_C
+#ifndef WONKY_SEMANTICS_C
+#define WONKY_SEMANTICS_C WONKY_SEMANTICS_C
 #include <evaluation.h>
 
 

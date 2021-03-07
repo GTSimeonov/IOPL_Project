@@ -1,5 +1,5 @@
-#ifndef GCC_TYPE_H 
-#define GCC_TYPE_H GCC_TYPE_H
+#ifndef WONKY_TYPE_H 
+#define WONKY_TYPE_H WONKY_TYPE_H
 #include <type.hh>
 #include <denoted.h>
 #include <scope.h>

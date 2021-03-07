@@ -1,5 +1,5 @@
-#ifndef GCC_PARSE_DECLARATION_C
-#define GCC_PARSE_DECLARATION_C GCC_PARSE_DECLARATION_C
+#ifndef WONKY_PARSE_DECLARATION_C
+#define WONKY_PARSE_DECLARATION_C WONKY_PARSE_DECLARATION_C
 #include"parse_declaration.h"
 
 /*declaration-specifiers init-declarator (,init-declarator)* ;*/

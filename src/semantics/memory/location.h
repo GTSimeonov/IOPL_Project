@@ -1,5 +1,5 @@
-#ifndef GCC_LOCATION_H
-#define GCC_LOCATION_H GCC_LOCATION_H
+#ifndef WONKY_LOCATION_H
+#define WONKY_LOCATION_H WONKY_LOCATION_H
 #include <location.hh>
 #include <lexer.h>
 #include <type.h>

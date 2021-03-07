@@ -1,5 +1,5 @@
-#ifndef GCC_PROGRAM_H
-#define GCC_PROGRAM_H GCC_PROGRAM_H
+#ifndef WONKY_PROGRAM_H
+#define WONKY_PROGRAM_H WONKY_PROGRAM_H
 
 
 #include <program.hh>

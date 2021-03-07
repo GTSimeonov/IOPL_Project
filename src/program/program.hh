@@ -1,5 +1,5 @@
-#ifndef GCC_PROGRAM_HH
-#define GCC_PROGRAM_HH GCC_PROGRAM_HH
+#ifndef WONKY_PROGRAM_HH
+#define WONKY_PROGRAM_HH WONKY_PROGRAM_HH
 
 struct Program;
 struct Translation_Data;

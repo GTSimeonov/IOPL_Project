@@ -1,5 +1,5 @@
-#ifndef GCC_PRINT
-#define GCC_PRINT GCC_PRINT
+#ifndef WONKY_PRINT
+#define WONKY_PRINT WONKY_PRINT
 #include "print.h"
 
 

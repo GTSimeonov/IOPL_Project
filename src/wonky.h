@@ -1,5 +1,5 @@
-#ifndef GCC_ALL
-#define GCC_ALL GCC_ALL
+#ifndef WONKY_ALL
+#define WONKY_ALL WONKY_ALL
 
 
 #include <gcc_arguments.h>

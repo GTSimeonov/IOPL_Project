@@ -1,5 +1,5 @@
-#ifndef PARSE_GCC_STATEMENT_H
-#define PARSE_GCC_STATEMENT_H PARSE_GCC_STATEMENT_H
+#ifndef PARSE_WONKY_STATEMENT_H
+#define PARSE_WONKY_STATEMENT_H PARSE_WONKY_STATEMENT_H
 #include <scope.h>
 #include <ast.h>
 #include <queue.h>

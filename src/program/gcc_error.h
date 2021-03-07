@@ -1,5 +1,5 @@
-#ifndef GCC_ERROR_H
-#define GCC_ERROR_H GCC_ERROR_H
+#ifndef WONKY_ERROR_H
+#define WONKY_ERROR_H WONKY_ERROR_H
 #include <gcc_error.hh>
 #include <lexer.h>
 #include <stdio.h>

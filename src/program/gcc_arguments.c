@@ -1,5 +1,5 @@
-#ifndef GCC_ARGUMENTS_C
-#define GCC_ARGUMENTS_C GCC_ARGUMENTS_C
+#ifndef WONKY_ARGUMENTS_C
+#define WONKY_ARGUMENTS_C WONKY_ARGUMENTS_C
 #include<gcc_arguments.h>
 
 

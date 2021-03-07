@@ -1,5 +1,5 @@
-#ifndef GCC_PARSE_EXPR_H
-#define GCC_PARSE_EXPR_H GCC_PARSE_EXPR_H
+#ifndef WONKY_PARSE_EXPR_H
+#define WONKY_PARSE_EXPR_H WONKY_PARSE_EXPR_H
 #include <chonky.h>
 #include <queue.h>
 #include <lexer.h>

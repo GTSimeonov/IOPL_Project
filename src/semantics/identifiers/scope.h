@@ -1,5 +1,5 @@
-#ifndef GCC_SCOPE_H
-#define GCC_SCOPE_H GCC_SCOPE_H
+#ifndef WONKY_SCOPE_H
+#define WONKY_SCOPE_H WONKY_SCOPE_H
 #include <scope.hh>
 #include <map.h>
 #include <denoted.h>

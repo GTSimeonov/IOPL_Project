@@ -1,5 +1,5 @@
-#ifndef GCC_LINKAGE_HH
-#define GCC_LINKAGE_HH GCC_LINKAGE_HH
+#ifndef WONKY_LINKAGE_HH
+#define WONKY_LINKAGE_HH WONKY_LINKAGE_HH
 
 
 enum Linkage_Type

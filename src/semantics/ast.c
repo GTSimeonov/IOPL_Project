@@ -1,5 +1,5 @@
-#ifndef GCC_AST_C
-#define GCC_AST_C GCC_AST_C
+#ifndef WONKY_AST_C
+#define WONKY_AST_C WONKY_AST_C
 #include <ast.h>
 
 struct AST_Error* get_error_tree(struct AST *error)

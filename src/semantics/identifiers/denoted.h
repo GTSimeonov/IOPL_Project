@@ -1,5 +1,5 @@
-#ifndef GCC_DENOTED_H
-#define GCC_DENOTED_H GCC_DENOTED_H
+#ifndef WONKY_DENOTED_H
+#define WONKY_DENOTED_H WONKY_DENOTED_H
 #include <denoted.hh>
 #include <type.h>
 #include <scope.h>

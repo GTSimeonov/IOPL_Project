@@ -1,5 +1,5 @@
-#ifndef GCC_PRINT_H
-#define GCC_PRINT_H GCC_PRINT_H
+#ifndef WONKY_PRINT_H
+#define WONKY_PRINT_H WONKY_PRINT_H
 
 #include<stdio.h>
 #include<assert.h>

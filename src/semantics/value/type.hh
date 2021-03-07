@@ -1,5 +1,5 @@
-#ifndef GCC_TYPE_HH
-#define GCC_TYPE_HH GCC_TYPE_HH
+#ifndef WONKY_TYPE_HH
+#define WONKY_TYPE_HH WONKY_TYPE_HH
 
 #define PTR_SIZE 4
 #define INT_SIZE 4

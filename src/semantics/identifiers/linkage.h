@@ -1,5 +1,5 @@
-#ifndef GCC_LINKAGE_H
-#define GCC_LINKAGE_H GCC_LINKAGE_H
+#ifndef WONKY_LINKAGE_H
+#define WONKY_LINKAGE_H WONKY_LINKAGE_H
 #include <linkage.hh>
 #include <map.h>
 #include <denoted.h>

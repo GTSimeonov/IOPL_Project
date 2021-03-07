@@ -1,5 +1,5 @@
-#ifndef GCC_TRANSPILE_TO_JS_H
-#define GCC_TRANSPILE_TO_JS_H GCC_TRANSPILE_TO_JS_H
+#ifndef WONKY_TRANSPILE_TO_JS_H
+#define WONKY_TRANSPILE_TO_JS_H WONKY_TRANSPILE_TO_JS_H
 #include <program.h>
 #include <gcc_arguments.h>
 #include <stdio.h>

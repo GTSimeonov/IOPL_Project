@@ -1,5 +1,5 @@
-#ifndef GCC_LOCATION_C
-#define GCC_LOCATION_C GCC_LOCATION_C
+#ifndef WONKY_LOCATION_C
+#define WONKY_LOCATION_C WONKY_LOCATION_C
 #include "location.h"
 
 

@@ -1,5 +1,5 @@
-#ifndef GCC_PARSE_TRANSLATION_C
-#define GCC_PARSE_TRANSLATION_C GCC_PARSE_TRANSLATION_C
+#ifndef WONKY_PARSE_TRANSLATION_C
+#define WONKY_PARSE_TRANSLATION_C WONKY_PARSE_TRANSLATION_C
 #include <parse_translation_unit.h>
 #include <gcc_error.h>
 /*

@@ -1,5 +1,5 @@
-#ifndef LEXER_C
-#define LEXER_C LEXER_C
+#ifndef WONKY_LEXER_C
+#define WONKY_LEXER_C WONKY_LEXER_C
 /*asdf*/#include <lexer.h>
 
 char *well_known_locations_base[]={"","/usr/include/","/usr/include/x86_64-linux-gnu/",NULL};

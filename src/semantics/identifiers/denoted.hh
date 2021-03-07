@@ -1,5 +1,5 @@
-#ifndef GCC_DENOTED_HH
-#define GCC_DENOTED_HH GCC_DENOTED_HH
+#ifndef WONKY_DENOTED_HH
+#define WONKY_DENOTED_HH WONKY_DENOTED_HH
 
 #define AS_DENOTED_OBJECT_PTR(x) ((struct Denoted_Object*)x)
 #define AS_DENOTED_FUNCTION(x) ((struct Denoted_Function*)x)

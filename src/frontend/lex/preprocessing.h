@@ -1,5 +1,5 @@
-#ifndef GCC_PREPROCESSING_H
-#define GCC_PREPROCESSING_H GCC_PREPROCESSING_H
+#ifndef WONKY_PREPROCESSING_H
+#define WONKY_PREPROCESSING_H WONKY_PREPROCESSING_H
 #include <preprocessing.hh>
 #include <program.h>
 #include <lexer.h>
